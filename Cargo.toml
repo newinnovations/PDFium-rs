@@ -1,0 +1,12 @@
+[package]
+name = "pdfium"
+version = "0.1.0"
+edition = "2024"
+description = "Safe Rust wrapper to PDFium, the PDF library from Google"
+keywords = ["pdf", "pdfium"]
+license = "GPL-3.0"
+readme = "README.md"
+repository = "https://github.com/newinnovations/pdfium-rs"
+homepage = "https://github.com/newinnovations/pdfium-rs"
+
+[dependencies]
