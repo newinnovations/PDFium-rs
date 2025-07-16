@@ -34,6 +34,7 @@ use crate::{
     pdfium_types::FPDF_DOCUMENT,
 };
 
+/// Rust interface to FPDF_DOCUMENT
 pub struct PdfiumDocument {
     handle: FPDF_DOCUMENT,
     _reader: Option<Box<PdfiumReader>>,

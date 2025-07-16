@@ -22,8 +22,10 @@ use std::{
     fmt::{Display, Formatter},
 };
 
+/// Alias for `Result<T, PdfiumError>`
 pub type PdfiumResult<T> = Result<T, PdfiumError>;
 
+/// Enumerations of errors that can occur in PDFium and PDFium-rs
 #[derive(Debug)]
 pub enum PdfiumError {
     /// An unknown or unspecified error occurred

@@ -19,6 +19,7 @@
 
 use crate::pdfium_types::FS_RECTF;
 
+/// Rust interface to FS_RECTF
 #[derive(Debug, Copy, Clone)]
 pub struct PdfiumRect {
     pub left: f32,

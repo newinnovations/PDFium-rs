@@ -19,6 +19,7 @@
 
 use crate::pdfium_types::FS_MATRIX;
 
+/// Rust interface to FS_MATRIX
 #[derive(Debug, Copy, Clone)]
 pub struct PdfiumMatrix {
     a: f32,

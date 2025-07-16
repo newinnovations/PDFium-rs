@@ -19,9 +19,9 @@
 
 use crate::pdfium_types::FPDF_DWORD;
 
-/// A 32-bit color value with alpha channel.
+/// Rust interface to PDFium colors
 ///
-/// PDFium uses BGRA by default
+/// PDFium uses BGRA by default (32-bit color value with alpha channel).
 #[derive(Debug, Copy, Clone)]
 pub struct PdfiumColor {
     red: u8,

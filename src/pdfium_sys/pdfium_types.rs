@@ -21,6 +21,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+//! Access to the C language types of PDFium
+
 #[repr(C)]
 #[repr(align(16))]
 #[derive(Debug, Copy, Clone)]

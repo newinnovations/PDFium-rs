@@ -25,6 +25,7 @@ use crate::{
     pdfium_constants::FALSE,
 };
 
+/// Rust interface to the boundary boxes of a page
 pub struct PdfiumPageBoundaries<'a> {
     page: &'a PdfiumPage,
 }

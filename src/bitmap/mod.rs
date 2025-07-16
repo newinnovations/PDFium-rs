@@ -29,6 +29,7 @@ use crate::{
     pdfium_types::FPDF_BITMAP,
 };
 
+/// Rust interface to FPDF_BITMAP
 pub struct PdfiumBitmap {
     handle: FPDF_BITMAP,
 }
@@ -157,7 +158,7 @@ impl Drop for PdfiumBitmap {
     }
 }
 
-/// The pixel format of the rendered image data in the backing buffer of a [PdfiumBitmap].
+/// The pixel format of the backing buffer of a [PdfiumBitmap].
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(i32)]
 pub enum PdfiumBitmapFormat {

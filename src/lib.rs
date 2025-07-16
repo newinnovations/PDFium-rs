@@ -42,5 +42,6 @@ pub use guard::lib;
 pub use guard::set_library_location;
 pub use matrix::PdfiumMatrix;
 pub use page::PdfiumPage;
+pub use page::PdfiumRenderFlags;
 pub use page::boundaries::PdfiumPageBoundaries;
 pub use rect::PdfiumRect;

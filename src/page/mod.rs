@@ -29,6 +29,7 @@ use crate::{
     pdfium_types::{FPDF_PAGE, FS_MATRIX, FS_RECTF},
 };
 
+/// Rust interface to FPDF_PAGE
 pub struct PdfiumPage {
     handle: FPDF_PAGE,
 }

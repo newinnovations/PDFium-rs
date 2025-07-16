@@ -20,6 +20,8 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
+//! Access to the C language constants of PDFium
+
 use crate::pdfium_types::*;
 
 pub const FALSE: i32 = 0;
