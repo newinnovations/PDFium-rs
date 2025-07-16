@@ -1,14 +1,8 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+mod error;
+mod guard;
+mod pdfium_sys;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub use pdfium_sys::pdfium_constants;
+pub use pdfium_sys::pdfium_types;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use error::PdfiumError;

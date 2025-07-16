@@ -1,6 +1,6 @@
 [package]
 name = "pdfium"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Safe Rust wrapper to PDFium, the PDF library from Google"
 keywords = ["pdf", "pdfium"]
@@ -10,3 +10,5 @@ repository = "https://github.com/newinnovations/pdfium-rs"
 homepage = "https://github.com/newinnovations/pdfium-rs"
 
 [dependencies]
+libloading = "0.8.8"
+parking_lot = "0.12.4"

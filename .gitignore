@@ -1,1 +1,5 @@
 /target
+libpdfium.so
+libpdfium.dylib
+pdfium.dll
+*.png
