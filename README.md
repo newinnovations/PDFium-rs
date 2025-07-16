@@ -1,5 +1,19 @@
 # PDFium-rs
 
+[![Crates.io][crates-badge]][crates-url]
+[![GitHub Actions Workflow Status][build-badge]][build-url]
+[![Docs.io][docs-badge]][docs-url]
+[![Crates.io License][lic-badge]][lic-url]
+
+[crates-badge]: https://img.shields.io/crates/v/pdfium.svg
+[crates-url]: https://crates.io/crates/pdfium
+[docs-badge]: https://img.shields.io/docsrs/pdfium
+[docs-url]: https://docs.rs/pdfium
+[lic-badge]: https://img.shields.io/crates/l/pdfium
+[lic-url]: https://github.com/newinnovations/PDFium-rs/blob/main/README.md
+[build-badge]: https://img.shields.io/github/actions/workflow/status/newinnovations/PDFium-rs/cargo_test.yml
+[build-url]: https://github.com/newinnovations/PDFium-rs/actions/workflows/cargo_test.yml
+
 A streamlined Rust wrapper for the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is the PDF library from Google developed for and used in Chromium and Chrome.
 
 PDFium-rs is used as one of the pdf engines in [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4.
