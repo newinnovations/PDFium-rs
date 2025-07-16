@@ -17,30 +17,41 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#![doc = include_str!("../README.md")]
+use crate::pdfium_types::FPDF_DWORD;
 
-mod bitmap;
-mod color;
-mod document;
-mod error;
-mod guard;
-mod matrix;
-mod page;
-mod pdfium_sys;
-mod rect;
+/// A 32-bit color value with alpha channel.
+///
+/// PDFium uses BGRA by default
+#[derive(Debug, Copy, Clone)]
+pub struct PdfiumColor {
+    red: u8,
+    green: u8,
+    blue: u8,
+    alpha: u8,
+}
 
-pub use pdfium_sys::pdfium_constants;
-pub use pdfium_sys::pdfium_types;
+impl PdfiumColor {
+    pub const WHITE: PdfiumColor = PdfiumColor::new(255, 255, 255, 255);
+    pub const BLACK: PdfiumColor = PdfiumColor::new(0, 0, 0, 255);
 
-pub use bitmap::PdfiumBitmap;
-pub use bitmap::PdfiumBitmapFormat;
-pub use color::PdfiumColor;
-pub use document::PdfiumDocument;
-pub use error::PdfiumError;
-pub use error::PdfiumResult;
-pub use guard::lib;
-pub use guard::set_library_location;
-pub use matrix::PdfiumMatrix;
-pub use page::PdfiumPage;
-pub use page::boundaries::PdfiumPageBoundaries;
-pub use rect::PdfiumRect;
+    /// Constructs a new [`PdfiumColor`] instance from the given components.
+    pub const fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Self {
+        Self {
+            red,
+            green,
+            blue,
+            alpha,
+        }
+    }
+}
+
+impl From<&PdfiumColor> for FPDF_DWORD {
+    /// Converts the [`PdfiumColor`] to the BGRA value
+    fn from(value: &PdfiumColor) -> Self {
+        let red = value.red as FPDF_DWORD;
+        let green = value.green as FPDF_DWORD;
+        let blue = value.blue as FPDF_DWORD;
+        let alpha = value.alpha as FPDF_DWORD;
+        (alpha << 24) | (red << 16) | (green << 8) | blue
+    }
+}
