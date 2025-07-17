@@ -17,8 +17,6 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::ffi::c_int;
-
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::{
@@ -47,25 +45,24 @@ impl PdfiumBitmap {
     /// Creates a new [`PdfiumBitmap`] with the given `width`, `height` and [`PdfiumBitmapFormat`].
     pub fn empty(width: i32, height: i32, format: PdfiumBitmapFormat) -> PdfiumResult<Self> {
         let lib = try_lib()?;
-        let handle = lib.FPDFBitmap_CreateEx(
-            width as c_int,
-            height as c_int,
+        lib.FPDFBitmap_CreateEx(
+            width,
+            height,
             format.into(),
-            std::ptr::null_mut(),
-            0, // Not relevant because Pdfium will create the buffer itself.
-        );
-        Self::new_from_handle(handle)
+            None, // If this parameter is NULL, then PDFium will create its own buffer.
+            0,    // Number of bytes for each scan line, for external buffer only
+        )
     }
 
     /// Fills this entire [`PdfiumBitmap`] with the given [`PdfiumColor`].
     pub fn fill(&self, color: &PdfiumColor) {
         let lib = lib();
         lib.FPDFBitmap_FillRect(
-            self.handle,
+            self,
             0,
             0,
-            lib.FPDFBitmap_GetWidth(self.handle),
-            lib.FPDFBitmap_GetHeight(self.handle),
+            lib.FPDFBitmap_GetWidth(self),
+            lib.FPDFBitmap_GetHeight(self),
             color.into(),
         );
     }
@@ -73,27 +70,27 @@ impl PdfiumBitmap {
     /// Returns the width of the image in the bitmap buffer backing this [`PdfiumBitmap`].
     #[inline]
     pub fn width(&self) -> i32 {
-        lib().FPDFBitmap_GetWidth(self.handle) as i32
+        lib().FPDFBitmap_GetWidth(self) as i32
     }
 
     /// Returns the height of the image in the bitmap buffer backing this [`PdfiumBitmap`].
     #[inline]
     pub fn height(&self) -> i32 {
-        lib().FPDFBitmap_GetHeight(self.handle) as i32
+        lib().FPDFBitmap_GetHeight(self) as i32
     }
 
     /// Returns the pixel format of the image in the bitmap buffer backing this [`PdfiumBitmap`].
     #[inline]
     pub fn format(&self) -> PdfiumBitmapFormat {
-        lib().FPDFBitmap_GetFormat(self.handle).into()
+        lib().FPDFBitmap_GetFormat(self).into()
     }
 
     /// Returns an immutable reference to the bitmap buffer backing this [`PdfiumBitmap`].
     ///
     /// This function does not attempt any color channel normalization.
     pub fn as_raw_bytes<'a>(&self, lib: &'a PdfiumGuard) -> &'a [u8] {
-        let buffer = lib.FPDFBitmap_GetBuffer(self.handle);
-        let len = lib.FPDFBitmap_GetStride(self.handle) * lib.FPDFBitmap_GetHeight(self.handle);
+        let buffer = lib.FPDFBitmap_GetBuffer(self);
+        let len = lib.FPDFBitmap_GetStride(self) * lib.FPDFBitmap_GetHeight(self);
         unsafe { std::slice::from_raw_parts(buffer as *const u8, len as usize) }
     }
 
@@ -154,7 +151,7 @@ impl Drop for PdfiumBitmap {
     #[inline]
     fn drop(&mut self) {
         println!("Closing bitmap {:?}", self.handle);
-        lib().FPDFBitmap_Destroy(self.handle);
+        lib().FPDFBitmap_Destroy(self);
     }
 }
 

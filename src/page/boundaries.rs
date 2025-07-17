@@ -17,13 +17,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{
-    PdfiumRect,
-    error::{PdfiumError, PdfiumResult},
-    guard::lib,
-    page::PdfiumPage,
-    pdfium_constants::FALSE,
-};
+use crate::{PdfiumRect, error::PdfiumResult, guard::lib, page::PdfiumPage};
 
 /// Rust interface to the boundary boxes of a page
 pub struct PdfiumPageBoundaries<'a> {
@@ -39,18 +33,9 @@ impl<'a> PdfiumPageBoundaries<'a> {
     /// size, equivalent to the target paper size when the document is printed.
     #[inline]
     pub fn media(&self) -> PdfiumResult<PdfiumRect> {
-        let mut rect = PdfiumRect::zero();
-        let result = lib().FPDFPage_GetMediaBox(
-            self.page.into(),
-            &mut rect.left,
-            &mut rect.bottom,
-            &mut rect.right,
-            &mut rect.top,
-        );
-        match result {
-            FALSE => Err(PdfiumError::NotFound),
-            _ => Ok(rect),
-        }
+        Ok(PdfiumRect::new_from_lbrt(
+            lib().FPDFPage_GetMediaBox(self.page)?,
+        ))
     }
 }
 

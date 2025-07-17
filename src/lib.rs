@@ -29,6 +29,7 @@ mod page;
 mod pdfium_sys;
 mod rect;
 
+pub use pdfium_sys::Pdfium;
 pub use pdfium_sys::pdfium_constants;
 pub use pdfium_sys::pdfium_types;
 
@@ -36,6 +37,7 @@ pub use bitmap::PdfiumBitmap;
 pub use bitmap::PdfiumBitmapFormat;
 pub use color::PdfiumColor;
 pub use document::PdfiumDocument;
+pub use document::reader::PdfiumReader;
 pub use error::PdfiumError;
 pub use error::PdfiumResult;
 pub use guard::lib;

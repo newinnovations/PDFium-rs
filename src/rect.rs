@@ -22,9 +22,13 @@ use crate::pdfium_types::FS_RECTF;
 /// Rust interface to FS_RECTF
 #[derive(Debug, Copy, Clone)]
 pub struct PdfiumRect {
+    /// The x-coordinate of the left-top corner.
     pub left: f32,
+    /// The y-coordinate of the left-top corner.
     pub top: f32,
+    /// The x-coordinate of the right-bottom corner.
     pub right: f32,
+    /// The y-coordinate of the right-bottom corner.
     pub bottom: f32,
 }
 
@@ -46,6 +50,16 @@ impl PdfiumRect {
             top,
             right,
             bottom,
+        }
+    }
+
+    /// Creates a new [`PdfiumRect`] from a (left, bottom, right, top) tuple.
+    pub fn new_from_lbrt(value: (f32, f32, f32, f32)) -> Self {
+        Self {
+            left: value.0,
+            top: value.3,
+            right: value.2,
+            bottom: value.1,
         }
     }
 
@@ -76,5 +90,12 @@ impl From<&PdfiumRect> for FS_RECTF {
             right: rect.right,
             bottom: rect.bottom,
         }
+    }
+}
+
+impl From<&PdfiumRect> for *const FS_RECTF {
+    fn from(rect: &PdfiumRect) -> Self {
+        let rect: FS_RECTF = rect.into();
+        &rect
     }
 }

@@ -26,7 +26,7 @@ use crate::{
     guard::lib,
     page::boundaries::PdfiumPageBoundaries,
     pdfium_constants,
-    pdfium_types::{FPDF_PAGE, FS_MATRIX, FS_RECTF},
+    pdfium_types::FPDF_PAGE,
 };
 
 /// Rust interface to FPDF_PAGE
@@ -185,15 +185,7 @@ impl PdfiumPage {
             bitmap.width() as f32,
             bitmap.height() as f32,
         ));
-        let clipping: FS_RECTF = (&clipping).into();
-        let matrix: FS_MATRIX = matrix.into();
-        lib().FPDF_RenderPageBitmapWithMatrix(
-            bitmap.into(),
-            self.into(),
-            &matrix,
-            &clipping,
-            render_flags,
-        );
+        lib().FPDF_RenderPageBitmapWithMatrix(bitmap, self, matrix, &clipping, render_flags);
     }
 }
 
@@ -209,7 +201,7 @@ impl Drop for PdfiumPage {
     #[inline]
     fn drop(&mut self) {
         println!("Closing page {:?}", self.handle);
-        lib().FPDF_ClosePage(self.handle);
+        lib().FPDF_ClosePage(self);
     }
 }
 

@@ -17,10 +17,10 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-mod reader;
+pub mod reader;
 
 use std::{
-    ffi::{CString, c_int},
+    ffi::CString,
     fs::File,
     io::{Read, Seek},
     path::Path,
@@ -74,18 +74,17 @@ impl PdfiumDocument {
         let lib = try_lib()?;
         let mut reader = PdfiumReader::new(reader);
         let password = CString::new(password.unwrap_or("")).unwrap();
-        let handle = lib.FPDF_LoadCustomDocument(reader.as_mut().into(), password.as_ptr());
+        let handle = lib.FPDF_LoadCustomDocument(&mut reader, &password);
         Self::new_from_handle(handle, Some(reader))
     }
 
     pub fn page_count(&self) -> i32 {
-        lib().FPDF_GetPageCount(self.into())
+        lib().FPDF_GetPageCount(self)
     }
 
     /// Returns the [`PdfiumPage`] indicated by `index` from this [`PdfiumDocument`].
     pub fn page(&self, index: i32) -> PdfiumResult<PdfiumPage> {
-        let page_handle = lib().FPDF_LoadPage(self.into(), index as c_int);
-        PdfiumPage::new_from_handle(page_handle)
+        lib().FPDF_LoadPage(self, index)
     }
 }
 
@@ -101,7 +100,7 @@ impl Drop for PdfiumDocument {
     #[inline]
     fn drop(&mut self) {
         println!("Closing document {:?}", self.handle);
-        lib().FPDF_CloseDocument(self.handle);
+        lib().FPDF_CloseDocument(self);
     }
 }
 

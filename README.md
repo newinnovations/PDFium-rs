@@ -92,7 +92,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.3.3"
+pdfium = "0.3.4"
 ```
 
 ## Current Status

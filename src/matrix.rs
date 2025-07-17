@@ -87,7 +87,6 @@ impl PdfiumMatrix {
 }
 
 impl From<&PdfiumMatrix> for FS_MATRIX {
-    #[inline]
     fn from(matrix: &PdfiumMatrix) -> Self {
         FS_MATRIX {
             a: matrix.a,
@@ -97,6 +96,13 @@ impl From<&PdfiumMatrix> for FS_MATRIX {
             e: matrix.e,
             f: matrix.f,
         }
+    }
+}
+
+impl From<&PdfiumMatrix> for *const FS_MATRIX {
+    fn from(matrix: &PdfiumMatrix) -> Self {
+        let matrix: FS_MATRIX = matrix.into();
+        &matrix
     }
 }
 

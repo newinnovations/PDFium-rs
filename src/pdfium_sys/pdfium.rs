@@ -20,10 +20,14 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+use std::ffi::CString;
 use std::os::raw::{c_int, c_ulong, c_void};
 
 use super::lib_get;
-use crate::{PdfiumError, pdfium_types::*};
+use crate::{
+    PdfiumBitmap, PdfiumDocument, PdfiumError, PdfiumMatrix, PdfiumPage, PdfiumRect, PdfiumResult,
+    pdfium_types::*,
+};
 use libloading::Library;
 
 #[allow(non_snake_case)]
@@ -105,121 +109,150 @@ impl PdfiumBindings {
 }
 
 impl PdfiumBindings {
-    #[inline]
     pub fn FPDF_InitLibrary(&self) {
         unsafe { (self.fn_FPDF_InitLibrary)() }
     }
 
-    #[inline]
     pub fn FPDF_LoadCustomDocument(
         &self,
-        pFileAccess: *mut FPDF_FILEACCESS,
-        password: FPDF_BYTESTRING,
+        pFileAccess: &mut Box<crate::PdfiumReader>,
+        password: &CString,
     ) -> FPDF_DOCUMENT {
-        unsafe { (self.fn_FPDF_LoadCustomDocument)(pFileAccess, password) }
+        unsafe { (self.fn_FPDF_LoadCustomDocument)(pFileAccess.as_mut().into(), password.as_ptr()) }
     }
 
-    #[inline]
-    pub fn FPDF_GetLastError(&self) -> c_ulong {
+    pub fn FPDF_GetLastError(&self) -> ::std::os::raw::c_ulong {
         unsafe { (self.fn_FPDF_GetLastError)() }
     }
 
-    #[inline]
-    pub fn FPDF_GetPageCount(&self, document: FPDF_DOCUMENT) -> c_int {
-        unsafe { (self.fn_FPDF_GetPageCount)(document) }
+    pub fn FPDF_GetPageCount(&self, document: &PdfiumDocument) -> i32 {
+        unsafe { (self.fn_FPDF_GetPageCount)(document.into()) }
     }
 
-    #[inline]
-    pub fn FPDF_LoadPage(&self, document: FPDF_DOCUMENT, page_index: c_int) -> FPDF_PAGE {
-        unsafe { (self.fn_FPDF_LoadPage)(document, page_index) }
+    pub fn FPDF_LoadPage(
+        &self,
+        document: &PdfiumDocument,
+        page_index: i32,
+    ) -> PdfiumResult<PdfiumPage> {
+        PdfiumPage::new_from_handle(unsafe { (self.fn_FPDF_LoadPage)(document.into(), page_index) })
     }
 
-    #[inline]
     pub fn FPDF_RenderPageBitmapWithMatrix(
         &self,
-        bitmap: FPDF_BITMAP,
-        page: FPDF_PAGE,
-        matrix: *const FS_MATRIX,
-        clipping: *const FS_RECTF,
-        flags: c_int,
+        bitmap: &PdfiumBitmap,
+        page: &PdfiumPage,
+        matrix: &PdfiumMatrix,
+        clipping: &PdfiumRect,
+        flags: i32,
     ) {
-        unsafe { (self.fn_FPDF_RenderPageBitmapWithMatrix)(bitmap, page, matrix, clipping, flags) }
+        unsafe {
+            (self.fn_FPDF_RenderPageBitmapWithMatrix)(
+                bitmap.into(),
+                page.into(),
+                matrix.into(),
+                clipping.into(),
+                flags,
+            )
+        }
     }
 
-    #[inline]
-    pub fn FPDF_ClosePage(&self, page: FPDF_PAGE) {
-        unsafe { (self.fn_FPDF_ClosePage)(page) }
+    pub fn FPDF_ClosePage(&self, page: &PdfiumPage) {
+        unsafe { (self.fn_FPDF_ClosePage)(page.into()) }
     }
 
-    #[inline]
-    pub fn FPDF_CloseDocument(&self, document: FPDF_DOCUMENT) {
-        unsafe { (self.fn_FPDF_CloseDocument)(document) }
+    pub fn FPDF_CloseDocument(&self, document: &PdfiumDocument) {
+        unsafe { (self.fn_FPDF_CloseDocument)(document.into()) }
     }
 
-    #[inline]
     pub fn FPDFBitmap_CreateEx(
         &self,
-        width: c_int,
-        height: c_int,
-        format: c_int,
-        first_scan: *mut c_void,
-        stride: c_int,
-    ) -> FPDF_BITMAP {
-        unsafe { (self.fn_FPDFBitmap_CreateEx)(width, height, format, first_scan, stride) }
+        width: i32,
+        height: i32,
+        format: i32,
+        first_scan: Option<&mut [u8]>,
+        stride: i32,
+    ) -> PdfiumResult<PdfiumBitmap> {
+        PdfiumBitmap::new_from_handle(unsafe {
+            (self.fn_FPDFBitmap_CreateEx)(
+                width,
+                height,
+                format,
+                to_void_ptr_mut(first_scan),
+                stride,
+            )
+        })
     }
 
-    #[inline]
-    pub fn FPDFBitmap_GetFormat(&self, bitmap: FPDF_BITMAP) -> c_int {
-        unsafe { (self.fn_FPDFBitmap_GetFormat)(bitmap) }
+    pub fn FPDFBitmap_GetFormat(&self, bitmap: &PdfiumBitmap) -> i32 {
+        unsafe { (self.fn_FPDFBitmap_GetFormat)(bitmap.into()) }
     }
 
-    #[inline]
     pub fn FPDFBitmap_FillRect(
         &self,
-        bitmap: FPDF_BITMAP,
-        left: c_int,
-        top: c_int,
-        width: c_int,
-        height: c_int,
+        bitmap: &PdfiumBitmap,
+        left: i32,
+        top: i32,
+        width: i32,
+        height: i32,
         color: FPDF_DWORD,
     ) -> FPDF_BOOL {
-        unsafe { (self.fn_FPDFBitmap_FillRect)(bitmap, left, top, width, height, color) }
+        unsafe { (self.fn_FPDFBitmap_FillRect)(bitmap.into(), left, top, width, height, color) }
     }
 
-    #[inline]
-    pub fn FPDFBitmap_GetBuffer(&self, bitmap: FPDF_BITMAP) -> *mut c_void {
-        unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap) }
+    pub fn FPDFBitmap_GetBuffer(&self, bitmap: &PdfiumBitmap) -> *mut ::std::os::raw::c_void {
+        unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap.into()) }
     }
 
-    #[inline]
-    pub fn FPDFBitmap_GetWidth(&self, bitmap: FPDF_BITMAP) -> c_int {
-        unsafe { (self.fn_FPDFBitmap_GetWidth)(bitmap) }
+    pub fn FPDFBitmap_GetWidth(&self, bitmap: &PdfiumBitmap) -> i32 {
+        unsafe { (self.fn_FPDFBitmap_GetWidth)(bitmap.into()) }
     }
 
-    #[inline]
-    pub fn FPDFBitmap_GetHeight(&self, bitmap: FPDF_BITMAP) -> c_int {
-        unsafe { (self.fn_FPDFBitmap_GetHeight)(bitmap) }
+    pub fn FPDFBitmap_GetHeight(&self, bitmap: &PdfiumBitmap) -> i32 {
+        unsafe { (self.fn_FPDFBitmap_GetHeight)(bitmap.into()) }
     }
 
-    #[inline]
-    pub fn FPDFBitmap_GetStride(&self, bitmap: FPDF_BITMAP) -> c_int {
-        unsafe { (self.fn_FPDFBitmap_GetStride)(bitmap) }
+    pub fn FPDFBitmap_GetStride(&self, bitmap: &PdfiumBitmap) -> i32 {
+        unsafe { (self.fn_FPDFBitmap_GetStride)(bitmap.into()) }
     }
 
-    #[inline]
-    pub fn FPDFBitmap_Destroy(&self, bitmap: FPDF_BITMAP) {
-        unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap) }
+    pub fn FPDFBitmap_Destroy(&self, bitmap: &PdfiumBitmap) {
+        unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
     }
 
-    #[inline]
-    pub fn FPDFPage_GetMediaBox(
-        &self,
-        page: FPDF_PAGE,
-        left: *mut f32,
-        bottom: *mut f32,
-        right: *mut f32,
-        top: *mut f32,
-    ) -> FPDF_BOOL {
-        unsafe { (self.fn_FPDFPage_GetMediaBox)(page, left, bottom, right, top) }
+    pub fn FPDFPage_GetMediaBox(&self, page: &PdfiumPage) -> PdfiumResult<(f32, f32, f32, f32)> {
+        let mut left: f32 = Default::default();
+        let mut bottom: f32 = Default::default();
+        let mut right: f32 = Default::default();
+        let mut top: f32 = Default::default();
+        let result = unsafe {
+            (self.fn_FPDFPage_GetMediaBox)(
+                page.into(),
+                &mut left,
+                &mut bottom,
+                &mut right,
+                &mut top,
+            )
+        };
+        if result == 0 {
+            Err(PdfiumError::InvokationFailed(
+                "FPDFPage_GetMediaBox".to_string(),
+            ))
+        } else {
+            Ok((left, bottom, right, top))
+        }
+    }
+}
+
+fn to_void_ptr(data: Option<&[u8]>) -> *const c_void {
+    match data {
+        Some(slice) => slice.as_ptr() as *const c_void,
+        None => std::ptr::null(),
+    }
+}
+
+fn to_void_ptr_mut(data: Option<&mut [u8]>) -> *mut c_void {
+    match data {
+        Some(slice) => slice.as_ptr() as *mut c_void,
+        None => std::ptr::null_mut(),
     }
 }

@@ -28,7 +28,7 @@ use crate::pdfium_types::FPDF_FILEACCESS;
 
 /// `PdfiumReader` makes it possible to use a Rust based reader with PDFium.
 #[repr(C)]
-pub(crate) struct PdfiumReader {
+pub struct PdfiumReader {
     file_access_ptr: FPDF_FILEACCESS,
     reader: Box<dyn PdfiumReaderExt>, // Type-erased equivalent of <R: Read + Seek>
 }
