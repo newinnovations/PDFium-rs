@@ -26,19 +26,11 @@ use crate::{
     pdfium_sys::{Pdfium, pdfium::PdfiumBindings},
 };
 
-pub struct PdfiumWrapper(PdfiumResult<Pdfium>);
-
-static PDFIUM: OnceLock<ReentrantMutex<PdfiumWrapper>> = OnceLock::new();
+static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Pdfium>>> = OnceLock::new();
 
 static LIBRARY_LOCATION: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::from(".")));
 
-impl PdfiumWrapper {
-    pub fn get(&self) -> &PdfiumResult<Pdfium> {
-        &self.0
-    }
-}
-
-fn load_pdfium() -> &'static ReentrantMutex<PdfiumWrapper> {
+fn load_pdfium() -> &'static ReentrantMutex<PdfiumResult<Pdfium>> {
     PDFIUM.get_or_init(|| {
         let directory = LIBRARY_LOCATION
             .lock()
@@ -47,19 +39,19 @@ fn load_pdfium() -> &'static ReentrantMutex<PdfiumWrapper> {
         let pdfium = Pdfium::load_from_directory(&directory)
             .or_else(|_| Pdfium::load())
             .map(Pdfium::new);
-        ReentrantMutex::new(PdfiumWrapper(pdfium))
+        ReentrantMutex::new(pdfium)
     })
 }
 
 /// A guard that holds the reentrant mutex lock and provides access to [`PdfiumBindings`]
 pub struct PdfiumGuard {
-    _guard: ReentrantMutexGuard<'static, PdfiumWrapper>,
+    _guard: ReentrantMutexGuard<'static, PdfiumResult<Pdfium>>,
     pdfium: *const Pdfium,
 }
 
 impl PdfiumGuard {
-    fn new(guard: ReentrantMutexGuard<'static, PdfiumWrapper>) -> PdfiumResult<Self> {
-        match guard.get() {
+    fn new(guard: ReentrantMutexGuard<'static, PdfiumResult<Pdfium>>) -> PdfiumResult<Self> {
+        match guard.as_ref() {
             Ok(p) => Ok(PdfiumGuard {
                 pdfium: p as *const Pdfium,
                 _guard: guard,
