@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# Pre-commit hook to check:
+# 1. pdfium version consistency between README.md and Cargo.toml
+# 2. Code formatting (cargo fmt)
+# 3. Clippy lints (cargo clippy)
+# 4. Tests (cargo test)
+# 5. Documentation (cargo doc)
+# Place this file in .git/hooks/pre-commit and make it executable
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to extract version from Cargo.toml
+get_cargo_version() {
+    if [[ ! -f "Cargo.toml" ]]; then
+        echo "Error: Cargo.toml not found" >&2
+        exit 1
+    fi
+
+    # Extract version from Cargo.toml (crate version field)
+    # This looks for: version = "0.3.0"
+    cargo_version=$(grep -E '^\s*version\s*=\s*"[^"]*"' Cargo.toml | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+    if [[ -z "$cargo_version" ]]; then
+        echo "Error: Could not find version in Cargo.toml" >&2
+        exit 1
+    fi
+
+    echo "$cargo_version"
+}
+
+# Function to extract version from README.md
+get_readme_version() {
+    if [[ ! -f "README.md" ]]; then
+        echo "Error: README.md not found" >&2
+        exit 1
+    fi
+
+    # Extract pdfium version from README.md
+    # This looks for patterns like: pdfium = "0.3.0"
+    readme_version=$(grep -E 'pdfium\s*=\s*"[^"]*"' README.md | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+    if [[ -z "$readme_version" ]]; then
+        echo "Error: Could not find pdfium version in README.md" >&2
+        exit 1
+    fi
+
+    echo "$readme_version"
+}
+
+# Check version consistency between README.md and Cargo.toml
+check_versions() {
+    cargo_version=$(get_cargo_version)
+    readme_version=$(get_readme_version)
+
+    echo "   Cargo.toml version: $cargo_version"
+    echo "   README.md version:  $readme_version"
+
+    if [[ "$cargo_version" == "$readme_version" ]]; then
+        echo -e "   ${GREEN}✓ Versions match!${NC}"
+        return 0
+    else
+        echo -e "   ${RED}✗ Version mismatch detected!${NC}"
+        echo -e "   ${YELLOW}Please update the pdfium version in README.md to match Cargo.toml${NC}"
+        echo -e "   ${YELLOW}Expected: pdfium = \"$cargo_version\"${NC}"
+        echo -e "   ${YELLOW}Found:    pdfium = \"$readme_version\"${NC}"
+        return 1
+    fi
+}
+
+# Function to check code formatting
+check_formatting() {
+    # Check if cargo fmt would make changes
+    if ! cargo fmt --check > /dev/null 2>&1; then
+        echo -e "   ${RED}✗ Code is not formatted!${NC}"
+        echo -e "   ${YELLOW}Please run: cargo fmt${NC}"
+        return 1
+    fi
+
+    echo -e "   ${GREEN}✓ Code is properly formatted${NC}"
+    return 0
+}
+
+# Function to run clippy
+check_clippy() {
+    # Run clippy and capture output
+    if ! cargo clippy --all-targets --all-features -- -D warnings > /dev/null 2>&1; then
+        echo -e "   ${RED}✗ Clippy found issues!${NC}"
+        echo -e "   ${YELLOW}Please fix clippy warnings by running: cargo clippy --all-targets --all-features${NC}"
+        return 1
+    fi
+
+    echo -e "   ${GREEN}✓ Clippy is happy${NC}"
+    return 0
+}
+
+# Function to run tests
+check_tests() {
+    # Run tests and capture output
+    if ! cargo test --all-features > /dev/null 2>&1; then
+        echo -e "   ${RED}✗ Tests failed!${NC}"
+        echo -e "   ${YELLOW}Please fix failing tests by running: cargo test --all-features${NC}"
+        return 1
+    fi
+
+    echo -e "   ${GREEN}✓ All tests passed${NC}"
+    return 0
+}
+
+# Function to check documentation
+check_docs() {
+    # Check if docs can be built without warnings
+    if ! cargo doc --all-features --no-deps > /dev/null 2>&1; then
+        echo -e "   ${RED}✗ Documentation build failed!${NC}"
+        echo -e "   ${YELLOW}Please fix documentation issues by running: cargo doc --all-features --no-deps${NC}"
+        return 1
+    fi
+
+    echo -e "   ${GREEN}✓ Documentation builds successfully${NC}"
+    return 0
+}
+
+# Main check
+echo "Running pre-commit checks"
+echo "========================="
+echo
+
+# Track if any checks failed
+failed=0
+
+# Check 1: Version consistency
+echo "1. Checking version consistency..."
+if ! check_versions; then
+    failed=1
+fi
+
+echo
+
+# Check 2: Code formatting
+echo "2. Checking code formatting..."
+if ! check_formatting; then
+    failed=1
+fi
+
+echo
+
+# Check 3: Clippy
+echo "3. Running clippy..."
+if ! check_clippy; then
+    failed=1
+fi
+
+echo
+
+# Check 4: Tests
+echo "4. Running tests..."
+if ! check_tests; then
+    failed=1
+fi
+
+echo
+
+# Check 5: Documentation
+echo "5. Checking documentation..."
+if ! check_docs; then
+    failed=1
+fi
+
+echo
+echo "=========================="
+
+if [[ $failed -eq 1 ]]; then
+    echo -e "${RED}Pre-commit checks failed!${NC}"
+    echo -e "${YELLOW}Please fix the issues above and try again.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}All pre-commit checks passed!${NC}"
+    exit 0
+fi

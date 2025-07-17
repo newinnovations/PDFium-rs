@@ -92,7 +92,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.3.0"
+pdfium = "0.3.2"
 ```
 
 ## Current Status
@@ -122,6 +122,12 @@ pdfium = "0.3.0"
 ## Contributing
 
 Contributions are welcome!
+
+After cloning the repository, please install the git hooks:
+
+```bash
+./scripts/install-hooks.sh
+```
 
 ## License
 
