@@ -14,9 +14,9 @@
 [build-badge]: https://img.shields.io/github/actions/workflow/status/newinnovations/PDFium-rs/cargo_test.yml
 [build-url]: https://github.com/newinnovations/PDFium-rs/actions/workflows/cargo_test.yml
 
-A streamlined Rust wrapper for the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is the PDF library from Google developed for and used in Chromium and Chrome.
+A modern streamlined Rust wrapper for the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is the PDF library from Google developed for (and used in) the Chromium and Chrome web browsers.
 
-PDFium-rs is used as one of the pdf engines in [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4.
+PDFium-rs is used as one of the two PDF engines enabled in [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4. It makes it easy and fun to see the rendering (quality) differences between mupdf and PDFium.
 
 ## Features
 
@@ -31,15 +31,15 @@ While there are existing PDFium bindings for Rust, this crate takes a different 
 
 ### Thread-Safe Static Access
 
-The library uses a static, thread-safe initialization pattern with `parking_lot::ReentrantMutex`. On first use, it checks for PDFium availability on your system or a provided directory and stores the library reference statically for the application's lifetime. This prevents deadlocks when used multiple times in the same thread and eliminates the need for complex library management.
+This library uses a modern, static and thread-safe initialization pattern with `parking_lot::ReentrantMutex`. On first use, it checks for the availability of the PDFium dynamic library on your system or in a provided directory; and stores the library reference statically for the application's lifetime. This prevents deadlocks when used multiple times in the same thread and eliminates the need for complex library management.
 
 ### No Lifetime Complexity
 
-Unlike other implementations, this crate doesn't impose lifetimes on structs representing documents, pages, and bitmaps. This makes integration into your application much simpler - you can store these objects wherever you need them without fighting the borrow checker.
+Unlike other implementations, this crate doesn't impose lifetimes on structs representing documents, pages, bitmaps and other structures. This makes integration into your application much simpler - you can store these objects wherever you need them without fighting the borrow checker.
 
 ### Clean Integration
 
-Aims to follow the PDFium C-language interface, while providing a high level Rust integration.
+Aims to follow the PDFium C-language interface, while still providing a high level safe Rust integration.
 
 ### Interactive Application Focus
 
@@ -92,7 +92,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.3.5"
+pdfium = "0.3.6"
 ```
 
 ## Current Status

@@ -30,6 +30,10 @@ use crate::{
 };
 use libloading::Library;
 
+/// The actual bindings to the PDFium C library
+///
+/// This aims to fully follow the original API, while still providing a safe interface by replacing
+/// all pointer based parameters with safe Rust replacements. The same applies to the function results.
 #[allow(non_snake_case)]
 pub struct PdfiumBindings {
     fn_FPDF_InitLibrary: unsafe extern "C" fn(),

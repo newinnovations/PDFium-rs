@@ -26,7 +26,7 @@ use std::{
 
 use crate::pdfium_types::FPDF_FILEACCESS;
 
-/// `PdfiumReader` makes it possible to use a Rust based reader with PDFium.
+/// Use Rust based readers implementing (`Read` + `Seek`) with PDFium.
 #[repr(C)]
 pub struct PdfiumReader {
     file_access_ptr: FPDF_FILEACCESS,
@@ -58,7 +58,7 @@ impl PdfiumReader {
 }
 
 /// Converts a mutable reference to PdfiumReader into a raw pointer to FPDF_FILEACCESS
-/// for FFI purposes. This allows passing the file access structure to Pdfium's C API.
+/// for FFI purposes. This allows passing the file access structure to PDFium's C API.
 impl From<&mut PdfiumReader> for *mut FPDF_FILEACCESS {
     fn from(value: &mut PdfiumReader) -> Self {
         unsafe { &mut *(&mut value.file_access_ptr as *mut FPDF_FILEACCESS) }
@@ -72,7 +72,7 @@ trait PdfiumReaderExt: Read + Seek {}
 
 impl<R: Read + Seek> PdfiumReaderExt for R {}
 
-/// The callback function invoked by Pdfium to read data from the underlying reader.
+/// The callback function invoked by PDFium to read data from the underlying reader.
 ///
 /// # Parameters
 /// - `param`: Pointer to the PdfiumReader instance (cast from m_Param)
