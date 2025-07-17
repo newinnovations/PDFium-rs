@@ -145,8 +145,8 @@ impl PdfiumBindings {
         clipping: &PdfiumRect,
         flags: i32,
     ) {
-        let clipping: FS_RECTF = clipping.into();
         let matrix: FS_MATRIX = matrix.into();
+        let clipping: FS_RECTF = clipping.into();
         unsafe {
             (self.fn_FPDF_RenderPageBitmapWithMatrix)(
                 bitmap.into(),
@@ -221,27 +221,15 @@ impl PdfiumBindings {
         unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
     }
 
-    pub fn FPDFPage_GetMediaBox(&self, page: &PdfiumPage) -> PdfiumResult<(f32, f32, f32, f32)> {
-        let mut left: f32 = Default::default();
-        let mut bottom: f32 = Default::default();
-        let mut right: f32 = Default::default();
-        let mut top: f32 = Default::default();
-        let result = unsafe {
-            (self.fn_FPDFPage_GetMediaBox)(
-                page.into(),
-                &mut left,
-                &mut bottom,
-                &mut right,
-                &mut top,
-            )
-        };
-        if result == 0 {
-            Err(PdfiumError::InvokationFailed(
-                "FPDFPage_GetMediaBox".to_string(),
-            ))
-        } else {
-            Ok((left, bottom, right, top))
-        }
+    pub fn FPDFPage_GetMediaBox(
+        &self,
+        page: &PdfiumPage,
+        left: &mut f32,
+        bottom: &mut f32,
+        right: &mut f32,
+        top: &mut f32,
+    ) -> FPDF_BOOL {
+        unsafe { (self.fn_FPDFPage_GetMediaBox)(page.into(), left, bottom, right, top) }
     }
 }
 

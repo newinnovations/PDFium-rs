@@ -99,13 +99,6 @@ impl From<&PdfiumMatrix> for FS_MATRIX {
     }
 }
 
-impl From<&PdfiumMatrix> for *const FS_MATRIX {
-    fn from(matrix: &PdfiumMatrix) -> Self {
-        let matrix: FS_MATRIX = matrix.into();
-        &matrix
-    }
-}
-
 impl From<FS_MATRIX> for PdfiumMatrix {
     #[inline]
     fn from(matrix: FS_MATRIX) -> Self {

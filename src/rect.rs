@@ -92,10 +92,3 @@ impl From<&PdfiumRect> for FS_RECTF {
         }
     }
 }
-
-impl From<&PdfiumRect> for *const FS_RECTF {
-    fn from(rect: &PdfiumRect) -> Self {
-        let rect: FS_RECTF = rect.into();
-        &rect
-    }
-}
