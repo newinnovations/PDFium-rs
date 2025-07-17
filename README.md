@@ -82,7 +82,7 @@ impl App {
 
 fn main() -> PdfiumResult<()> {
     let app = App::new("resources/groningen.pdf")?;
-    app.render_to_file("groningen.png", 0)
+    app.render_to_file("groningen-page-1.png", 0)
 }
 ```
 
@@ -92,7 +92,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.3.4"
+pdfium = "0.3.5"
 ```
 
 ## Current Status

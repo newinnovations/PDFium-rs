@@ -193,3 +193,33 @@ impl From<PdfiumBitmapFormat> for i32 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn test_render_to_image() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(1).unwrap();
+        let bounds = page.boundaries().media().unwrap();
+        let height = 1080;
+        let zoom = height as f32 / bounds.height();
+        let width = (bounds.width() * zoom) as i32;
+        let matrix = PdfiumMatrix::new_scale(zoom);
+        let bitmap = page
+            .render_with_matrix(
+                width,
+                height,
+                PdfiumBitmapFormat::Bgra,
+                Some(PdfiumColor::WHITE),
+                &matrix,
+                0,
+                None,
+            )
+            .unwrap();
+        bitmap
+            .save("groningen-page-2.png", image::ImageFormat::Png)
+            .unwrap();
+    }
+}

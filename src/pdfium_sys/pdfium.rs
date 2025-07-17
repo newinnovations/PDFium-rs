@@ -145,12 +145,14 @@ impl PdfiumBindings {
         clipping: &PdfiumRect,
         flags: i32,
     ) {
+        let clipping: FS_RECTF = clipping.into();
+        let matrix: FS_MATRIX = matrix.into();
         unsafe {
             (self.fn_FPDF_RenderPageBitmapWithMatrix)(
                 bitmap.into(),
                 page.into(),
-                matrix.into(),
-                clipping.into(),
+                &matrix,
+                &clipping,
                 flags,
             )
         }
