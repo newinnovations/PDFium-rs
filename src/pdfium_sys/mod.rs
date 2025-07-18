@@ -28,7 +28,7 @@ use std::{
 
 use libloading::{Library, Symbol};
 
-use crate::{PdfiumError, pdfium_sys::pdfium::PdfiumBindings};
+use crate::{PdfiumError, PdfiumLibraryConfig, pdfium_sys::pdfium::PdfiumBindings};
 
 pub struct Pdfium {
     bindings: Box<PdfiumBindings>,
@@ -57,8 +57,9 @@ impl Pdfium {
     }
 
     /// Creates a new [Pdfium] instance from the given external Pdfium library bindings.
-    pub fn new(bindings: Box<PdfiumBindings>) -> Self {
-        bindings.FPDF_InitLibrary();
+    pub fn new(bindings: Box<PdfiumBindings>, use_skia: bool) -> Self {
+        let config = PdfiumLibraryConfig::new(use_skia);
+        bindings.FPDF_InitLibraryWithConfig(&config);
         Self { bindings }
     }
 

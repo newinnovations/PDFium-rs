@@ -18,7 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use parking_lot::{ReentrantMutex, ReentrantMutexGuard};
-use std::sync::{LazyLock, Mutex, OnceLock};
+use std::sync::{LazyLock, Mutex, OnceLock, atomic::AtomicBool};
 
 use crate::{
     PdfiumError,
@@ -30,15 +30,18 @@ static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Pdfium>>> = OnceLock::new();
 
 static LIBRARY_LOCATION: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::from(".")));
 
+static SKIA_RENDERER: AtomicBool = AtomicBool::new(false);
+
 fn load_pdfium() -> &'static ReentrantMutex<PdfiumResult<Pdfium>> {
     PDFIUM.get_or_init(|| {
         let directory = LIBRARY_LOCATION
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .to_string();
+        let use_skia = SKIA_RENDERER.load(std::sync::atomic::Ordering::Relaxed);
         let pdfium = Pdfium::load_from_directory(&directory)
             .or_else(|_| Pdfium::load())
-            .map(Pdfium::new);
+            .map(|bindings| Pdfium::new(bindings, use_skia));
         ReentrantMutex::new(pdfium)
     })
 }
@@ -112,6 +115,11 @@ pub fn set_library_location(location: &str) {
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     *guard = location.to_string();
+}
+
+/// Enable the use of the Skia renderer. Default renderer is AGG (Aggregated Graphics).
+pub fn set_use_skia(use_skia: bool) {
+    SKIA_RENDERER.store(use_skia, std::sync::atomic::Ordering::Relaxed);
 }
 
 #[cfg(test)]

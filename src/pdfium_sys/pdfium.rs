@@ -19,16 +19,17 @@
 
 #![allow(non_snake_case)]
 #![allow(dead_code)]
+#![allow(unused_imports)]
 #![allow(clippy::too_many_arguments)]
 
 use std::ffi::CString;
-use std::os::raw::{c_int, c_ulong, c_void};
+use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 
 use super::lib_get;
 use crate::{
     PdfiumAnnotation, PdfiumBitmap, PdfiumClipPath, PdfiumDocument, PdfiumError, PdfiumForm,
-    PdfiumFormFillInfo, PdfiumMatrix, PdfiumPage, PdfiumPageObject, PdfiumRect, PdfiumResult,
-    PdfiumXObject, pdfium_types::*,
+    PdfiumFormFillInfo, PdfiumLibraryConfig, PdfiumMatrix, PdfiumPage, PdfiumPageObject,
+    PdfiumRect, PdfiumResult, PdfiumXObject, pdfium_types::*,
 };
 use libloading::Library;
 
@@ -39,6 +40,7 @@ use libloading::Library;
 /// whenever possible.
 #[allow(non_snake_case)]
 pub struct PdfiumBindings {
+    fn_FPDF_InitLibraryWithConfig: unsafe extern "C" fn(config: *const FPDF_LIBRARY_CONFIG),
     fn_FPDF_InitLibrary: unsafe extern "C" fn(),
     fn_FPDF_DestroyLibrary: unsafe extern "C" fn(),
     fn_FPDF_LoadCustomDocument: unsafe extern "C" fn(
@@ -194,6 +196,7 @@ pub struct PdfiumBindings {
 impl PdfiumBindings {
     pub fn new(lib: Library) -> Result<Self, PdfiumError> {
         Ok(Self {
+            fn_FPDF_InitLibraryWithConfig: *(lib_get(&lib, "FPDF_InitLibraryWithConfig")?),
             fn_FPDF_InitLibrary: *(lib_get(&lib, "FPDF_InitLibrary")?),
             fn_FPDF_DestroyLibrary: *(lib_get(&lib, "FPDF_DestroyLibrary")?),
             fn_FPDF_LoadCustomDocument: *(lib_get(&lib, "FPDF_LoadCustomDocument")?),
@@ -270,6 +273,24 @@ impl PdfiumBindings {
 }
 
 impl PdfiumBindings {
+    /// # **FPDF_InitLibraryWithConfig** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_InitLibraryWithConfig
+    ///          Initialize the PDFium library and allocate global resources for it.
+    /// Parameters:
+    ///          config - configuration information as above.
+    /// Return value:
+    ///          None.
+    /// Comments:
+    ///          You have to call this function before you can call any PDF
+    ///          processing functions.
+    /// ```
+    pub fn FPDF_InitLibraryWithConfig(&self, config: &PdfiumLibraryConfig) {
+        let config: FPDF_LIBRARY_CONFIG = config.into();
+        unsafe { (self.fn_FPDF_InitLibraryWithConfig)(&config) }
+    }
+
     /// # **FPDF_InitLibrary** *(original C documentation)*
     ///
     /// ```text

@@ -2312,6 +2312,9 @@ pub type FS_FLOAT = f32;
 /// Duplex types
 pub type _FPDF_DUPLEXTYPE_ = ::std::os::raw::c_uint;
 
+/// Duplex types
+pub use self::_FPDF_DUPLEXTYPE_ as FPDF_DUPLEXTYPE;
+
 /// String types
 pub type FPDF_WCHAR = ::std::os::raw::c_ushort;
 
