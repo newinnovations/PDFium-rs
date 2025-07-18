@@ -17,46 +17,39 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#![doc = include_str!("../README.md")]
+use crate::{
+    error::{PdfiumError, PdfiumResult},
+    pdfium_types::FPDF_FORMHANDLE,
+};
 
-mod annotation;
-mod bitmap;
-mod clippath;
-mod color;
-mod document;
-mod error;
-mod form;
-mod form_fill_info;
-mod guard;
-mod matrix;
-mod page;
-mod page_object;
-mod pdfium_sys;
-mod rect;
-mod x_object;
+/// # Rust interface to FPDF_FORMHANDLE
+pub struct PdfiumForm {
+    handle: FPDF_FORMHANDLE,
+}
 
-pub use pdfium_sys::Pdfium;
-pub use pdfium_sys::pdfium::PdfiumBindings;
-pub use pdfium_sys::pdfium_constants;
-pub use pdfium_sys::pdfium_types;
+impl PdfiumForm {
+    pub(crate) fn new_from_handle(handle: FPDF_FORMHANDLE) -> PdfiumResult<Self> {
+        if handle.is_null() {
+            Err(PdfiumError::NullHandle)
+        } else {
+            println!("New page {handle:?}");
+            Ok(Self { handle })
+        }
+    }
+}
 
-pub use annotation::PdfiumAnnotation;
-pub use bitmap::PdfiumBitmap;
-pub use bitmap::PdfiumBitmapFormat;
-pub use clippath::PdfiumClipPath;
-pub use color::PdfiumColor;
-pub use document::PdfiumDocument;
-pub use document::reader::PdfiumReader;
-pub use error::PdfiumError;
-pub use error::PdfiumResult;
-pub use form::PdfiumForm;
-pub use form_fill_info::PdfiumFormFillInfo;
-pub use guard::lib;
-pub use guard::set_library_location;
-pub use matrix::PdfiumMatrix;
-pub use page::PdfiumPage;
-pub use page::PdfiumRenderFlags;
-pub use page::boundaries::PdfiumPageBoundaries;
-pub use page_object::PdfiumPageObject;
-pub use rect::PdfiumRect;
-pub use x_object::PdfiumXObject;
+impl From<&PdfiumForm> for FPDF_FORMHANDLE {
+    fn from(value: &PdfiumForm) -> Self {
+        value.handle
+    }
+}
+
+// FIXME: check that FPDF_FORMHANDLE gets destroyed by assigning it
+
+// impl Drop for PdfiumForm {
+//     /// # Closes this [`PdfiumForm`], releasing held memory.
+//     fn drop(&mut self) {
+//         println!("Closing form {:?}", self.handle);
+//         lib().FPDF_Close(self);
+//     }
+// }

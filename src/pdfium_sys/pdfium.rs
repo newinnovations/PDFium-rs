@@ -1,4 +1,4 @@
-// PDFium-rs -- Safe Rust wrapper to PDFium, the PDF library from Google
+// PDFium-rs -- Modern Rust wrapper to PDFium, the PDF library from Google
 //
 // Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
 //
@@ -19,14 +19,16 @@
 
 #![allow(non_snake_case)]
 #![allow(dead_code)]
+#![allow(clippy::too_many_arguments)]
 
 use std::ffi::CString;
 use std::os::raw::{c_int, c_ulong, c_void};
 
 use super::lib_get;
 use crate::{
-    PdfiumBitmap, PdfiumDocument, PdfiumError, PdfiumMatrix, PdfiumPage, PdfiumRect, PdfiumResult,
-    pdfium_types::*,
+    PdfiumAnnotation, PdfiumBitmap, PdfiumClipPath, PdfiumDocument, PdfiumError, PdfiumForm,
+    PdfiumFormFillInfo, PdfiumMatrix, PdfiumPage, PdfiumPageObject, PdfiumRect, PdfiumResult,
+    PdfiumXObject, pdfium_types::*,
 };
 use libloading::Library;
 
@@ -38,6 +40,7 @@ use libloading::Library;
 #[allow(non_snake_case)]
 pub struct PdfiumBindings {
     fn_FPDF_InitLibrary: unsafe extern "C" fn(),
+    fn_FPDF_DestroyLibrary: unsafe extern "C" fn(),
     fn_FPDF_LoadCustomDocument: unsafe extern "C" fn(
         pFileAccess: *mut FPDF_FILEACCESS,
         password: FPDF_BYTESTRING,
@@ -54,6 +57,8 @@ pub struct PdfiumBindings {
     ),
     fn_FPDF_ClosePage: unsafe extern "C" fn(page: FPDF_PAGE),
     fn_FPDF_CloseDocument: unsafe extern "C" fn(document: FPDF_DOCUMENT),
+    fn_FPDFBitmap_Create:
+        unsafe extern "C" fn(width: c_int, height: c_int, alpha: c_int) -> FPDF_BITMAP,
     fn_FPDFBitmap_CreateEx: unsafe extern "C" fn(
         width: c_int,
         height: c_int,
@@ -75,6 +80,70 @@ pub struct PdfiumBindings {
     fn_FPDFBitmap_GetHeight: unsafe extern "C" fn(bitmap: FPDF_BITMAP) -> c_int,
     fn_FPDFBitmap_GetStride: unsafe extern "C" fn(bitmap: FPDF_BITMAP) -> c_int,
     fn_FPDFBitmap_Destroy: unsafe extern "C" fn(bitmap: FPDF_BITMAP),
+    fn_FPDFDOC_InitFormFillEnvironment: unsafe extern "C" fn(
+        document: FPDF_DOCUMENT,
+        formInfo: *mut FPDF_FORMFILLINFO,
+    ) -> FPDF_FORMHANDLE,
+    fn_FPDFPage_HasFormFieldAtPoint: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        page: FPDF_PAGE,
+        page_x: f64,
+        page_y: f64,
+    ) -> c_int,
+    fn_FPDFPage_FormFieldZOrderAtPoint: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        page: FPDF_PAGE,
+        page_x: f64,
+        page_y: f64,
+    ) -> c_int,
+    fn_FPDFPage_CreateAnnot:
+        unsafe extern "C" fn(page: FPDF_PAGE, subtype: FPDF_ANNOTATION_SUBTYPE) -> FPDF_ANNOTATION,
+    fn_FPDFPage_GetAnnotCount: unsafe extern "C" fn(page: FPDF_PAGE) -> c_int,
+    fn_FPDFPage_GetAnnot: unsafe extern "C" fn(page: FPDF_PAGE, index: c_int) -> FPDF_ANNOTATION,
+    fn_FPDFPage_GetAnnotIndex:
+        unsafe extern "C" fn(page: FPDF_PAGE, annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFPage_CloseAnnot: unsafe extern "C" fn(annot: FPDF_ANNOTATION),
+    fn_FPDFPage_RemoveAnnot: unsafe extern "C" fn(page: FPDF_PAGE, index: c_int) -> FPDF_BOOL,
+    fn_FPDFPage_New: unsafe extern "C" fn(
+        document: FPDF_DOCUMENT,
+        page_index: c_int,
+        width: f64,
+        height: f64,
+    ) -> FPDF_PAGE,
+    fn_FPDFPage_Delete: unsafe extern "C" fn(document: FPDF_DOCUMENT, page_index: c_int),
+    fn_FPDFPage_GetRotation: unsafe extern "C" fn(page: FPDF_PAGE) -> c_int,
+    fn_FPDFPage_SetRotation: unsafe extern "C" fn(page: FPDF_PAGE, rotate: c_int),
+    fn_FPDFPage_InsertObject: unsafe extern "C" fn(page: FPDF_PAGE, page_object: FPDF_PAGEOBJECT),
+    fn_FPDFPage_RemoveObject:
+        unsafe extern "C" fn(page: FPDF_PAGE, page_object: FPDF_PAGEOBJECT) -> FPDF_BOOL,
+    fn_FPDFPage_CountObjects: unsafe extern "C" fn(page: FPDF_PAGE) -> c_int,
+    fn_FPDFPage_GetObject: unsafe extern "C" fn(page: FPDF_PAGE, index: c_int) -> FPDF_PAGEOBJECT,
+    fn_FPDFPage_HasTransparency: unsafe extern "C" fn(page: FPDF_PAGE) -> FPDF_BOOL,
+    fn_FPDFPage_GenerateContent: unsafe extern "C" fn(page: FPDF_PAGE) -> FPDF_BOOL,
+    fn_FPDFPage_TransformAnnots:
+        unsafe extern "C" fn(page: FPDF_PAGE, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64),
+    fn_FPDFPage_Flatten: unsafe extern "C" fn(page: FPDF_PAGE, nFlag: c_int) -> c_int,
+    fn_FPDF_NewXObjectFromPage: unsafe extern "C" fn(
+        dest_doc: FPDF_DOCUMENT,
+        src_doc: FPDF_DOCUMENT,
+        src_page_index: c_int,
+    ) -> FPDF_XOBJECT,
+    fn_FPDF_CloseXObject: unsafe extern "C" fn(xobject: FPDF_XOBJECT),
+    fn_FPDFPage_GetDecodedThumbnailData:
+        unsafe extern "C" fn(page: FPDF_PAGE, buffer: *mut c_void, buflen: c_ulong) -> c_ulong,
+    fn_FPDFPage_GetRawThumbnailData:
+        unsafe extern "C" fn(page: FPDF_PAGE, buffer: *mut c_void, buflen: c_ulong) -> c_ulong,
+    fn_FPDFPage_GetThumbnailAsBitmap: unsafe extern "C" fn(page: FPDF_PAGE) -> FPDF_BITMAP,
+    fn_FPDFPage_SetMediaBox:
+        unsafe extern "C" fn(page: FPDF_PAGE, left: f32, bottom: f32, right: f32, top: f32),
+    fn_FPDFPage_SetCropBox:
+        unsafe extern "C" fn(page: FPDF_PAGE, left: f32, bottom: f32, right: f32, top: f32),
+    fn_FPDFPage_SetBleedBox:
+        unsafe extern "C" fn(page: FPDF_PAGE, left: f32, bottom: f32, right: f32, top: f32),
+    fn_FPDFPage_SetTrimBox:
+        unsafe extern "C" fn(page: FPDF_PAGE, left: f32, bottom: f32, right: f32, top: f32),
+    fn_FPDFPage_SetArtBox:
+        unsafe extern "C" fn(page: FPDF_PAGE, left: f32, bottom: f32, right: f32, top: f32),
     fn_FPDFPage_GetMediaBox: unsafe extern "C" fn(
         page: FPDF_PAGE,
         left: *mut f32,
@@ -82,6 +151,43 @@ pub struct PdfiumBindings {
         right: *mut f32,
         top: *mut f32,
     ) -> FPDF_BOOL,
+    fn_FPDFPage_GetCropBox: unsafe extern "C" fn(
+        page: FPDF_PAGE,
+        left: *mut f32,
+        bottom: *mut f32,
+        right: *mut f32,
+        top: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFPage_GetBleedBox: unsafe extern "C" fn(
+        page: FPDF_PAGE,
+        left: *mut f32,
+        bottom: *mut f32,
+        right: *mut f32,
+        top: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFPage_GetTrimBox: unsafe extern "C" fn(
+        page: FPDF_PAGE,
+        left: *mut f32,
+        bottom: *mut f32,
+        right: *mut f32,
+        top: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFPage_GetArtBox: unsafe extern "C" fn(
+        page: FPDF_PAGE,
+        left: *mut f32,
+        bottom: *mut f32,
+        right: *mut f32,
+        top: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFPage_TransFormWithClip: unsafe extern "C" fn(
+        page: FPDF_PAGE,
+        matrix: *const FS_MATRIX,
+        clipRect: *const FS_RECTF,
+    ) -> FPDF_BOOL,
+    fn_FPDF_CreateClipPath:
+        unsafe extern "C" fn(left: f32, bottom: f32, right: f32, top: f32) -> FPDF_CLIPPATH,
+    fn_FPDF_DestroyClipPath: unsafe extern "C" fn(clipPath: FPDF_CLIPPATH),
+    fn_FPDFPage_InsertClipPath: unsafe extern "C" fn(page: FPDF_PAGE, clipPath: FPDF_CLIPPATH),
     lib: Library,
 }
 
@@ -89,6 +195,7 @@ impl PdfiumBindings {
     pub fn new(lib: Library) -> Result<Self, PdfiumError> {
         Ok(Self {
             fn_FPDF_InitLibrary: *(lib_get(&lib, "FPDF_InitLibrary")?),
+            fn_FPDF_DestroyLibrary: *(lib_get(&lib, "FPDF_DestroyLibrary")?),
             fn_FPDF_LoadCustomDocument: *(lib_get(&lib, "FPDF_LoadCustomDocument")?),
             fn_FPDF_GetLastError: *(lib_get(&lib, "FPDF_GetLastError")?),
             fn_FPDF_GetPageCount: *(lib_get(&lib, "FPDF_GetPageCount")?),
@@ -99,6 +206,7 @@ impl PdfiumBindings {
             )?),
             fn_FPDF_ClosePage: *(lib_get(&lib, "FPDF_ClosePage")?),
             fn_FPDF_CloseDocument: *(lib_get(&lib, "FPDF_CloseDocument")?),
+            fn_FPDFBitmap_Create: *(lib_get(&lib, "FPDFBitmap_Create")?),
             fn_FPDFBitmap_CreateEx: *(lib_get(&lib, "FPDFBitmap_CreateEx")?),
             fn_FPDFBitmap_GetFormat: *(lib_get(&lib, "FPDFBitmap_GetFormat")?),
             fn_FPDFBitmap_FillRect: *(lib_get(&lib, "FPDFBitmap_FillRect")?),
@@ -107,7 +215,55 @@ impl PdfiumBindings {
             fn_FPDFBitmap_GetHeight: *(lib_get(&lib, "FPDFBitmap_GetHeight")?),
             fn_FPDFBitmap_GetStride: *(lib_get(&lib, "FPDFBitmap_GetStride")?),
             fn_FPDFBitmap_Destroy: *(lib_get(&lib, "FPDFBitmap_Destroy")?),
+            fn_FPDFDOC_InitFormFillEnvironment: *(lib_get(
+                &lib,
+                "FPDFDOC_InitFormFillEnvironment",
+            )?),
+            fn_FPDFPage_HasFormFieldAtPoint: *(lib_get(&lib, "FPDFPage_HasFormFieldAtPoint")?),
+            fn_FPDFPage_FormFieldZOrderAtPoint: *(lib_get(
+                &lib,
+                "FPDFPage_FormFieldZOrderAtPoint",
+            )?),
+            fn_FPDFPage_CreateAnnot: *(lib_get(&lib, "FPDFPage_CreateAnnot")?),
+            fn_FPDFPage_GetAnnotCount: *(lib_get(&lib, "FPDFPage_GetAnnotCount")?),
+            fn_FPDFPage_GetAnnot: *(lib_get(&lib, "FPDFPage_GetAnnot")?),
+            fn_FPDFPage_GetAnnotIndex: *(lib_get(&lib, "FPDFPage_GetAnnotIndex")?),
+            fn_FPDFPage_CloseAnnot: *(lib_get(&lib, "FPDFPage_CloseAnnot")?),
+            fn_FPDFPage_RemoveAnnot: *(lib_get(&lib, "FPDFPage_RemoveAnnot")?),
+            fn_FPDFPage_New: *(lib_get(&lib, "FPDFPage_New")?),
+            fn_FPDFPage_Delete: *(lib_get(&lib, "FPDFPage_Delete")?),
+            fn_FPDFPage_GetRotation: *(lib_get(&lib, "FPDFPage_GetRotation")?),
+            fn_FPDFPage_SetRotation: *(lib_get(&lib, "FPDFPage_SetRotation")?),
+            fn_FPDFPage_InsertObject: *(lib_get(&lib, "FPDFPage_InsertObject")?),
+            fn_FPDFPage_RemoveObject: *(lib_get(&lib, "FPDFPage_RemoveObject")?),
+            fn_FPDFPage_CountObjects: *(lib_get(&lib, "FPDFPage_CountObjects")?),
+            fn_FPDFPage_GetObject: *(lib_get(&lib, "FPDFPage_GetObject")?),
+            fn_FPDFPage_HasTransparency: *(lib_get(&lib, "FPDFPage_HasTransparency")?),
+            fn_FPDFPage_GenerateContent: *(lib_get(&lib, "FPDFPage_GenerateContent")?),
+            fn_FPDFPage_TransformAnnots: *(lib_get(&lib, "FPDFPage_TransformAnnots")?),
+            fn_FPDFPage_Flatten: *(lib_get(&lib, "FPDFPage_Flatten")?),
+            fn_FPDF_NewXObjectFromPage: *(lib_get(&lib, "FPDF_NewXObjectFromPage")?),
+            fn_FPDF_CloseXObject: *(lib_get(&lib, "FPDF_CloseXObject")?),
+            fn_FPDFPage_GetDecodedThumbnailData: *(lib_get(
+                &lib,
+                "FPDFPage_GetDecodedThumbnailData",
+            )?),
+            fn_FPDFPage_GetRawThumbnailData: *(lib_get(&lib, "FPDFPage_GetRawThumbnailData")?),
+            fn_FPDFPage_GetThumbnailAsBitmap: *(lib_get(&lib, "FPDFPage_GetThumbnailAsBitmap")?),
+            fn_FPDFPage_SetMediaBox: *(lib_get(&lib, "FPDFPage_SetMediaBox")?),
+            fn_FPDFPage_SetCropBox: *(lib_get(&lib, "FPDFPage_SetCropBox")?),
+            fn_FPDFPage_SetBleedBox: *(lib_get(&lib, "FPDFPage_SetBleedBox")?),
+            fn_FPDFPage_SetTrimBox: *(lib_get(&lib, "FPDFPage_SetTrimBox")?),
+            fn_FPDFPage_SetArtBox: *(lib_get(&lib, "FPDFPage_SetArtBox")?),
             fn_FPDFPage_GetMediaBox: *(lib_get(&lib, "FPDFPage_GetMediaBox")?),
+            fn_FPDFPage_GetCropBox: *(lib_get(&lib, "FPDFPage_GetCropBox")?),
+            fn_FPDFPage_GetBleedBox: *(lib_get(&lib, "FPDFPage_GetBleedBox")?),
+            fn_FPDFPage_GetTrimBox: *(lib_get(&lib, "FPDFPage_GetTrimBox")?),
+            fn_FPDFPage_GetArtBox: *(lib_get(&lib, "FPDFPage_GetArtBox")?),
+            fn_FPDFPage_TransFormWithClip: *(lib_get(&lib, "FPDFPage_TransFormWithClip")?),
+            fn_FPDF_CreateClipPath: *(lib_get(&lib, "FPDF_CreateClipPath")?),
+            fn_FPDF_DestroyClipPath: *(lib_get(&lib, "FPDF_DestroyClipPath")?),
+            fn_FPDFPage_InsertClipPath: *(lib_get(&lib, "FPDFPage_InsertClipPath")?),
             lib,
         })
     }
@@ -131,6 +287,28 @@ impl PdfiumBindings {
     /// ```
     pub fn FPDF_InitLibrary(&self) {
         unsafe { (self.fn_FPDF_InitLibrary)() }
+    }
+
+    /// # **FPDF_DestroyLibrary** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_DestroyLibrary
+    ///          Release global resources allocated to the PDFium library by
+    ///          FPDF_InitLibrary() or FPDF_InitLibraryWithConfig().
+    /// Parameters:
+    ///          None.
+    /// Return value:
+    ///          None.
+    /// Comments:
+    ///          After this function is called, you must not call any PDF
+    ///          processing functions.
+    ///
+    ///          Calling this function does not automatically close other
+    ///          objects. It is recommended to close other objects before
+    ///          closing the library with this function.
+    /// ```
+    pub fn FPDF_DestroyLibrary(&self) {
+        unsafe { (self.fn_FPDF_DestroyLibrary)() }
     }
 
     /// # **FPDF_LoadCustomDocument** *(original C documentation)*
@@ -288,6 +466,49 @@ impl PdfiumBindings {
     /// ```
     pub fn FPDF_CloseDocument(&self, document: &PdfiumDocument) {
         unsafe { (self.fn_FPDF_CloseDocument)(document.into()) }
+    }
+
+    /// # **FPDFBitmap_Create** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_Create
+    ///          Create a device independent bitmap (FXDIB).
+    /// Parameters:
+    ///          width       -   The number of pixels in width for the bitmap.
+    ///                          Must be greater than 0.
+    ///          height      -   The number of pixels in height for the bitmap.
+    ///                          Must be greater than 0.
+    ///          alpha       -   A flag indicating whether the alpha channel is used.
+    ///                          Non-zero for using alpha, zero for not using.
+    /// Return value:
+    ///          The created bitmap handle, or NULL if a parameter error or out of
+    ///          memory.
+    /// Comments:
+    ///          The bitmap always uses 4 bytes per pixel. The first byte is always
+    ///          double word aligned.
+    ///
+    ///          The byte order is BGRx (the last byte unused if no alpha channel) or
+    ///          BGRA.
+    ///
+    ///          The pixels in a horizontal line are stored side by side, with the
+    ///          left most pixel stored first (with lower memory address).
+    ///          Each line uses width * 4 bytes.
+    ///
+    ///          Lines are stored one after another, with the top most line stored
+    ///          first. There is no gap between adjacent lines.
+    ///
+    ///          This function allocates enough memory for holding all pixels in the
+    ///          bitmap, but it doesn't initialize the buffer. Applications can use
+    ///          FPDFBitmap_FillRect() to fill the bitmap using any color. If the OS
+    ///          allows it, this function can allocate up to 4 GB of memory.
+    /// ```
+    pub fn FPDFBitmap_Create(
+        &self,
+        width: i32,
+        height: i32,
+        alpha: i32,
+    ) -> PdfiumResult<PdfiumBitmap> {
+        PdfiumBitmap::new_from_handle(unsafe { (self.fn_FPDFBitmap_Create)(width, height, alpha) })
     }
 
     /// # **FPDFBitmap_CreateEx** *(original C documentation)*
@@ -494,6 +715,619 @@ impl PdfiumBindings {
         unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
     }
 
+    /// # **FPDFDOC_InitFormFillEnvironment** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFDOC_InitFormFillEnvironment
+    ///       Initialize form fill environment.
+    /// Parameters:
+    ///       document        -   Handle to document from FPDF_LoadDocument().
+    ///       formInfo        -   Pointer to a FPDF_FORMFILLINFO structure.
+    /// Return Value:
+    ///       Handle to the form fill module, or NULL on failure.
+    /// Comments:
+    ///       This function should be called before any form fill operation.
+    ///       The FPDF_FORMFILLINFO passed in via |formInfo| must remain valid until
+    ///       the returned FPDF_FORMHANDLE is closed.
+    /// ```
+    pub fn FPDFDOC_InitFormFillEnvironment(
+        &self,
+        document: &PdfiumDocument,
+        formInfo: &mut PdfiumFormFillInfo,
+    ) -> PdfiumResult<PdfiumForm> {
+        let mut formInfo: FPDF_FORMFILLINFO = formInfo.into();
+        PdfiumForm::new_from_handle(unsafe {
+            (self.fn_FPDFDOC_InitFormFillEnvironment)(document.into(), &mut formInfo)
+        })
+    }
+
+    /// # **FPDFPage_HasFormFieldAtPoint** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFPage_HasFormFieldAtPoint
+    ///     Get the form field type by point.
+    /// Parameters:
+    ///     hHandle     -   Handle to the form fill module. Returned by
+    ///                     FPDFDOC_InitFormFillEnvironment().
+    ///     page        -   Handle to the page. Returned by FPDF_LoadPage().
+    ///     page_x      -   X position in PDF "user space".
+    ///     page_y      -   Y position in PDF "user space".
+    /// Return Value:
+    ///     Return the type of the form field; -1 indicates no field.
+    ///     See field types above.
+    /// ```
+    pub fn FPDFPage_HasFormFieldAtPoint(
+        &self,
+        hHandle: &PdfiumForm,
+        page: &PdfiumPage,
+        page_x: f64,
+        page_y: f64,
+    ) -> i32 {
+        unsafe {
+            (self.fn_FPDFPage_HasFormFieldAtPoint)(hHandle.into(), page.into(), page_x, page_y)
+        }
+    }
+
+    /// # **FPDFPage_FormFieldZOrderAtPoint** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFPage_FormFieldZOrderAtPoint
+    ///     Get the form field z-order by point.
+    /// Parameters:
+    ///     hHandle     -   Handle to the form fill module. Returned by
+    ///                     FPDFDOC_InitFormFillEnvironment().
+    ///     page        -   Handle to the page. Returned by FPDF_LoadPage().
+    ///     page_x      -   X position in PDF "user space".
+    ///     page_y      -   Y position in PDF "user space".
+    /// Return Value:
+    ///     Return the z-order of the form field; -1 indicates no field.
+    ///     Higher numbers are closer to the front.
+    /// ```
+    pub fn FPDFPage_FormFieldZOrderAtPoint(
+        &self,
+        hHandle: &PdfiumForm,
+        page: &PdfiumPage,
+        page_x: f64,
+        page_y: f64,
+    ) -> i32 {
+        unsafe {
+            (self.fn_FPDFPage_FormFieldZOrderAtPoint)(hHandle.into(), page.into(), page_x, page_y)
+        }
+    }
+
+    /// # **FPDFPage_CreateAnnot** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Create an annotation in |page| of the subtype |subtype|. If the specified
+    /// subtype is illegal or unsupported, then a new annotation will not be created.
+    /// Must call FPDFPage_CloseAnnot() when the annotation returned by this
+    /// function is no longer needed.
+    ///
+    ///   page      - handle to a page.
+    ///   subtype   - the subtype of the new annotation.
+    ///
+    /// Returns a handle to the new annotation object, or NULL on failure.
+    /// ```
+    pub fn FPDFPage_CreateAnnot(
+        &self,
+        page: &PdfiumPage,
+        subtype: FPDF_ANNOTATION_SUBTYPE,
+    ) -> PdfiumResult<PdfiumAnnotation> {
+        PdfiumAnnotation::new_from_handle(unsafe {
+            (self.fn_FPDFPage_CreateAnnot)(page.into(), subtype)
+        })
+    }
+
+    /// # **FPDFPage_GetAnnotCount** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of annotations in |page|.
+    ///
+    ///   page   - handle to a page.
+    ///
+    /// Returns the number of annotations in |page|.
+    /// ```
+    pub fn FPDFPage_GetAnnotCount(&self, page: &PdfiumPage) -> i32 {
+        unsafe { (self.fn_FPDFPage_GetAnnotCount)(page.into()) }
+    }
+
+    /// # **FPDFPage_GetAnnot** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get annotation in |page| at |index|. Must call FPDFPage_CloseAnnot() when the
+    /// annotation returned by this function is no longer needed.
+    ///
+    ///   page  - handle to a page.
+    ///   index - the index of the annotation.
+    ///
+    /// Returns a handle to the annotation object, or NULL on failure.
+    /// ```
+    pub fn FPDFPage_GetAnnot(
+        &self,
+        page: &PdfiumPage,
+        index: i32,
+    ) -> PdfiumResult<PdfiumAnnotation> {
+        PdfiumAnnotation::new_from_handle(unsafe {
+            (self.fn_FPDFPage_GetAnnot)(page.into(), index)
+        })
+    }
+
+    /// # **FPDFPage_GetAnnotIndex** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the index of |annot| in |page|. This is the opposite of
+    /// FPDFPage_GetAnnot().
+    ///
+    ///   page  - handle to the page that the annotation is on.
+    ///   annot - handle to an annotation.
+    ///
+    /// Returns the index of |annot|, or -1 on failure.
+    /// ```
+    pub fn FPDFPage_GetAnnotIndex(&self, page: &PdfiumPage, annot: &PdfiumAnnotation) -> i32 {
+        unsafe { (self.fn_FPDFPage_GetAnnotIndex)(page.into(), annot.into()) }
+    }
+
+    /// # **FPDFPage_CloseAnnot** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Close an annotation. Must be called when the annotation returned by
+    /// FPDFPage_CreateAnnot() or FPDFPage_GetAnnot() is no longer needed. This
+    /// function does not remove the annotation from the document.
+    ///
+    ///   annot  - handle to an annotation.
+    /// ```
+    pub fn FPDFPage_CloseAnnot(&self, annot: &PdfiumAnnotation) {
+        unsafe { (self.fn_FPDFPage_CloseAnnot)(annot.into()) }
+    }
+
+    /// # **FPDFPage_RemoveAnnot** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Remove the annotation in |page| at |index|.
+    ///
+    ///   page  - handle to a page.
+    ///   index - the index of the annotation.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFPage_RemoveAnnot(&self, page: &PdfiumPage, index: i32) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_RemoveAnnot)(page.into(), index) })
+    }
+
+    /// # **FPDFPage_New** *(original C documentation)*
+    ///
+    /// ```text
+    /// Create a new PDF page.
+    ///
+    ///   document   - handle to document.
+    ///   page_index - suggested 0-based index of the page to create. If it is larger
+    ///                than document's current last index(L), the created page index
+    ///                is the next available index -- L+1.
+    ///   width      - the page width in points.
+    ///   height     - the page height in points.
+    ///
+    /// Returns the handle to the new page or NULL on failure.
+    ///
+    /// The page should be closed with FPDF_ClosePage() when finished as
+    /// with any other page in the document.
+    /// ```
+    pub fn FPDFPage_New(
+        &self,
+        document: &PdfiumDocument,
+        page_index: i32,
+        width: f64,
+        height: f64,
+    ) -> PdfiumResult<PdfiumPage> {
+        PdfiumPage::new_from_handle(unsafe {
+            (self.fn_FPDFPage_New)(document.into(), page_index, width, height)
+        })
+    }
+
+    /// # **FPDFPage_Delete** *(original C documentation)*
+    ///
+    /// ```text
+    /// Delete the page at |page_index|.
+    ///
+    ///   document   - handle to document.
+    ///   page_index - the index of the page to delete.
+    /// ```
+    pub fn FPDFPage_Delete(&self, document: &PdfiumDocument, page_index: i32) {
+        unsafe { (self.fn_FPDFPage_Delete)(document.into(), page_index) }
+    }
+
+    /// # **FPDFPage_GetRotation** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get the rotation of |page|.
+    ///
+    ///   page - handle to a page
+    ///
+    /// Returns one of the following indicating the page rotation:
+    ///   0 - No rotation.
+    ///   1 - Rotated 90 degrees clockwise.
+    ///   2 - Rotated 180 degrees clockwise.
+    ///   3 - Rotated 270 degrees clockwise.
+    /// ```
+    pub fn FPDFPage_GetRotation(&self, page: &PdfiumPage) -> i32 {
+        unsafe { (self.fn_FPDFPage_GetRotation)(page.into()) }
+    }
+
+    /// # **FPDFPage_SetRotation** *(original C documentation)*
+    ///
+    /// ```text
+    /// Set rotation for |page|.
+    ///
+    ///   page   - handle to a page.
+    ///   rotate - the rotation value, one of:
+    ///              0 - No rotation.
+    ///              1 - Rotated 90 degrees clockwise.
+    ///              2 - Rotated 180 degrees clockwise.
+    ///              3 - Rotated 270 degrees clockwise.
+    /// ```
+    pub fn FPDFPage_SetRotation(&self, page: &PdfiumPage, rotate: i32) {
+        unsafe { (self.fn_FPDFPage_SetRotation)(page.into(), rotate) }
+    }
+
+    /// # **FPDFPage_InsertObject** *(original C documentation)*
+    ///
+    /// ```text
+    /// Insert |page_object| into |page|.
+    ///
+    ///   page        - handle to a page
+    ///   page_object - handle to a page object. The |page_object| will be
+    ///                 automatically freed.
+    /// ```
+    pub fn FPDFPage_InsertObject(&self, page: &PdfiumPage, page_object: &PdfiumPageObject) {
+        unsafe { (self.fn_FPDFPage_InsertObject)(page.into(), page_object.into()) }
+    }
+
+    /// # **FPDFPage_RemoveObject** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Remove |page_object| from |page|.
+    ///
+    ///   page        - handle to a page
+    ///   page_object - handle to a page object to be removed.
+    ///
+    /// Returns TRUE on success.
+    ///
+    /// Ownership is transferred to the caller. Call FPDFPageObj_Destroy() to free
+    /// it.
+    /// Note that when removing a |page_object| of type FPDF_PAGEOBJ_TEXT, all
+    /// FPDF_TEXTPAGE handles for |page| are no longer valid.
+    /// ```
+    pub fn FPDFPage_RemoveObject(
+        &self,
+        page: &PdfiumPage,
+        page_object: &PdfiumPageObject,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_RemoveObject)(page.into(), page_object.into()) })
+    }
+
+    /// # **FPDFPage_CountObjects** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get number of page objects inside |page|.
+    ///
+    ///   page - handle to a page.
+    ///
+    /// Returns the number of objects in |page|.
+    /// ```
+    pub fn FPDFPage_CountObjects(&self, page: &PdfiumPage) -> i32 {
+        unsafe { (self.fn_FPDFPage_CountObjects)(page.into()) }
+    }
+
+    /// # **FPDFPage_GetObject** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get object in |page| at |index|.
+    ///
+    ///   page  - handle to a page.
+    ///   index - the index of a page object.
+    ///
+    /// Returns the handle to the page object, or NULL on failed.
+    /// ```
+    pub fn FPDFPage_GetObject(
+        &self,
+        page: &PdfiumPage,
+        index: i32,
+    ) -> PdfiumResult<PdfiumPageObject> {
+        PdfiumPageObject::new_from_handle(unsafe {
+            (self.fn_FPDFPage_GetObject)(page.into(), index)
+        })
+    }
+
+    /// # **FPDFPage_HasTransparency** *(original C documentation)*
+    ///
+    /// ```text
+    /// Checks if |page| contains transparency.
+    ///
+    ///   page - handle to a page.
+    ///
+    /// Returns TRUE if |page| contains transparency.
+    /// ```
+    pub fn FPDFPage_HasTransparency(&self, page: &PdfiumPage) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_HasTransparency)(page.into()) })
+    }
+
+    /// # **FPDFPage_GenerateContent** *(original C documentation)*
+    ///
+    /// ```text
+    /// Generate the content of |page|.
+    ///
+    ///   page - handle to a page.
+    ///
+    /// Returns TRUE on success.
+    ///
+    /// Before you save the page to a file, or reload the page, you must call
+    /// |FPDFPage_GenerateContent| or any changes to |page| will be lost.
+    /// ```
+    pub fn FPDFPage_GenerateContent(&self, page: &PdfiumPage) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_GenerateContent)(page.into()) })
+    }
+
+    /// # **FPDFPage_TransformAnnots** *(original C documentation)*
+    ///
+    /// ```text
+    /// Transform all annotations in |page|.
+    ///
+    ///   page - handle to a page.
+    ///   a    - matrix value.
+    ///   b    - matrix value.
+    ///   c    - matrix value.
+    ///   d    - matrix value.
+    ///   e    - matrix value.
+    ///   f    - matrix value.
+    ///
+    /// The matrix is composed as:
+    ///   |a c e|
+    ///   |b d f|
+    /// and can be used to scale, rotate, shear and translate the |page| annotations.
+    /// ```
+    pub fn FPDFPage_TransformAnnots(
+        &self,
+        page: &PdfiumPage,
+        a: f64,
+        b: f64,
+        c: f64,
+        d: f64,
+        e: f64,
+        f: f64,
+    ) {
+        unsafe { (self.fn_FPDFPage_TransformAnnots)(page.into(), a, b, c, d, e, f) }
+    }
+
+    /// # **FPDFPage_Flatten** *(original C documentation)*
+    ///
+    /// ```text
+    /// Flatten annotations and form fields into the page contents.
+    ///
+    ///   page  - handle to the page.
+    ///   nFlag - One of the |FLAT_*| values denoting the page usage.
+    ///
+    /// Returns one of the |FLATTEN_*| values.
+    ///
+    /// Currently, all failures return |FLATTEN_FAIL| with no indication of the
+    /// cause.
+    /// ```
+    pub fn FPDFPage_Flatten(&self, page: &PdfiumPage, nFlag: i32) -> i32 {
+        unsafe { (self.fn_FPDFPage_Flatten)(page.into(), nFlag) }
+    }
+
+    /// # **FPDF_NewXObjectFromPage** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Create a template to generate form xobjects from |src_doc|'s page at
+    /// |src_page_index|, for use in |dest_doc|.
+    ///
+    /// Returns a handle on success, or NULL on failure. Caller owns the newly
+    /// created object.
+    /// ```
+    pub fn FPDF_NewXObjectFromPage(
+        &self,
+        dest_doc: &PdfiumDocument,
+        src_doc: &PdfiumDocument,
+        src_page_index: i32,
+    ) -> PdfiumResult<PdfiumXObject> {
+        PdfiumXObject::new_from_handle(unsafe {
+            (self.fn_FPDF_NewXObjectFromPage)(dest_doc.into(), src_doc.into(), src_page_index)
+        })
+    }
+
+    /// # **FPDF_CloseXObject** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Close an FPDF_XOBJECT handle created by FPDF_NewXObjectFromPage().
+    /// FPDF_PAGEOBJECTs created from the FPDF_XOBJECT handle are not affected.
+    /// ```
+    pub fn FPDF_CloseXObject(&self, xobject: &PdfiumXObject) {
+        unsafe { (self.fn_FPDF_CloseXObject)(xobject.into()) }
+    }
+
+    /// # **FPDFPage_GetDecodedThumbnailData** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the decoded data from the thumbnail of |page| if it exists.
+    /// This only modifies |buffer| if |buflen| less than or equal to the
+    /// size of the decoded data. Returns the size of the decoded
+    /// data or 0 if thumbnail DNE. Optional, pass null to just retrieve
+    /// the size of the buffer needed.
+    ///
+    ///   page    - handle to a page.
+    ///   buffer  - buffer for holding the decoded image data.
+    ///   buflen  - length of the buffer in bytes.
+    /// ```
+    pub fn FPDFPage_GetDecodedThumbnailData(
+        &self,
+        page: &PdfiumPage,
+        buffer: Option<&mut [u8]>,
+        buflen: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_ulong {
+        unsafe {
+            (self.fn_FPDFPage_GetDecodedThumbnailData)(page.into(), to_void_ptr_mut(buffer), buflen)
+        }
+    }
+
+    /// # **FPDFPage_GetRawThumbnailData** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the raw data from the thumbnail of |page| if it exists.
+    /// This only modifies |buffer| if |buflen| is less than or equal to
+    /// the size of the raw data. Returns the size of the raw data or 0
+    /// if thumbnail DNE. Optional, pass null to just retrieve the size
+    /// of the buffer needed.
+    ///
+    ///   page    - handle to a page.
+    ///   buffer  - buffer for holding the raw image data.
+    ///   buflen  - length of the buffer in bytes.
+    /// ```
+    pub fn FPDFPage_GetRawThumbnailData(
+        &self,
+        page: &PdfiumPage,
+        buffer: Option<&mut [u8]>,
+        buflen: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_ulong {
+        unsafe {
+            (self.fn_FPDFPage_GetRawThumbnailData)(page.into(), to_void_ptr_mut(buffer), buflen)
+        }
+    }
+
+    /// # **FPDFPage_GetThumbnailAsBitmap** *(original C documentation)*
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Returns the thumbnail of |page| as a FPDF_BITMAP. Returns a nullptr
+    /// if unable to access the thumbnail's stream.
+    ///
+    ///   page - handle to a page.
+    /// ```
+    pub fn FPDFPage_GetThumbnailAsBitmap(&self, page: &PdfiumPage) -> PdfiumResult<PdfiumBitmap> {
+        PdfiumBitmap::new_from_handle(unsafe {
+            (self.fn_FPDFPage_GetThumbnailAsBitmap)(page.into())
+        })
+    }
+
+    /// # **FPDFPage_SetMediaBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Set "MediaBox" entry to the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - The left of the rectangle.
+    /// bottom - The bottom of the rectangle.
+    /// right  - The right of the rectangle.
+    /// top    - The top of the rectangle.
+    /// ```
+    pub fn FPDFPage_SetMediaBox(
+        &self,
+        page: &PdfiumPage,
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) {
+        unsafe { (self.fn_FPDFPage_SetMediaBox)(page.into(), left, bottom, right, top) }
+    }
+
+    /// # **FPDFPage_SetCropBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Set "CropBox" entry to the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - The left of the rectangle.
+    /// bottom - The bottom of the rectangle.
+    /// right  - The right of the rectangle.
+    /// top    - The top of the rectangle.
+    /// ```
+    pub fn FPDFPage_SetCropBox(
+        &self,
+        page: &PdfiumPage,
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) {
+        unsafe { (self.fn_FPDFPage_SetCropBox)(page.into(), left, bottom, right, top) }
+    }
+
+    /// # **FPDFPage_SetBleedBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Set "BleedBox" entry to the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - The left of the rectangle.
+    /// bottom - The bottom of the rectangle.
+    /// right  - The right of the rectangle.
+    /// top    - The top of the rectangle.
+    /// ```
+    pub fn FPDFPage_SetBleedBox(
+        &self,
+        page: &PdfiumPage,
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) {
+        unsafe { (self.fn_FPDFPage_SetBleedBox)(page.into(), left, bottom, right, top) }
+    }
+
+    /// # **FPDFPage_SetTrimBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Set "TrimBox" entry to the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - The left of the rectangle.
+    /// bottom - The bottom of the rectangle.
+    /// right  - The right of the rectangle.
+    /// top    - The top of the rectangle.
+    /// ```
+    pub fn FPDFPage_SetTrimBox(
+        &self,
+        page: &PdfiumPage,
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) {
+        unsafe { (self.fn_FPDFPage_SetTrimBox)(page.into(), left, bottom, right, top) }
+    }
+
+    /// # **FPDFPage_SetArtBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Set "ArtBox" entry to the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - The left of the rectangle.
+    /// bottom - The bottom of the rectangle.
+    /// right  - The right of the rectangle.
+    /// top    - The top of the rectangle.
+    /// ```
+    pub fn FPDFPage_SetArtBox(
+        &self,
+        page: &PdfiumPage,
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) {
+        unsafe { (self.fn_FPDFPage_SetArtBox)(page.into(), left, bottom, right, top) }
+    }
+
     /// # **FPDFPage_GetMediaBox** *(original C documentation)*
     ///
     /// ```text
@@ -517,6 +1351,186 @@ impl PdfiumBindings {
         top: &mut f32,
     ) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPage_GetMediaBox)(page.into(), left, bottom, right, top) })
+    }
+
+    /// # **FPDFPage_GetCropBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get "CropBox" entry from the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - Pointer to a float value receiving the left of the rectangle.
+    /// bottom - Pointer to a float value receiving the bottom of the rectangle.
+    /// right  - Pointer to a float value receiving the right of the rectangle.
+    /// top    - Pointer to a float value receiving the top of the rectangle.
+    ///
+    /// On success, return true and write to the out parameters. Otherwise return
+    /// false and leave the out parameters unmodified.
+    /// ```
+    pub fn FPDFPage_GetCropBox(
+        &self,
+        page: &PdfiumPage,
+        left: &mut f32,
+        bottom: &mut f32,
+        right: &mut f32,
+        top: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_GetCropBox)(page.into(), left, bottom, right, top) })
+    }
+
+    /// # **FPDFPage_GetBleedBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get "BleedBox" entry from the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - Pointer to a float value receiving the left of the rectangle.
+    /// bottom - Pointer to a float value receiving the bottom of the rectangle.
+    /// right  - Pointer to a float value receiving the right of the rectangle.
+    /// top    - Pointer to a float value receiving the top of the rectangle.
+    ///
+    /// On success, return true and write to the out parameters. Otherwise return
+    /// false and leave the out parameters unmodified.
+    /// ```
+    pub fn FPDFPage_GetBleedBox(
+        &self,
+        page: &PdfiumPage,
+        left: &mut f32,
+        bottom: &mut f32,
+        right: &mut f32,
+        top: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_GetBleedBox)(page.into(), left, bottom, right, top) })
+    }
+
+    /// # **FPDFPage_GetTrimBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get "TrimBox" entry from the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - Pointer to a float value receiving the left of the rectangle.
+    /// bottom - Pointer to a float value receiving the bottom of the rectangle.
+    /// right  - Pointer to a float value receiving the right of the rectangle.
+    /// top    - Pointer to a float value receiving the top of the rectangle.
+    ///
+    /// On success, return true and write to the out parameters. Otherwise return
+    /// false and leave the out parameters unmodified.
+    /// ```
+    pub fn FPDFPage_GetTrimBox(
+        &self,
+        page: &PdfiumPage,
+        left: &mut f32,
+        bottom: &mut f32,
+        right: &mut f32,
+        top: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_GetTrimBox)(page.into(), left, bottom, right, top) })
+    }
+
+    /// # **FPDFPage_GetArtBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get "ArtBox" entry from the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - Pointer to a float value receiving the left of the rectangle.
+    /// bottom - Pointer to a float value receiving the bottom of the rectangle.
+    /// right  - Pointer to a float value receiving the right of the rectangle.
+    /// top    - Pointer to a float value receiving the top of the rectangle.
+    ///
+    /// On success, return true and write to the out parameters. Otherwise return
+    /// false and leave the out parameters unmodified.
+    /// ```
+    pub fn FPDFPage_GetArtBox(
+        &self,
+        page: &PdfiumPage,
+        left: &mut f32,
+        bottom: &mut f32,
+        right: &mut f32,
+        top: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_GetArtBox)(page.into(), left, bottom, right, top) })
+    }
+
+    /// # **FPDFPage_TransFormWithClip** *(original C documentation)*
+    ///
+    /// ```text
+    /// Apply transforms to |page|.
+    ///
+    /// If |matrix| is provided it will be applied to transform the page.
+    /// If |clipRect| is provided it will be used to clip the resulting page.
+    /// If neither |matrix| or |clipRect| are provided this method returns |false|.
+    /// Returns |true| if transforms are applied.
+    ///
+    /// This function will transform the whole page, and would take effect to all the
+    /// objects in the page.
+    ///
+    /// page        - Page handle.
+    /// matrix      - Transform matrix.
+    /// clipRect    - Clipping rectangle.
+    /// ```
+    pub fn FPDFPage_TransFormWithClip(
+        &self,
+        page: &PdfiumPage,
+        matrix: &PdfiumMatrix,
+        clipRect: &PdfiumRect,
+    ) -> PdfiumResult<()> {
+        let matrix: FS_MATRIX = matrix.into();
+        let clipRect: FS_RECTF = clipRect.into();
+        to_result(unsafe { (self.fn_FPDFPage_TransFormWithClip)(page.into(), &matrix, &clipRect) })
+    }
+
+    /// # **FPDF_CreateClipPath** *(original C documentation)*
+    ///
+    /// ```text
+    /// Create a new clip path, with a rectangle inserted.
+    ///
+    /// Caller takes ownership of the returned FPDF_CLIPPATH. It should be freed with
+    /// FPDF_DestroyClipPath().
+    ///
+    /// left   - The left of the clip box.
+    /// bottom - The bottom of the clip box.
+    /// right  - The right of the clip box.
+    /// top    - The top of the clip box.
+    /// ```
+    pub fn FPDF_CreateClipPath(
+        &self,
+        left: f32,
+        bottom: f32,
+        right: f32,
+        top: f32,
+    ) -> PdfiumResult<PdfiumClipPath> {
+        PdfiumClipPath::new_from_handle(unsafe {
+            (self.fn_FPDF_CreateClipPath)(left, bottom, right, top)
+        })
+    }
+
+    /// # **FPDF_DestroyClipPath** *(original C documentation)*
+    ///
+    /// ```text
+    /// Destroy the clip path.
+    ///
+    /// clipPath - A handle to the clip path. It will be invalid after this call.
+    /// ```
+    pub fn FPDF_DestroyClipPath(&self, clipPath: &PdfiumClipPath) {
+        unsafe { (self.fn_FPDF_DestroyClipPath)(clipPath.into()) }
+    }
+
+    /// # **FPDFPage_InsertClipPath** *(original C documentation)*
+    ///
+    /// ```text
+    /// Clip the page content, the page content that outside the clipping region
+    /// become invisible.
+    ///
+    /// A clip path will be inserted before the page content stream or content array.
+    /// In this way, the page content will be clipped by this clip path.
+    ///
+    /// page        - A page handle.
+    /// clipPath    - A handle to the clip path. (Does not take ownership.)
+    /// ```
+    pub fn FPDFPage_InsertClipPath(&self, page: &PdfiumPage, clipPath: &PdfiumClipPath) {
+        unsafe { (self.fn_FPDFPage_InsertClipPath)(page.into(), clipPath.into()) }
     }
 }
 

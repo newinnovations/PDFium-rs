@@ -16,7 +16,7 @@
 
 A modern streamlined Rust wrapper for the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is the PDF library from Google developed for (and used in) the Chromium and Chrome web browsers.
 
-PDFium-rs is used as one of the two PDF engines enabled in [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4. With a single keypress you can switch engines and see the rendering (quality) differences between mupdf and PDFium.
+PDFium-rs is used as one of the two PDF engines behind [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4. With a single keypress you can switch engines and see the rendering (quality) differences between mupdf and PDFium.
 
 ## Features
 
@@ -92,7 +92,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.4.0"
+pdfium = "0.4.1"
 ```
 
 ## Current Status

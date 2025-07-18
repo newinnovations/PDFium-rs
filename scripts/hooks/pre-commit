@@ -127,9 +127,23 @@ check_docs() {
 }
 
 # Main check
+echo
 echo "Running pre-commit checks"
 echo "========================="
 echo
+
+# Check if there are any unstaged changes in tracked files
+if ! git diff-files --quiet; then
+    echo -e "${RED}Error: You have unstaged changes in tracked files.${NC}"
+    echo -e "${YELLOW}Unstaged changes detected in:${NC}"
+    git diff-files --name-only | sed 's/^/  /'
+    echo ""
+    echo -e "${YELLOW}Please stage all changes before committing:${NC}"
+    echo "  git add -u"
+    echo ""
+    # echo -e "${YELLOW}This prevents the cargo fmt loophole where formatted changes aren't staged.${NC}"
+    exit 1
+fi
 
 # Track if any checks failed
 failed=0
@@ -173,13 +187,15 @@ if ! check_docs; then
 fi
 
 echo
-echo "=========================="
+echo "============================="
 
 if [[ $failed -eq 1 ]]; then
     echo -e "${RED}Pre-commit checks failed!${NC}"
     echo -e "${YELLOW}Please fix the issues above and try again.${NC}"
+    echo
     exit 1
 else
     echo -e "${GREEN}All pre-commit checks passed!${NC}"
+    echo
     exit 0
 fi

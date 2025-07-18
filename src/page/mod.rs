@@ -1,4 +1,4 @@
-// PDFium-rs -- Safe Rust wrapper to PDFium, the PDF library from Google
+// PDFium-rs -- Modern Rust wrapper to PDFium, the PDF library from Google
 //
 // Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
 //
@@ -29,7 +29,7 @@ use crate::{
     pdfium_types::FPDF_PAGE,
 };
 
-/// Rust interface to FPDF_PAGE
+/// # Rust interface to FPDF_PAGE
 pub struct PdfiumPage {
     handle: FPDF_PAGE,
 }
@@ -85,14 +85,14 @@ impl PdfiumPage {
         PdfiumPageBoundaries::new(self)
     }
 
-    /// Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] using a transformation matrix.
+    /// # Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] using a transformation matrix.
     ///
     /// This function provides fine-grained control over the rendering process by allowing
     /// you to directly specify a transformation matrix, background color, render flags,
     /// and clipping rectangle. The transformation matrix can be used to apply scaling,
     /// rotation or translation transformations during rendering.
     ///
-    /// # Arguments
+    /// ## Arguments
     ///
     /// * `width` - The width of the target bitmap in pixels
     /// * `height` - The height of the target bitmap in pixels
@@ -102,11 +102,11 @@ impl PdfiumPage {
     /// * `render_flags` - Flags controlling the rendering behavior (0 for most use cases)
     /// * `clipping` - Optional clipping rectangle to restrict rendering to a specific area
     ///
-    /// # Returns
+    /// ## Returns
     ///
     /// Returns a [`PdfiumBitmap`] containing the rendered page, or a [PdfiumError] if rendering fails.
     ///
-    /// # Examples
+    /// ## Examples
     ///
     /// ```
     /// use pdfium::*;
@@ -154,14 +154,14 @@ impl PdfiumPage {
         Ok(bitmap)
     }
 
-    /// Renders this [`PdfiumPage`] into the given [`PdfiumBitmap`] using a transformation matrix.
+    /// # Renders this [`PdfiumPage`] into the given [`PdfiumBitmap`] using a transformation matrix.
     ///
     /// This function provides fine-grained control over the rendering process by allowing
     /// you to directly specify a transformation matrix, render flags, and clipping rectangle.
     /// The transformation matrix can be used to apply scaling, rotation or translation
     /// transformations during rendering.
     ///
-    /// # Arguments
+    /// ## Arguments
     ///
     /// * `bitmap` - The target bitmap to render into
     /// * `matrix` - The transformation matrix to apply during rendering
@@ -169,7 +169,7 @@ impl PdfiumPage {
     /// * `clipping` - Optional clipping rectangle to restrict rendering to a specific area.
     ///   If None, defaults to the full bitmap dimensions.
     ///
-    /// # Returns
+    /// ## Returns
     ///
     /// Returns `Ok(())` if rendering succeeds, or a [PdfiumError] if rendering fails.
     pub fn render_into_bitmap_with_matrix(
@@ -197,7 +197,7 @@ impl From<&PdfiumPage> for FPDF_PAGE {
 }
 
 impl Drop for PdfiumPage {
-    /// Closes this [`PdfiumPage`], releasing held memory.
+    /// # Closes this [`PdfiumPage`], releasing held memory.
     #[inline]
     fn drop(&mut self) {
         println!("Closing page {:?}", self.handle);
