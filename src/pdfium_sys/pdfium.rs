@@ -400,8 +400,10 @@ impl PdfiumBindings {
         width: i32,
         height: i32,
         color: FPDF_DWORD,
-    ) -> FPDF_BOOL {
-        unsafe { (self.fn_FPDFBitmap_FillRect)(bitmap.into(), left, top, width, height, color) }
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFBitmap_FillRect)(bitmap.into(), left, top, width, height, color)
+        })
     }
 
     /// # **FPDFBitmap_GetBuffer** *(original C documentation)*
@@ -513,8 +515,8 @@ impl PdfiumBindings {
         bottom: &mut f32,
         right: &mut f32,
         top: &mut f32,
-    ) -> FPDF_BOOL {
-        unsafe { (self.fn_FPDFPage_GetMediaBox)(page.into(), left, bottom, right, top) }
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFPage_GetMediaBox)(page.into(), left, bottom, right, top) })
     }
 }
 
@@ -529,5 +531,13 @@ fn to_void_ptr_mut(data: Option<&mut [u8]>) -> *mut c_void {
     match data {
         Some(slice) => slice.as_ptr() as *mut c_void,
         None => std::ptr::null_mut(),
+    }
+}
+
+fn to_result(b: FPDF_BOOL) -> PdfiumResult<()> {
+    if b == 0 {
+        Err(PdfiumError::InvokationFailed)
+    } else {
+        Ok(())
     }
 }

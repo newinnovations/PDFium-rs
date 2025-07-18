@@ -55,7 +55,7 @@ impl PdfiumBitmap {
     }
 
     /// Fills this entire [`PdfiumBitmap`] with the given [`PdfiumColor`].
-    pub fn fill(&self, color: &PdfiumColor) {
+    pub fn fill(&self, color: &PdfiumColor) -> PdfiumResult<()> {
         let lib = lib();
         lib.FPDFBitmap_FillRect(
             self,
@@ -64,7 +64,7 @@ impl PdfiumBitmap {
             lib.FPDFBitmap_GetWidth(self),
             lib.FPDFBitmap_GetHeight(self),
             color.into(),
-        );
+        )
     }
 
     /// Returns the width of the image in the bitmap buffer backing this [`PdfiumBitmap`].

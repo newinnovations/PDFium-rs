@@ -31,7 +31,6 @@ jobs:
           wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz
           tar xf pdfium-linux-x64.tgz --strip-components=1 lib/libpdfium.so
           rm -f pdfium-linux-x64.tgz
-          ls -la
           file libpdfium.so
 
       - name: Get PDFium for Windows
@@ -41,7 +40,6 @@ jobs:
           curl -L https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.tgz --output pdfium-win-x64.tgz
           tar xf pdfium-win-x64.tgz --strip-components=1 bin/pdfium.dll
           rm -f pdfium-win-x64.tgz
-          ls -la
           file pdfium.dll
 
       - name: Get PDFium for Macos
@@ -51,9 +49,15 @@ jobs:
           wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-mac-arm64.tgz
           tar xf pdfium-mac-arm64.tgz --strip-components=1 lib/libpdfium.dylib
           rm -f pdfium-mac-arm64.tgz
-          ls -la
           file libpdfium.dylib
 
       - name: Test pdfium-rs
         run: |
           cargo test
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfium-rs-output-${{ matrix.os }}
+          path: |
+            *.png

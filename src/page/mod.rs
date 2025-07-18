@@ -146,7 +146,7 @@ impl PdfiumPage {
         let mut bitmap = PdfiumBitmap::empty(width, height, format)?;
 
         if let Some(color) = background {
-            bitmap.fill(&color);
+            bitmap.fill(&color)?;
         }
 
         self.render_into_bitmap_with_matrix(&mut bitmap, matrix, render_flags, clipping);

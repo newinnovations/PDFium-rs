@@ -61,8 +61,8 @@ pub enum PdfiumError {
     /// The requested resource, object, or element was not found
     NotFound,
 
-    /// A call to the PDFium library return an error condition
-    InvokationFailed(String),
+    /// A call to the PDFium library returned an error condition
+    InvokationFailed,
 
     /// Error loading or initializing the PDFium library
     LibraryError(String),
