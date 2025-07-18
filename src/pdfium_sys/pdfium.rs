@@ -30,10 +30,11 @@ use crate::{
 };
 use libloading::Library;
 
-/// The actual bindings to the PDFium C library
+/// # Low level Rust bindings to the PDFium C library
 ///
-/// This aims to fully follow the original API, while still providing a safe interface by replacing
-/// all pointer based parameters with safe Rust replacements. The same applies to the function results.
+/// These functions aim to fully follow the original API, while also providing a safe interface by replacing
+/// all pointer based parameters with safe Rust replacements. The same applies to the function results
+/// whenever possible.
 #[allow(non_snake_case)]
 pub struct PdfiumBindings {
     fn_FPDF_InitLibrary: unsafe extern "C" fn(),
@@ -113,10 +114,49 @@ impl PdfiumBindings {
 }
 
 impl PdfiumBindings {
+    /// # **FPDF_InitLibrary** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_InitLibrary
+    ///          Initialize the PDFium library (alternative form).
+    /// Parameters:
+    ///          None
+    /// Return value:
+    ///          None.
+    /// Comments:
+    ///          Convenience function to call FPDF_InitLibraryWithConfig() with a
+    ///          default configuration for backwards compatibility purposes. New
+    ///          code should call FPDF_InitLibraryWithConfig() instead. This will
+    ///          be deprecated in the future.
+    /// ```
     pub fn FPDF_InitLibrary(&self) {
         unsafe { (self.fn_FPDF_InitLibrary)() }
     }
 
+    /// # **FPDF_LoadCustomDocument** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_LoadCustomDocument
+    ///          Load PDF document from a custom access descriptor.
+    /// Parameters:
+    ///          pFileAccess -   A structure for accessing the file.
+    ///          password    -   Optional password for decrypting the PDF file.
+    /// Return value:
+    ///          A handle to the loaded document, or NULL on failure.
+    /// Comments:
+    ///          The application must keep the file resources |pFileAccess| points to
+    ///          valid until the returned FPDF_DOCUMENT is closed. |pFileAccess|
+    ///          itself does not need to outlive the FPDF_DOCUMENT.
+    ///
+    ///          The loaded document can be closed with FPDF_CloseDocument().
+    ///
+    ///          See the comments for FPDF_LoadDocument() regarding the encoding for
+    ///          |password|.
+    /// Notes:
+    ///          If PDFium is built with the XFA module, the application should call
+    ///          FPDF_LoadXFA() function after the PDF document loaded to support XFA
+    ///          fields defined in the fpdfformfill.h file.
+    /// ```
     pub fn FPDF_LoadCustomDocument(
         &self,
         pFileAccess: &mut Box<crate::PdfiumReader>,
@@ -125,14 +165,52 @@ impl PdfiumBindings {
         unsafe { (self.fn_FPDF_LoadCustomDocument)(pFileAccess.as_mut().into(), password.as_ptr()) }
     }
 
+    /// # **FPDF_GetLastError** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_GetLastError
+    ///          Get last error code when a function fails.
+    /// Parameters:
+    ///          None.
+    /// Return value:
+    ///          A 32-bit integer indicating error code as defined above.
+    /// Comments:
+    ///          If the previous SDK call succeeded, the return value of this
+    ///          function is not defined. This function only works in conjunction
+    ///          with APIs that mention FPDF_GetLastError() in their documentation.
+    /// ```
     pub fn FPDF_GetLastError(&self) -> ::std::os::raw::c_ulong {
         unsafe { (self.fn_FPDF_GetLastError)() }
     }
 
+    /// # **FPDF_GetPageCount** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_GetPageCount
+    ///          Get total number of pages in the document.
+    /// Parameters:
+    ///          document    -   Handle to document. Returned by FPDF_LoadDocument.
+    /// Return value:
+    ///          Total number of pages in the document.
+    /// ```
     pub fn FPDF_GetPageCount(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_GetPageCount)(document.into()) }
     }
 
+    /// # **FPDF_LoadPage** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_LoadPage
+    ///          Load a page inside the document.
+    /// Parameters:
+    ///          document    -   Handle to document. Returned by FPDF_LoadDocument
+    ///          page_index  -   Index number of the page. 0 for the first page.
+    /// Return value:
+    ///          A handle to the loaded page, or NULL if page load fails.
+    /// Comments:
+    ///          The loaded page can be rendered to devices using FPDF_RenderPage.
+    ///          The loaded page can be closed using FPDF_ClosePage.
+    /// ```
     pub fn FPDF_LoadPage(
         &self,
         document: &PdfiumDocument,
@@ -141,6 +219,28 @@ impl PdfiumBindings {
         PdfiumPage::new_from_handle(unsafe { (self.fn_FPDF_LoadPage)(document.into(), page_index) })
     }
 
+    /// # **FPDF_RenderPageBitmapWithMatrix** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_RenderPageBitmapWithMatrix
+    ///          Render contents of a page to a device independent bitmap.
+    /// Parameters:
+    ///          bitmap      -   Handle to the device independent bitmap (as the
+    ///                          output buffer). The bitmap handle can be created
+    ///                          by FPDFBitmap_Create or retrieved by
+    ///                          FPDFImageObj_GetBitmap.
+    ///          page        -   Handle to the page. Returned by FPDF_LoadPage.
+    ///          matrix      -   The transform matrix, which must be invertible.
+    ///                          See PDF Reference 1.7, 4.2.2 Common Transformations.
+    ///          clipping    -   The rect to clip to in device coords.
+    ///          flags       -   0 for normal display, or combination of the Page
+    ///                          Rendering flags defined above. With the FPDF_ANNOT
+    ///                          flag, it renders all annotations that do not require
+    ///                          user-interaction, which are all annotations except
+    ///                          widget and popup annotations.
+    /// Return value:
+    ///          None. Note that behavior is undefined if det of |matrix| is 0.
+    /// ```
     pub fn FPDF_RenderPageBitmapWithMatrix(
         &self,
         bitmap: &PdfiumBitmap,
@@ -162,14 +262,71 @@ impl PdfiumBindings {
         }
     }
 
+    /// # **FPDF_ClosePage** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_ClosePage
+    ///          Close a loaded PDF page.
+    /// Parameters:
+    ///          page        -   Handle to the loaded page.
+    /// Return value:
+    ///          None.
+    /// ```
     pub fn FPDF_ClosePage(&self, page: &PdfiumPage) {
         unsafe { (self.fn_FPDF_ClosePage)(page.into()) }
     }
 
+    /// # **FPDF_CloseDocument** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDF_CloseDocument
+    ///          Close a loaded PDF document.
+    /// Parameters:
+    ///          document    -   Handle to the loaded document.
+    /// Return value:
+    ///          None.
+    /// ```
     pub fn FPDF_CloseDocument(&self, document: &PdfiumDocument) {
         unsafe { (self.fn_FPDF_CloseDocument)(document.into()) }
     }
 
+    /// # **FPDFBitmap_CreateEx** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_CreateEx
+    ///          Create a device independent bitmap (FXDIB)
+    /// Parameters:
+    ///          width       -   The number of pixels in width for the bitmap.
+    ///                          Must be greater than 0.
+    ///          height      -   The number of pixels in height for the bitmap.
+    ///                          Must be greater than 0.
+    ///          format      -   A number indicating for bitmap format, as defined
+    ///                          above.
+    ///          first_scan  -   A pointer to the first byte of the first line if
+    ///                          using an external buffer. If this parameter is NULL,
+    ///                          then a new buffer will be created.
+    ///          stride      -   Number of bytes for each scan line. The value must
+    ///                          be 0 or greater. When the value is 0,
+    ///                          FPDFBitmap_CreateEx() will automatically calculate
+    ///                          the appropriate value using |width| and |format|.
+    ///                          When using an external buffer, it is recommended for
+    ///                          the caller to pass in the value.
+    ///                          When not using an external buffer, it is recommended
+    ///                          for the caller to pass in 0.
+    /// Return value:
+    ///          The bitmap handle, or NULL if parameter error or out of memory.
+    /// Comments:
+    ///          Similar to FPDFBitmap_Create function, but allows for more formats
+    ///          and an external buffer is supported. The bitmap created by this
+    ///          function can be used in any place that a FPDF_BITMAP handle is
+    ///          required.
+    ///
+    ///          If an external buffer is used, then the caller should destroy the
+    ///          buffer. FPDFBitmap_Destroy() will not destroy the buffer.
+    ///
+    ///          It is recommended to use FPDFBitmap_GetStride() to get the stride
+    ///          value.
+    /// ```
     pub fn FPDFBitmap_CreateEx(
         &self,
         width: i32,
@@ -189,10 +346,52 @@ impl PdfiumBindings {
         })
     }
 
+    /// # **FPDFBitmap_GetFormat** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_GetFormat
+    ///          Get the format of the bitmap.
+    /// Parameters:
+    ///          bitmap      -   Handle to the bitmap. Returned by FPDFBitmap_Create
+    ///                          or FPDFImageObj_GetBitmap.
+    /// Return value:
+    ///          The format of the bitmap.
+    /// Comments:
+    ///          Only formats supported by FPDFBitmap_CreateEx are supported by this
+    ///          function; see the list of such formats above.
+    /// ```
     pub fn FPDFBitmap_GetFormat(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetFormat)(bitmap.into()) }
     }
 
+    /// # **FPDFBitmap_FillRect** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_FillRect
+    ///          Fill a rectangle in a bitmap.
+    /// Parameters:
+    ///          bitmap      -   The handle to the bitmap. Returned by
+    ///                          FPDFBitmap_Create.
+    ///          left        -   The left position. Starting from 0 at the
+    ///                          left-most pixel.
+    ///          top         -   The top position. Starting from 0 at the
+    ///                          top-most line.
+    ///          width       -   Width in pixels to be filled.
+    ///          height      -   Height in pixels to be filled.
+    ///          color       -   A 32-bit value specifing the color, in 8888 ARGB
+    ///                          format.
+    /// Return value:
+    ///          Returns whether the operation succeeded or not.
+    /// Comments:
+    ///          This function sets the color and (optionally) alpha value in the
+    ///          specified region of the bitmap.
+    ///
+    ///          NOTE: If the alpha channel is used, this function does NOT
+    ///          composite the background with the source color, instead the
+    ///          background will be replaced by the source color and the alpha.
+    ///
+    ///          If the alpha channel is not used, the alpha parameter is ignored.
+    /// ```
     pub fn FPDFBitmap_FillRect(
         &self,
         bitmap: &PdfiumBitmap,
@@ -205,26 +404,108 @@ impl PdfiumBindings {
         unsafe { (self.fn_FPDFBitmap_FillRect)(bitmap.into(), left, top, width, height, color) }
     }
 
+    /// # **FPDFBitmap_GetBuffer** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_GetBuffer
+    ///          Get data buffer of a bitmap.
+    /// Parameters:
+    ///          bitmap      -   Handle to the bitmap. Returned by FPDFBitmap_Create
+    ///                          or FPDFImageObj_GetBitmap.
+    /// Return value:
+    ///          The pointer to the first byte of the bitmap buffer.
+    /// Comments:
+    ///          The stride may be more than width * number of bytes per pixel
+    ///
+    ///          Applications can use this function to get the bitmap buffer pointer,
+    ///          then manipulate any color and/or alpha values for any pixels in the
+    ///          bitmap.
+    ///
+    ///          Use FPDFBitmap_GetFormat() to find out the format of the data.
+    /// ```
     pub fn FPDFBitmap_GetBuffer(&self, bitmap: &PdfiumBitmap) -> *mut ::std::os::raw::c_void {
         unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap.into()) }
     }
 
+    /// # **FPDFBitmap_GetWidth** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_GetWidth
+    ///          Get width of a bitmap.
+    /// Parameters:
+    ///          bitmap      -   Handle to the bitmap. Returned by FPDFBitmap_Create
+    ///                          or FPDFImageObj_GetBitmap.
+    /// Return value:
+    ///          The width of the bitmap in pixels.
+    /// ```
     pub fn FPDFBitmap_GetWidth(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetWidth)(bitmap.into()) }
     }
 
+    /// # **FPDFBitmap_GetHeight** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_GetHeight
+    ///          Get height of a bitmap.
+    /// Parameters:
+    ///          bitmap      -   Handle to the bitmap. Returned by FPDFBitmap_Create
+    ///                          or FPDFImageObj_GetBitmap.
+    /// Return value:
+    ///          The height of the bitmap in pixels.
+    /// ```
     pub fn FPDFBitmap_GetHeight(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetHeight)(bitmap.into()) }
     }
 
+    /// # **FPDFBitmap_GetStride** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_GetStride
+    ///          Get number of bytes for each line in the bitmap buffer.
+    /// Parameters:
+    ///          bitmap      -   Handle to the bitmap. Returned by FPDFBitmap_Create
+    ///                          or FPDFImageObj_GetBitmap.
+    /// Return value:
+    ///          The number of bytes for each line in the bitmap buffer.
+    /// Comments:
+    ///          The stride may be more than width * number of bytes per pixel.
+    /// ```
     pub fn FPDFBitmap_GetStride(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetStride)(bitmap.into()) }
     }
 
+    /// # **FPDFBitmap_Destroy** *(original C documentation)*
+    ///
+    /// ```text
+    /// Function: FPDFBitmap_Destroy
+    ///          Destroy a bitmap and release all related buffers.
+    /// Parameters:
+    ///          bitmap      -   Handle to the bitmap. Returned by FPDFBitmap_Create
+    ///                          or FPDFImageObj_GetBitmap.
+    /// Return value:
+    ///          None.
+    /// Comments:
+    ///          This function will not destroy any external buffers provided when
+    ///          the bitmap was created.
+    /// ```
     pub fn FPDFBitmap_Destroy(&self, bitmap: &PdfiumBitmap) {
         unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
     }
 
+    /// # **FPDFPage_GetMediaBox** *(original C documentation)*
+    ///
+    /// ```text
+    /// Get "MediaBox" entry from the page dictionary.
+    ///
+    /// page   - Handle to a page.
+    /// left   - Pointer to a float value receiving the left of the rectangle.
+    /// bottom - Pointer to a float value receiving the bottom of the rectangle.
+    /// right  - Pointer to a float value receiving the right of the rectangle.
+    /// top    - Pointer to a float value receiving the top of the rectangle.
+    ///
+    /// On success, return true and write to the out parameters. Otherwise return
+    /// false and leave the out parameters unmodified.
+    /// ```
     pub fn FPDFPage_GetMediaBox(
         &self,
         page: &PdfiumPage,
