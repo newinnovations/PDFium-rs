@@ -70,7 +70,7 @@ impl App {
             PdfiumBitmapFormat::Bgra,
             Some(PdfiumColor::WHITE),
             &matrix,
-            0,
+            PdfiumRenderFlags::empty(),
             None,
         )?;
         bitmap.save(filename, image::ImageFormat::Png)
@@ -114,7 +114,7 @@ impl App {
         let height = 1080;
         let zoom = height as f32 / (top - bottom);
         let width = ((right - left) * zoom) as i32;
-        let matrix = PdfiumMatrix {
+        let matrix = pdfium_types::FS_MATRIX {
             a: zoom,
             b: 0.0,
             c: 0.0,
@@ -124,7 +124,7 @@ impl App {
         };
         let bitmap = lib().FPDFBitmap_Create(width, height, 1)?;
         lib().FPDFBitmap_FillRect(&bitmap, 0, 0, width, height, 0xffffffff)?;
-        let clipping = PdfiumRect {
+        let clipping = pdfium_types::FS_RECTF {
             left: 0.0,
             top: height as f32,
             right: width as f32,
@@ -148,7 +148,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.4.3"  # Check crates.io for the latest version
+pdfium = "0.5.0"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

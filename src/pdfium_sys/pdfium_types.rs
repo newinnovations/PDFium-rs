@@ -209,6 +209,8 @@ pub struct fpdf_xobject_t__ {
 
 /// Structure for persisting a string beyond the duration of a callback.
 ///
+/// C documentation:
+///
 /// ```text
 /// Structure for persisting a string beyond the duration of a callback.
 /// Note: although represented as a char*, string may be interpreted as
@@ -223,7 +225,9 @@ pub struct FPDF_BSTR_ {
     pub len: ::std::os::raw::c_int,
 }
 
-/// Matrix for transformation, in the form \[a b c d e f\], equivalent to:
+/// Matrix for transformation
+///
+/// C documentation:
 ///
 /// ```text
 /// Matrix for transformation, in the form \[a b c d e f\], equivalent to:
@@ -293,7 +297,9 @@ pub struct _FS_QUADPOINTSF {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FPDF_LIBRARY_CONFIG_ {
-    /// Version number of the interface. Currently must be 2.
+    /// Version number of the interface
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Version number of the interface. Currently must be 2.
@@ -301,6 +307,8 @@ pub struct FPDF_LIBRARY_CONFIG_ {
     /// ```
     pub version: ::std::os::raw::c_int,
     /// Array of paths to scan in place of the defaults when using built-in
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Array of paths to scan in place of the defaults when using built-in
@@ -313,6 +321,8 @@ pub struct FPDF_LIBRARY_CONFIG_ {
     pub m_pIsolate: *mut ::std::os::raw::c_void,
     /// The embedder data slot to use in the v8::Isolate to store PDFium's
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// The embedder data slot to use in the v8::Isolate to store PDFium's
     /// per-isolate data. The value needs to be in the range
@@ -322,7 +332,9 @@ pub struct FPDF_LIBRARY_CONFIG_ {
     pub m_v8EmbedderSlot: ::std::os::raw::c_uint,
     /// Pointer to the V8::Platform to use.
     pub m_pPlatform: *mut ::std::os::raw::c_void,
-    /// Explicit specification of core renderer to use. |m_RendererType| must be
+    /// Explicit specification of core renderer to use
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Explicit specification of core renderer to use. |m_RendererType| must be
@@ -343,6 +355,8 @@ pub struct FPDF_FILEACCESS {
     pub m_FileLen: ::std::os::raw::c_ulong,
     /// A function pointer for getting a block of data from a specific position.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// A function pointer for getting a block of data from a specific position.
     /// Position is specified by byte offset from the beginning of the file.
@@ -360,7 +374,9 @@ pub struct FPDF_FILEACCESS {
             size: ::std::os::raw::c_ulong,
         ) -> ::std::os::raw::c_int,
     >,
-    /// A custom pointer for all implementation specific data.  This pointer will
+    /// A custom pointer for all implementation specific data
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// A custom pointer for all implementation specific data.  This pointer will
@@ -370,6 +386,8 @@ pub struct FPDF_FILEACCESS {
 }
 
 /// Structure for file reading or writing (I/O).
+///
+/// C documentation:
 ///
 /// ```text
 /// Structure for file reading or writing (I/O).
@@ -382,12 +400,16 @@ pub struct FPDF_FILEACCESS {
 pub struct FPDF_FILEHANDLER_ {
     /// User-defined data.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// User-defined data.
     /// Note: Callers can use this field to track controls.
     /// ```
     pub clientData: *mut ::std::os::raw::c_void,
     /// Callback function to release the current file stream object.
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Callback function to release the current file stream object.
@@ -401,6 +423,8 @@ pub struct FPDF_FILEHANDLER_ {
         ::std::option::Option<unsafe extern "C" fn(clientData: *mut ::std::os::raw::c_void)>,
     /// Callback function to retrieve the current file stream size.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Callback function to retrieve the current file stream size.
     ///
@@ -413,6 +437,8 @@ pub struct FPDF_FILEHANDLER_ {
         unsafe extern "C" fn(clientData: *mut ::std::os::raw::c_void) -> FPDF_DWORD,
     >,
     /// Callback function to read data from the current file stream.
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Callback function to read data from the current file stream.
@@ -439,6 +465,8 @@ pub struct FPDF_FILEHANDLER_ {
     >,
     /// Callback function to write data into the current file stream.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Callback function to write data into the current file stream.
     ///
@@ -463,6 +491,8 @@ pub struct FPDF_FILEHANDLER_ {
     >,
     /// Callback function to flush all internal accessing buffers.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Callback function to flush all internal accessing buffers.
     ///
@@ -475,6 +505,8 @@ pub struct FPDF_FILEHANDLER_ {
         unsafe extern "C" fn(clientData: *mut ::std::os::raw::c_void) -> FPDF_RESULT,
     >,
     /// Callback function to change file size.
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Callback function to change file size.
@@ -498,6 +530,8 @@ pub struct FPDF_FILEHANDLER_ {
 
 /// Struct for color scheme.
 ///
+/// C documentation:
+///
 /// ```text
 /// Struct for color scheme.
 /// Each should be a 32-bit value specifying the color, in 8888 ARGB format.
@@ -517,6 +551,8 @@ pub struct _IPDF_JsPlatform {
     /// Version number of the interface. Currently must be 2.
     pub version: ::std::os::raw::c_int,
     /// Method: app_alert
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: app_alert
@@ -548,6 +584,8 @@ pub struct _IPDF_JsPlatform {
     >,
     /// Method: app_beep
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: app_beep
     ///       Causes the system to play a sound.
@@ -566,6 +604,8 @@ pub struct _IPDF_JsPlatform {
         unsafe extern "C" fn(pThis: *mut _IPDF_JsPlatform, nType: ::std::os::raw::c_int),
     >,
     /// Method: app_response
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: app_response
@@ -616,6 +656,8 @@ pub struct _IPDF_JsPlatform {
     >,
     /// Method: Doc_getFilePath
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: Doc_getFilePath
     ///       Get the file path of the current document.
@@ -646,6 +688,8 @@ pub struct _IPDF_JsPlatform {
         ) -> ::std::os::raw::c_int,
     >,
     /// Method: Doc_mail
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: Doc_mail
@@ -695,6 +739,8 @@ pub struct _IPDF_JsPlatform {
     >,
     /// Method: Doc_print
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: Doc_print
     ///       Prints all or a specific number of pages of the document.
@@ -737,6 +783,8 @@ pub struct _IPDF_JsPlatform {
     >,
     /// Method: Doc_submitForm
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: Doc_submitForm
     ///       Send the form data to a specified URL.
@@ -763,6 +811,8 @@ pub struct _IPDF_JsPlatform {
     >,
     /// Method: Doc_gotoPage
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: Doc_gotoPage
     ///       Jump to a specified page.
@@ -780,6 +830,8 @@ pub struct _IPDF_JsPlatform {
         unsafe extern "C" fn(pThis: *mut _IPDF_JsPlatform, nPageNum: ::std::os::raw::c_int),
     >,
     /// Method: Field_browse
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: Field_browse
@@ -805,7 +857,9 @@ pub struct _IPDF_JsPlatform {
             length: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int,
     >,
-    /// Pointer for embedder-specific data. Unused by PDFium, and despite
+    /// Pointer for embedder-specific data
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Pointer for embedder-specific data. Unused by PDFium, and despite
@@ -846,6 +900,8 @@ pub struct _FPDF_SYSTEMTIME {
 pub struct _FPDF_FORMFILLINFO {
     /// Version number of the interface.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Version number of the interface.
     /// Version 1 contains stable interfaces. Version 2 has additional
@@ -861,6 +917,8 @@ pub struct _FPDF_FORMFILLINFO {
     /// ```
     pub version: ::std::os::raw::c_int,
     /// Method: Release
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: Release
@@ -879,6 +937,8 @@ pub struct _FPDF_FORMFILLINFO {
     /// ```
     pub Release: ::std::option::Option<unsafe extern "C" fn(pThis: *mut _FPDF_FORMFILLINFO)>,
     /// Method: FFI_Invalidate
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_Invalidate
@@ -916,6 +976,8 @@ pub struct _FPDF_FORMFILLINFO {
         ),
     >,
     /// Method: FFI_OutputSelectedRect
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_OutputSelectedRect
@@ -957,6 +1019,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_SetCursor
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_SetCursor
     ///       Set the Cursor shape.
@@ -974,6 +1038,8 @@ pub struct _FPDF_FORMFILLINFO {
         unsafe extern "C" fn(pThis: *mut _FPDF_FORMFILLINFO, nCursorType: ::std::os::raw::c_int),
     >,
     /// Method: FFI_SetTimer
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_SetTimer
@@ -1002,6 +1068,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_KillTimer
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_KillTimer
     ///       This method uninstalls a system timer, as set by an earlier call to
@@ -1021,6 +1089,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_GetLocalTime
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_GetLocalTime
     ///       This method receives the current local time on the system.
@@ -1039,6 +1109,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_OnChange
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_OnChange
     ///       This method will be invoked to notify the implementation when the
@@ -1054,6 +1126,8 @@ pub struct _FPDF_FORMFILLINFO {
     /// ```
     pub FFI_OnChange: ::std::option::Option<unsafe extern "C" fn(pThis: *mut _FPDF_FORMFILLINFO)>,
     /// Method: FFI_GetPage
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_GetPage
@@ -1086,6 +1160,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_GetCurrentPage
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_GetCurrentPage
     ///       This method receives the handle to the current page.
@@ -1107,6 +1183,8 @@ pub struct _FPDF_FORMFILLINFO {
         unsafe extern "C" fn(pThis: *mut _FPDF_FORMFILLINFO, document: FPDF_DOCUMENT) -> FPDF_PAGE,
     >,
     /// Method: FFI_GetRotation
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_GetRotation
@@ -1135,6 +1213,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_ExecuteNamedAction
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_ExecuteNamedAction
     ///       This method will execute a named action.
@@ -1157,6 +1237,8 @@ pub struct _FPDF_FORMFILLINFO {
         unsafe extern "C" fn(pThis: *mut _FPDF_FORMFILLINFO, namedAction: FPDF_BYTESTRING),
     >,
     /// Method: FFI_SetTextFieldFocus
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_SetTextFieldFocus
@@ -1188,6 +1270,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_DoURIAction
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_DoURIAction
     ///       Ask the implementation to navigate to a uniform resource identifier.
@@ -1213,6 +1297,8 @@ pub struct _FPDF_FORMFILLINFO {
         unsafe extern "C" fn(pThis: *mut _FPDF_FORMFILLINFO, bsURI: FPDF_BYTESTRING),
     >,
     /// Method: FFI_DoGoToAction
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_DoGoToAction
@@ -1253,6 +1339,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Pointer to IPDF_JSPLATFORM interface.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Pointer to IPDF_JSPLATFORM interface.
     /// Unused if PDFium is built without V8 support. Otherwise, if NULL, then
@@ -1261,6 +1349,8 @@ pub struct _FPDF_FORMFILLINFO {
     pub m_pJsPlatform: *mut IPDF_JSPLATFORM,
     /// Whether the XFA module is disabled when built with the XFA module.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Whether the XFA module is disabled when built with the XFA module.
     /// Interface Version:
@@ -1268,6 +1358,8 @@ pub struct _FPDF_FORMFILLINFO {
     /// ```
     pub xfa_disabled: FPDF_BOOL,
     /// Method: FFI_DisplayCaret
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_DisplayCaret
@@ -1303,6 +1395,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_GetCurrentPageIndex
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_GetCurrentPageIndex
     ///       This method will get the current page index.
@@ -1323,6 +1417,8 @@ pub struct _FPDF_FORMFILLINFO {
         ) -> ::std::os::raw::c_int,
     >,
     /// Method: FFI_SetCurrentPage
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_SetCurrentPage
@@ -1347,6 +1443,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_GotoURL
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_GotoURL
     ///       This method will navigate to the specified URL.
@@ -1369,6 +1467,8 @@ pub struct _FPDF_FORMFILLINFO {
         ),
     >,
     /// Method: FFI_GetPageViewRect
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_GetPageViewRect
@@ -1403,6 +1503,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_PageEvent
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_PageEvent
     ///       This method fires when pages have been added to or deleted from
@@ -1433,6 +1535,8 @@ pub struct _FPDF_FORMFILLINFO {
         ),
     >,
     /// Method: FFI_PopupMenu
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_PopupMenu
@@ -1467,6 +1571,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_OpenFile
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_OpenFile
     ///       This method will open the specified file with the specified mode.
@@ -1493,6 +1599,8 @@ pub struct _FPDF_FORMFILLINFO {
         ) -> *mut FPDF_FILEHANDLER,
     >,
     /// Method: FFI_EmailTo
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_EmailTo
@@ -1530,6 +1638,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_UploadTo
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_UploadTo
     ///       This method will upload the specified file stream to the
@@ -1557,6 +1667,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_GetPlatform
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_GetPlatform
     ///       This method will get the current platform.
@@ -1581,6 +1693,8 @@ pub struct _FPDF_FORMFILLINFO {
         ) -> ::std::os::raw::c_int,
     >,
     /// Method: FFI_GetLanguage
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_GetLanguage
@@ -1607,6 +1721,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_DownloadFromURL
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_DownloadFromURL
     ///       This method will download the specified file from the URL.
@@ -1628,6 +1744,8 @@ pub struct _FPDF_FORMFILLINFO {
         ) -> *mut FPDF_FILEHANDLER,
     >,
     /// Method: FFI_PostRequestURL
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_PostRequestURL
@@ -1663,6 +1781,8 @@ pub struct _FPDF_FORMFILLINFO {
     >,
     /// Method: FFI_PutRequestURL
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: FFI_PutRequestURL
     ///       This method will put the request to the server URL.
@@ -1688,6 +1808,8 @@ pub struct _FPDF_FORMFILLINFO {
         ) -> FPDF_BOOL,
     >,
     /// Method: FFI_OnFocusChange
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_OnFocusChange
@@ -1717,6 +1839,8 @@ pub struct _FPDF_FORMFILLINFO {
         ),
     >,
     /// Method: FFI_DoURIActionWithKeyboardModifier
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: FFI_DoURIActionWithKeyboardModifier
@@ -1755,7 +1879,9 @@ pub struct _FPDF_FORMFILLINFO {
 pub struct _FX_FILEAVAIL {
     /// Version number of the interface. Must be 1.
     pub version: ::std::os::raw::c_int,
-    /// Reports if the specified data section is currently available. A section is
+    /// Reports if the specified data section is currently available
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Reports if the specified data section is currently available. A section is
@@ -1784,6 +1910,8 @@ pub struct _FX_DOWNLOADHINTS {
     pub version: ::std::os::raw::c_int,
     /// Add a section to be downloaded.
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Add a section to be downloaded.
     ///
@@ -1805,12 +1933,6 @@ pub struct _FX_DOWNLOADHINTS {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct __fsid_t {
-    pub __val: [::std::os::raw::c_int; 2usize],
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
 pub struct FPDF_IMAGEOBJ_METADATA {
     /// The image width in pixels.
     pub width: ::std::os::raw::c_uint,
@@ -1824,7 +1946,9 @@ pub struct FPDF_IMAGEOBJ_METADATA {
     pub bits_per_pixel: ::std::os::raw::c_uint,
     /// The image's colorspace. See above for the list of FPDF_COLORSPACE_*.
     pub colorspace: ::std::os::raw::c_int,
-    /// The image's marked content ID. Useful for pairing with associated alt-text.
+    /// The image's marked content ID
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// The image's marked content ID. Useful for pairing with associated alt-text.
@@ -1861,7 +1985,9 @@ pub struct tm {
     pub tm_zone: *const ::std::os::raw::c_char,
 }
 
-/// POSIX.1b structure for a time value.  This is like a `struct timeval' but
+/// POSIX.1b structure for a time value
+///
+/// C documentation:
 ///
 /// ```text
 /// POSIX.1b structure for a time value.  This is like a `struct timeval' but
@@ -1890,27 +2016,6 @@ pub struct sigevent {
     _unused: [u8; 0],
 }
 
-/// POSIX.1-2008: the locale_t type, representing a locale context
-///
-/// ```text
-/// POSIX.1-2008: the locale_t type, representing a locale context
-///(implementation-namespace version).  This type should be treated
-///as opaque by applications; some details are exposed for the sake of
-///efficiency in e.g. ctype functions.
-/// ```
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct __locale_struct {
-    /// 13 = __LC_LAST.
-    pub __locales: [*mut __locale_data; 13usize],
-    /// To increase the speed of this solution we add some special members.
-    pub __ctype_b: *const ::std::os::raw::c_ushort,
-    pub __ctype_tolower: *const ::std::os::raw::c_int,
-    pub __ctype_toupper: *const ::std::os::raw::c_int,
-    /// Note: LC_ALL is not a valid index into this array.
-    pub __names: [*const ::std::os::raw::c_char; 13usize],
-}
-
 /// Interface for unsupported feature notifications.
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1918,6 +2023,8 @@ pub struct _UNSUPPORT_INFO {
     /// Version number of the interface. Must be 1.
     pub version: ::std::os::raw::c_int,
     /// Unsupported object notification function.
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Unsupported object notification function.
@@ -1939,6 +2046,8 @@ pub struct _IFSDK_PAUSE {
     /// Version number of the interface. Currently must be 1.
     pub version: ::std::os::raw::c_int,
     /// Method: NeedToPauseNow
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: NeedToPauseNow
@@ -1965,6 +2074,8 @@ pub struct FPDF_FILEWRITE_ {
     /// Version number of the interface. Currently must be 1.
     pub version: ::std::os::raw::c_int,
     /// Method: WriteBlock
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: WriteBlock
@@ -1993,6 +2104,8 @@ pub struct FPDF_FILEWRITE_ {
 
 /// Interface: FPDF_SYSFONTINFO
 ///
+/// C documentation:
+///
 /// ```text
 /// Interface: FPDF_SYSFONTINFO
 ///          Interface for getting system font information and font mapping
@@ -2003,6 +2116,8 @@ pub struct _FPDF_SYSFONTINFO {
     /// Version number of the interface. Currently must be 1.
     pub version: ::std::os::raw::c_int,
     /// Method: Release
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: Release
@@ -2021,6 +2136,8 @@ pub struct _FPDF_SYSFONTINFO {
     /// ```
     pub Release: ::std::option::Option<unsafe extern "C" fn(pThis: *mut _FPDF_SYSFONTINFO)>,
     /// Method: EnumFonts
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: EnumFonts
@@ -2044,6 +2161,8 @@ pub struct _FPDF_SYSFONTINFO {
         unsafe extern "C" fn(pThis: *mut _FPDF_SYSFONTINFO, pMapper: *mut ::std::os::raw::c_void),
     >,
     /// Method: MapFont
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: MapFont
@@ -2089,6 +2208,8 @@ pub struct _FPDF_SYSFONTINFO {
     >,
     /// Method: GetFont
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: GetFont
     ///          Get a handle to a particular font by its internal ID
@@ -2112,6 +2233,8 @@ pub struct _FPDF_SYSFONTINFO {
         ) -> *mut ::std::os::raw::c_void,
     >,
     /// Method: GetFontData
+    ///
+    /// C documentation:
     ///
     /// ```text
     /// Method: GetFontData
@@ -2146,6 +2269,8 @@ pub struct _FPDF_SYSFONTINFO {
     >,
     /// Method: GetFaceName
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: GetFaceName
     ///          Get face name from a font handle
@@ -2173,6 +2298,8 @@ pub struct _FPDF_SYSFONTINFO {
     >,
     /// Method: GetFontCharset
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: GetFontCharset
     ///          Get character set information for a font handle
@@ -2194,6 +2321,8 @@ pub struct _FPDF_SYSFONTINFO {
     >,
     /// Method: DeleteFont
     ///
+    /// C documentation:
+    ///
     /// ```text
     /// Method: DeleteFont
     ///          Delete a font handle
@@ -2214,6 +2343,8 @@ pub struct _FPDF_SYSFONTINFO {
 
 /// Struct: FPDF_CharsetFontMap
 ///
+/// C documentation:
+///
 /// ```text
 /// Struct: FPDF_CharsetFontMap
 ///    Provides the name of a font to use for a given charset value.
@@ -2226,15 +2357,6 @@ pub struct FPDF_CharsetFontMap_ {
     /// Name of default font to use with that charset.
     pub fontname: *const ::std::os::raw::c_char,
 }
-
-/// 13 = __LC_LAST.
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct __locale_data {
-    pub _address: u8,
-}
-
-pub type wchar_t = ::std::os::raw::c_int;
 
 /// PDF text rendering modes
 pub type FPDF_TEXT_RENDERMODE = ::std::os::raw::c_int;
@@ -2321,7 +2443,9 @@ pub type FPDF_WCHAR = ::std::os::raw::c_ushort;
 /// Public PDFium API type for byte strings.
 pub type FPDF_BYTESTRING = *const ::std::os::raw::c_char;
 
-/// The public PDFium API always uses UTF-16LE encoded wide strings, each
+/// The public PDFium API always uses UTF-16LE encoded wide strings
+///
+/// C documentation:
 ///
 /// ```text
 /// The public PDFium API always uses UTF-16LE encoded wide strings, each
@@ -2331,6 +2455,8 @@ pub type FPDF_WIDESTRING = *const FPDF_WCHAR;
 
 /// Structure for persisting a string beyond the duration of a callback.
 ///
+/// C documentation:
+///
 /// ```text
 /// Structure for persisting a string beyond the duration of a callback.
 /// Note: although represented as a char*, string may be interpreted as
@@ -2339,6 +2465,8 @@ pub type FPDF_WIDESTRING = *const FPDF_WCHAR;
 pub type FPDF_BSTR = FPDF_BSTR_;
 
 /// For Windows programmers: In most cases it's OK to treat FPDF_WIDESTRING as a
+///
+/// C documentation:
 ///
 /// ```text
 /// For Windows programmers: In most cases it's OK to treat FPDF_WIDESTRING as a
@@ -2351,7 +2479,9 @@ pub type FPDF_BSTR = FPDF_BSTR_;
 /// ```
 pub type FPDF_STRING = *const ::std::os::raw::c_char;
 
-/// Matrix for transformation, in the form \[a b c d e f\], equivalent to:
+/// Matrix for transformation
+///
+/// C documentation:
 ///
 /// ```text
 /// Matrix for transformation, in the form \[a b c d e f\], equivalent to:
@@ -2404,6 +2534,8 @@ pub type FPDF_OBJECT_TYPE = ::std::os::raw::c_int;
 
 /// PDF renderer types - Experimental.
 ///
+/// C documentation:
+///
 /// ```text
 /// PDF renderer types - Experimental.
 /// Selection of 2D graphics library to use for rendering to FPDF_BITMAPs.
@@ -2415,6 +2547,8 @@ pub type FPDF_LIBRARY_CONFIG = FPDF_LIBRARY_CONFIG_;
 
 /// Structure for file reading or writing (I/O).
 ///
+/// C documentation:
+///
 /// ```text
 /// Structure for file reading or writing (I/O).
 ///
@@ -2425,6 +2559,8 @@ pub type FPDF_FILEHANDLER = FPDF_FILEHANDLER_;
 
 /// Struct for color scheme.
 ///
+/// C documentation:
+///
 /// ```text
 /// Struct for color scheme.
 /// Each should be a 32-bit value specifying the color, in 8888 ARGB format.
@@ -2434,6 +2570,8 @@ pub type FPDF_COLORSCHEME = FPDF_COLORSCHEME_;
 pub type IPDF_JSPLATFORM = _IPDF_JsPlatform;
 
 /// Function signature for the callback function passed to the FFI_SetTimer
+///
+/// C documentation:
 ///
 /// ```text
 /// Function signature for the callback function passed to the FFI_SetTimer
@@ -2459,7 +2597,9 @@ pub type FX_FILEAVAIL = _FX_FILEAVAIL;
 /// Download hints interface. Used to receive hints for further downloading.
 pub type FX_DOWNLOADHINTS = _FX_DOWNLOADHINTS;
 
-/// The file identifier entry type. See section 14.4 "File Identifiers" of the
+/// The file identifier entry type
+///
+/// C documentation:
 ///
 /// ```text
 /// The file identifier entry type. See section 14.4 "File Identifiers" of the
@@ -2467,203 +2607,13 @@ pub type FX_DOWNLOADHINTS = _FX_DOWNLOADHINTS;
 /// ```
 pub type FPDF_FILEIDTYPE = ::std::os::raw::c_uint;
 
-/// Convenience types.
-pub type __u_char = ::std::os::raw::c_uchar;
-
-pub type __u_short = ::std::os::raw::c_ushort;
-
-pub type __u_int = ::std::os::raw::c_uint;
-
-pub type __u_long = ::std::os::raw::c_ulong;
-
-/// Fixed-size types, underlying types depend on word size and compiler.
-pub type __int8_t = ::std::os::raw::c_schar;
-
-pub type __uint8_t = ::std::os::raw::c_uchar;
-
-pub type __int16_t = ::std::os::raw::c_short;
-
-pub type __uint16_t = ::std::os::raw::c_ushort;
-
-pub type __int32_t = ::std::os::raw::c_int;
-
-pub type __uint32_t = ::std::os::raw::c_uint;
-
-pub type __int64_t = ::std::os::raw::c_long;
-
-pub type __uint64_t = ::std::os::raw::c_ulong;
-
-/// Smallest types with at least a given width.
-pub type __int_least8_t = __int8_t;
-
-pub type __uint_least8_t = __uint8_t;
-
-pub type __int_least16_t = __int16_t;
-
-pub type __uint_least16_t = __uint16_t;
-
-pub type __int_least32_t = __int32_t;
-
-pub type __uint_least32_t = __uint32_t;
-
-pub type __int_least64_t = __int64_t;
-
-pub type __uint_least64_t = __uint64_t;
-
-pub type __quad_t = ::std::os::raw::c_long;
-
-pub type __u_quad_t = ::std::os::raw::c_ulong;
-
-pub type __intmax_t = ::std::os::raw::c_long;
-
-pub type __uintmax_t = ::std::os::raw::c_ulong;
-
-pub type __dev_t = ::std::os::raw::c_ulong;
-
-pub type __uid_t = ::std::os::raw::c_uint;
-
-pub type __gid_t = ::std::os::raw::c_uint;
-
-pub type __ino_t = ::std::os::raw::c_ulong;
-
-pub type __ino64_t = ::std::os::raw::c_ulong;
-
-pub type __mode_t = ::std::os::raw::c_uint;
-
-pub type __nlink_t = ::std::os::raw::c_ulong;
-
-pub type __off_t = ::std::os::raw::c_long;
-
-pub type __off64_t = ::std::os::raw::c_long;
-
-pub type __pid_t = ::std::os::raw::c_int;
-
-pub type __clock_t = ::std::os::raw::c_long;
-
-pub type __rlim_t = ::std::os::raw::c_ulong;
-
-pub type __rlim64_t = ::std::os::raw::c_ulong;
-
-pub type __id_t = ::std::os::raw::c_uint;
-
 pub type __time_t = ::std::os::raw::c_long;
-
-pub type __useconds_t = ::std::os::raw::c_uint;
-
-pub type __suseconds_t = ::std::os::raw::c_long;
-
-pub type __suseconds64_t = ::std::os::raw::c_long;
-
-pub type __daddr_t = ::std::os::raw::c_int;
-
-pub type __key_t = ::std::os::raw::c_int;
-
-pub type __clockid_t = ::std::os::raw::c_int;
-
-pub type __timer_t = *mut ::std::os::raw::c_void;
-
-pub type __blksize_t = ::std::os::raw::c_long;
-
-pub type __blkcnt_t = ::std::os::raw::c_long;
-
-pub type __blkcnt64_t = ::std::os::raw::c_long;
-
-pub type __fsblkcnt_t = ::std::os::raw::c_ulong;
-
-pub type __fsblkcnt64_t = ::std::os::raw::c_ulong;
-
-pub type __fsfilcnt_t = ::std::os::raw::c_ulong;
-
-pub type __fsfilcnt64_t = ::std::os::raw::c_ulong;
-
-pub type __fsword_t = ::std::os::raw::c_long;
-
-pub type __ssize_t = ::std::os::raw::c_long;
 
 pub type __syscall_slong_t = ::std::os::raw::c_long;
 
 pub type __syscall_ulong_t = ::std::os::raw::c_ulong;
 
-/// These few don't really vary by system, they always correspond
-///
-/// ```text
-/// These few don't really vary by system, they always correspond
-///to one of the other defined types.
-/// ```
-pub type __loff_t = __off64_t;
-
-pub type __caddr_t = *mut ::std::os::raw::c_char;
-
-pub type __intptr_t = ::std::os::raw::c_long;
-
-pub type __socklen_t = ::std::os::raw::c_uint;
-
-/// C99: An integer type that can be accessed as an atomic entity,
-///
-/// ```text
-/// C99: An integer type that can be accessed as an atomic entity,
-///even in the presence of asynchronous interrupts.
-///It is not currently necessary for this to be machine-specific.
-/// ```
-pub type __sig_atomic_t = ::std::os::raw::c_int;
-
-/// Signed.
-pub type int_least8_t = __int_least8_t;
-
-pub type int_least16_t = __int_least16_t;
-
-pub type int_least32_t = __int_least32_t;
-
-pub type int_least64_t = __int_least64_t;
-
-/// Unsigned.
-pub type uint_least8_t = __uint_least8_t;
-
-pub type uint_least16_t = __uint_least16_t;
-
-pub type uint_least32_t = __uint_least32_t;
-
-pub type uint_least64_t = __uint_least64_t;
-
-/// Signed.
-pub type int_fast8_t = ::std::os::raw::c_schar;
-
-pub type int_fast16_t = ::std::os::raw::c_long;
-
-pub type int_fast32_t = ::std::os::raw::c_long;
-
-pub type int_fast64_t = ::std::os::raw::c_long;
-
-/// Unsigned.
-pub type uint_fast8_t = ::std::os::raw::c_uchar;
-
-pub type uint_fast16_t = ::std::os::raw::c_ulong;
-
-pub type uint_fast32_t = ::std::os::raw::c_ulong;
-
-pub type uint_fast64_t = ::std::os::raw::c_ulong;
-
-/// Largest integral types.
-pub type intmax_t = __intmax_t;
-
-pub type uintmax_t = __uintmax_t;
-
-/// Returned by `clock'.
-pub type clock_t = __clock_t;
-
 pub type time_t = __time_t;
-
-/// Clock ID used in clock and timer functions.
-pub type clockid_t = __clockid_t;
-
-/// Timer ID returned by `timer_create'.
-pub type timer_t = __timer_t;
-
-pub type pid_t = __pid_t;
-
-pub type __locale_t = *mut __locale_struct;
-
-pub type locale_t = __locale_t;
 
 /// Interface for unsupported feature notifications.
 pub type UNSUPPORT_INFO = _UNSUPPORT_INFO;
@@ -2682,6 +2632,8 @@ pub type FPDF_FILEWRITE = FPDF_FILEWRITE_;
 
 /// Interface: FPDF_SYSFONTINFO
 ///
+/// C documentation:
+///
 /// ```text
 /// Interface: FPDF_SYSFONTINFO
 ///          Interface for getting system font information and font mapping
@@ -2689,6 +2641,8 @@ pub type FPDF_FILEWRITE = FPDF_FILEWRITE_;
 pub type FPDF_SYSFONTINFO = _FPDF_SYSFONTINFO;
 
 /// Struct: FPDF_CharsetFontMap
+///
+/// C documentation:
 ///
 /// ```text
 /// Struct: FPDF_CharsetFontMap

@@ -214,7 +214,7 @@ mod tests {
                 PdfiumBitmapFormat::Bgra,
                 Some(PdfiumColor::WHITE),
                 &matrix,
-                0,
+                PdfiumRenderFlags::empty(),
                 None,
             )
             .unwrap();

@@ -26,7 +26,7 @@ use crate::{
     guard::lib,
     page::boundaries::PdfiumPageBoundaries,
     pdfium_constants,
-    pdfium_types::FPDF_PAGE,
+    pdfium_types::{FPDF_PAGE, FS_MATRIX, FS_RECTF},
 };
 
 /// # Rust interface to FPDF_PAGE
@@ -127,7 +127,7 @@ impl PdfiumPage {
     ///         PdfiumBitmapFormat::Bgra,
     ///         Some(PdfiumColor::WHITE),
     ///         &matrix,
-    ///         0,
+    ///         PdfiumRenderFlags::empty(),
     ///         None,
     ///     )
     /// }
@@ -140,7 +140,7 @@ impl PdfiumPage {
         format: PdfiumBitmapFormat,
         background: Option<PdfiumColor>,
         matrix: &PdfiumMatrix,
-        render_flags: i32,
+        render_flags: PdfiumRenderFlags,
         clipping: Option<PdfiumRect>,
     ) -> PdfiumResult<PdfiumBitmap> {
         let mut bitmap = PdfiumBitmap::empty(width, height, format)?;
@@ -176,7 +176,7 @@ impl PdfiumPage {
         &self,
         bitmap: &mut PdfiumBitmap,
         matrix: &PdfiumMatrix,
-        render_flags: i32,
+        render_flags: PdfiumRenderFlags,
         clipping: Option<PdfiumRect>,
     ) {
         let clipping = clipping.unwrap_or(PdfiumRect::new(
@@ -185,7 +185,15 @@ impl PdfiumPage {
             bitmap.width() as f32,
             bitmap.height() as f32,
         ));
-        lib().FPDF_RenderPageBitmapWithMatrix(bitmap, self, matrix, &clipping, render_flags);
+        let clipping: FS_RECTF = (&clipping).into();
+        let matrix: FS_MATRIX = matrix.into();
+        lib().FPDF_RenderPageBitmapWithMatrix(
+            bitmap,
+            self,
+            &matrix,
+            &clipping,
+            render_flags.bits(),
+        );
     }
 }
 
