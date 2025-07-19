@@ -22,12 +22,13 @@ PDFium-rs is used as one of the two PDF engines behind [MView6](https://github.c
 
 - **Thread-safe static library access** - Initialize once, use everywhere
 - **Lifetime-free API** - No complex lifetime management for documents, pages, and bitmaps
+- **Access to C API** - Safe access to the low level C API is [possible](#using-the-pdfium-c-api)
+- **Renderer selection** - [Select](#skia-or-agg) either `Skia` or `AGG` (Aggregated Graphics) as renderer for PDFium
 - **Interactive rendering focus** - Optimized render functions for real-time applications
-- **Simplified design** - Clean API that closely follows PDFium's C interface
 
 ## Why This Crate?
 
-While there are existing PDFium bindings for Rust, this crate takes a different approach focused on ease of use and thread safety:
+While there are existing PDFium bindings for Rust, this crate takes a different approach focused on ease of use and (thread) safety:
 
 ### Thread-Safe Static Access
 
@@ -37,9 +38,9 @@ This library uses a modern, static and thread-safe initialization pattern with `
 
 Unlike other implementations, this crate doesn't impose lifetimes on structs representing documents, pages, bitmaps and other structures. This makes integration into your application much simpler - you can store these objects wherever you need them without fighting the borrow checker.
 
-### Clean Integration
+### Access to C API without `unsafe` functions
 
-Aims to follow the PDFium C-language interface, while still providing a high level safe Rust integration.
+While focussing on the high level safe Rust integration, PDFium-rs also provides safe public access to the C API. Unsafe pointers to C structures and memory are transparently replaced with their safe Rust counterparts.
 
 ### Interactive Application Focus
 
@@ -86,6 +87,65 @@ fn main() -> PdfiumResult<()> {
 }
 ```
 
+## Using the PDFium C API
+
+This is the same example, but now using the C API of PDFium directly.
+
+- Using the C API is safe, no `unsafe` code blocks in your code
+- Access the C API through [`lib`] or [`try_lib`]
+- You can mix high-level Rust and C, shown here with the `bitmap.save` operation
+
+```rust
+use pdfium::*;
+
+struct App {
+    doc: PdfiumDocument,
+}
+
+impl App {
+    pub fn new(filename: &str) -> PdfiumResult<Self> {
+        Ok(App {
+            doc: PdfiumDocument::new_from_path(filename, None)?,
+        })
+    }
+    pub fn render_to_file(&self, filename: &str, index: i32) -> PdfiumResult<()> {
+        let page = lib().FPDF_LoadPage(&self.doc, index)?;
+        let mut left = 0.0;
+        let mut bottom = 0.0;
+        let mut right = 0.0;
+        let mut top = 0.0;
+        lib().FPDFPage_GetMediaBox(&page, &mut left, &mut bottom, &mut right, &mut top)?;
+        let height = 1080;
+        let zoom = height as f32 / (top - bottom);
+        let width = ((right - left) * zoom) as i32;
+        let matrix = PdfiumMatrix {
+            a: zoom,
+            b: 0.0,
+            c: 0.0,
+            d: zoom,
+            e: 0.0,
+            f: 0.0,
+        };
+        let bitmap = lib().FPDFBitmap_Create(width, height, 1)?;
+        lib().FPDFBitmap_FillRect(&bitmap, 0, 0, width, height, 0xffffffff)?;
+        let clipping = PdfiumRect {
+            left: 0.0,
+            top: height as f32,
+            right: width as f32,
+            bottom: 0.0,
+        };
+        lib().FPDF_RenderPageBitmapWithMatrix(&bitmap, &page, &matrix, &clipping, 0);
+        bitmap.save(filename, image::ImageFormat::Png)?;
+        Ok(())
+    }
+}
+
+fn main() -> PdfiumResult<()> {
+    let app = App::new("resources/groningen.pdf")?;
+    app.render_to_file("groningen-page-1-c.png", 0)
+}
+```
+
 ## Installation
 
 Add this to your `Cargo.toml`:
@@ -95,9 +155,21 @@ Add this to your `Cargo.toml`:
 pdfium = "0.4.2"
 ```
 
+### Dynamic library
+
+PDFium-rs needs to load the PDFium dynamic library (`libpdfium.so`, `pdfium.dll` or `libpdfium.dylib`) from your system.
+
+Pre-built libraries are available for all major platforms from <https://github.com/bblanchon/pdfium-binaries/releases>.
+
+You can place the library in a system location, with your application or in a custom location. You can specify the location using [`set_library_location`] (default is the current directory). PDFium-rs will try the specified location first, and then seach system locations. On windows you can place it in the same directory as the executable, on linux it is best to store it in a location like `/usr/lib/your_app` and specify it using [`set_library_location`].
+
+### `Skia` or `AGG`
+
+PDFium currently supports both renderers. You can select `Skia` over `AGG` (Aggregated Graphics) using the [`set_use_skia`] function
+
 ## Current Status
 
-⚠️ **Work in Progress** - This crate is actively being developed and currently implements a focused subset of PDFium's functionality. While it covers the core rendering and document manipulation features needed for most interactive applications, it doesn't yet provide the full feature set available in more comprehensive PDFium bindings.
+**Work in Progress** - This crate is actively being developed and currently implements a focused subset of PDFium's functionality. While it covers the core rendering and document manipulation features needed for most interactive applications, it doesn't yet provide the full feature set available in more comprehensive PDFium bindings.
 
 ### What's Available
 

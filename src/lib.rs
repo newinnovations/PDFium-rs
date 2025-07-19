@@ -55,6 +55,7 @@ pub use form_fill_info::PdfiumFormFillInfo;
 pub use guard::lib;
 pub use guard::set_library_location;
 pub use guard::set_use_skia;
+pub use guard::try_lib;
 pub use lib_config::PdfiumLibraryConfig;
 pub use matrix::PdfiumMatrix;
 pub use page::PdfiumPage;
