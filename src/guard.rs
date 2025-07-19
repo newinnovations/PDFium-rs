@@ -20,43 +20,42 @@
 use parking_lot::{ReentrantMutex, ReentrantMutexGuard};
 use std::sync::{LazyLock, Mutex, OnceLock, atomic::AtomicBool};
 
-use crate::{
-    PdfiumError,
-    error::PdfiumResult,
-    pdfium_sys::{Pdfium, pdfium::PdfiumBindings},
-};
+use crate::{PdfiumError, error::PdfiumResult, pdfium_sys::pdfium::Pdfium};
 
-static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Pdfium>>> = OnceLock::new();
+static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Box<Pdfium>>>> = OnceLock::new();
 
 static LIBRARY_LOCATION: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::from(".")));
 
 static SKIA_RENDERER: AtomicBool = AtomicBool::new(false);
 
-fn load_pdfium() -> &'static ReentrantMutex<PdfiumResult<Pdfium>> {
+fn load_pdfium() -> &'static ReentrantMutex<PdfiumResult<Box<Pdfium>>> {
     PDFIUM.get_or_init(|| {
         let directory = LIBRARY_LOCATION
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .to_string();
         let use_skia = SKIA_RENDERER.load(std::sync::atomic::Ordering::Relaxed);
-        let pdfium = Pdfium::load_from_directory(&directory)
-            .or_else(|_| Pdfium::load())
-            .map(|bindings| Pdfium::new(bindings, use_skia));
+        let pdfium = Pdfium::load_from_directory(&directory).or_else(|_| Pdfium::load());
+
+        if let Ok(pdfium) = &pdfium {
+            pdfium.init(use_skia);
+        }
+
         ReentrantMutex::new(pdfium)
     })
 }
 
 /// A guard that holds the reentrant mutex lock and provides access to [`PdfiumBindings`]
 pub struct PdfiumGuard {
-    _guard: ReentrantMutexGuard<'static, PdfiumResult<Pdfium>>,
-    pdfium: *const Pdfium,
+    _guard: ReentrantMutexGuard<'static, PdfiumResult<Box<Pdfium>>>,
+    pdfium: *const Box<Pdfium>,
 }
 
 impl PdfiumGuard {
-    fn new(guard: ReentrantMutexGuard<'static, PdfiumResult<Pdfium>>) -> PdfiumResult<Self> {
+    fn new(guard: ReentrantMutexGuard<'static, PdfiumResult<Box<Pdfium>>>) -> PdfiumResult<Self> {
         match guard.as_ref() {
             Ok(p) => Ok(PdfiumGuard {
-                pdfium: p as *const Pdfium,
+                pdfium: p as *const Box<Pdfium>,
                 _guard: guard,
             }),
             Err(e) => Err(PdfiumError::LibraryError(e.to_string())),
@@ -65,11 +64,11 @@ impl PdfiumGuard {
 }
 
 impl std::ops::Deref for PdfiumGuard {
-    type Target = PdfiumBindings;
+    type Target = Pdfium;
 
     fn deref(&self) -> &Self::Target {
         // Safety: The pointer is valid as long as the guard is held
-        unsafe { (*self.pdfium).bindings() }
+        unsafe { &(*self.pdfium) }
     }
 }
 

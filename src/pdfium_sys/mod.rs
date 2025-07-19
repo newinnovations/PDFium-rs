@@ -28,39 +28,21 @@ use std::{
 
 use libloading::{Library, Symbol};
 
-use crate::{PdfiumError, PdfiumLibraryConfig, pdfium_sys::pdfium::PdfiumBindings};
-
-pub struct Pdfium {
-    bindings: Box<PdfiumBindings>,
-}
+use crate::{PdfiumError, PdfiumLibraryConfig, pdfium_sys::pdfium::Pdfium};
 
 impl Pdfium {
     /// Tries to load the PDFium dynamic library from the system
     ///
     /// The locations in which the library is searched for are platform specific and cannot
     /// be adjusted in a portable manner.
-    pub fn load() -> Result<Box<PdfiumBindings>, PdfiumError> {
+    pub fn load() -> Result<Box<Pdfium>, PdfiumError> {
         Self::load_with_filename(Self::library_filename())
     }
 
     /// Tries to load the PDFium dynamic library from the specifed directory
-    pub fn load_from_directory<P: AsRef<Path>>(
-        directory: P,
-    ) -> Result<Box<PdfiumBindings>, PdfiumError> {
+    pub fn load_from_directory<P: AsRef<Path>>(directory: P) -> Result<Box<Pdfium>, PdfiumError> {
         let filename = directory.as_ref().join(Self::library_filename());
         Self::load_with_filename(filename)
-    }
-
-    /// Returns the [`PdfiumBindings`] wrapped by this instance of [`Pdfium`].
-    pub fn bindings(&self) -> &PdfiumBindings {
-        self.bindings.as_ref()
-    }
-
-    /// Creates a new [Pdfium] instance from the given external Pdfium library bindings.
-    pub fn new(bindings: Box<PdfiumBindings>, use_skia: bool) -> Self {
-        let config = PdfiumLibraryConfig::new(use_skia);
-        bindings.FPDF_InitLibraryWithConfig(&config);
-        Self { bindings }
     }
 
     /// Tries to load the PDFium dynamic library.
@@ -75,13 +57,11 @@ impl Pdfium {
     ///
     /// When a plain library filename is supplied, the locations in which the library is searched for
     /// are platform specific and cannot be adjusted in a portable manner.
-    fn load_with_filename<P: AsRef<OsStr>>(
-        filename: P,
-    ) -> Result<Box<PdfiumBindings>, PdfiumError> {
+    fn load_with_filename<P: AsRef<OsStr>>(filename: P) -> Result<Box<Pdfium>, PdfiumError> {
         // let lib_name = library_filename("pdfium");
         let lib = unsafe { Library::new(filename) };
         let bindings = match lib {
-            Ok(lib) => PdfiumBindings::new(lib),
+            Ok(lib) => Pdfium::new(lib),
             Err(e) => Err(PdfiumError::LibraryError(e.to_string())),
         };
         bindings.map(Box::new)
@@ -93,6 +73,17 @@ impl Pdfium {
     /// the library name to construct the filename.
     fn library_filename() -> OsString {
         libloading::library_filename("pdfium")
+    }
+
+    /// Initializes the PDFium library
+    ///
+    /// The `use_skia` parameter controls the use of the Skia renderer. Default renderer
+    /// for PDFium is AGG (Aggregated Graphics).
+    ///
+    /// You have to call this function before you can call any PDF processing function.
+    pub fn init(&self, use_skia: bool) {
+        let config = PdfiumLibraryConfig::new(use_skia);
+        self.FPDF_InitLibraryWithConfig(&config);
     }
 }
 

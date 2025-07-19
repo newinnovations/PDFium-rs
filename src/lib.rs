@@ -36,8 +36,7 @@ mod pdfium_sys;
 mod rect;
 mod x_object;
 
-pub use pdfium_sys::Pdfium;
-pub use pdfium_sys::pdfium::PdfiumBindings;
+pub use pdfium_sys::pdfium::Pdfium;
 pub use pdfium_sys::pdfium_constants;
 pub use pdfium_sys::pdfium_types;
 

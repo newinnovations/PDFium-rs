@@ -33,13 +33,13 @@ use crate::{
 };
 use libloading::Library;
 
-/// # Low level Rust bindings to the PDFium C library
+/// # Rust bindings to the PDFium C library
 ///
 /// These functions aim to fully follow the original API, while also providing a safe interface by replacing
 /// all pointer based parameters with safe Rust replacements. The same applies to the function results
 /// whenever possible.
 #[allow(non_snake_case)]
-pub struct PdfiumBindings {
+pub struct Pdfium {
     fn_FPDF_InitLibraryWithConfig: unsafe extern "C" fn(config: *const FPDF_LIBRARY_CONFIG),
     fn_FPDF_InitLibrary: unsafe extern "C" fn(),
     fn_FPDF_DestroyLibrary: unsafe extern "C" fn(),
@@ -193,7 +193,7 @@ pub struct PdfiumBindings {
     lib: Library,
 }
 
-impl PdfiumBindings {
+impl Pdfium {
     pub fn new(lib: Library) -> Result<Self, PdfiumError> {
         Ok(Self {
             fn_FPDF_InitLibraryWithConfig: *(lib_get(&lib, "FPDF_InitLibraryWithConfig")?),
@@ -272,7 +272,7 @@ impl PdfiumBindings {
     }
 }
 
-impl PdfiumBindings {
+impl Pdfium {
     /// C documentation for FPDF_InitLibraryWithConfig:
     ///
     /// ```text
