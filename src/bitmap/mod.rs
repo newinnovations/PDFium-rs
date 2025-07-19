@@ -37,6 +37,7 @@ impl PdfiumBitmap {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
+            #[cfg(feature = "debug_print")]
             println!("New bitmap {handle:?}");
             Ok(Self { handle })
         }
@@ -150,6 +151,7 @@ impl Drop for PdfiumBitmap {
     /// Closes this [PdfiumBitmap], releasing held memory.
     #[inline]
     fn drop(&mut self) {
+        #[cfg(feature = "debug_print")]
         println!("Closing bitmap {:?}", self.handle);
         lib().FPDFBitmap_Destroy(self);
     }

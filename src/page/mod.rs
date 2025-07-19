@@ -76,6 +76,7 @@ impl PdfiumPage {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
+            #[cfg(feature = "debug_print")]
             println!("New page {handle:?}");
             Ok(Self { handle })
         }
@@ -208,6 +209,7 @@ impl Drop for PdfiumPage {
     /// # Closes this [`PdfiumPage`], releasing held memory.
     #[inline]
     fn drop(&mut self) {
+        #[cfg(feature = "debug_print")]
         println!("Closing page {:?}", self.handle);
         lib().FPDF_ClosePage(self);
     }

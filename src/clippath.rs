@@ -33,7 +33,8 @@ impl PdfiumClipPath {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            println!("New page {handle:?}");
+            #[cfg(feature = "debug_print")]
+            println!("New clip_path {handle:?}");
             Ok(Self { handle })
         }
     }
@@ -48,7 +49,8 @@ impl From<&PdfiumClipPath> for FPDF_CLIPPATH {
 impl Drop for PdfiumClipPath {
     /// # Closes this [`PdfiumClipPath`], releasing held memory.
     fn drop(&mut self) {
-        println!("Closing ClipPath {:?}", self.handle);
+        #[cfg(feature = "debug_print")]
+        println!("Closing clip_path {:?}", self.handle);
         lib().FPDF_DestroyClipPath(self);
     }
 }

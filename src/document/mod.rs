@@ -55,6 +55,8 @@ impl PdfiumDocument {
                 _ => PdfiumError::Unknown,
             })
         } else {
+            #[cfg(feature = "debug_print")]
+            println!("New document {handle:?}");
             Ok(Self {
                 handle,
                 _reader: reader,
@@ -99,6 +101,7 @@ impl Drop for PdfiumDocument {
     /// Closes this [PdfiumDocument], releasing held memory.
     #[inline]
     fn drop(&mut self) {
+        #[cfg(feature = "debug_print")]
         println!("Closing document {:?}", self.handle);
         lib().FPDF_CloseDocument(self);
     }

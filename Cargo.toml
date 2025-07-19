@@ -14,3 +14,6 @@ bitflags = "2.9.1"
 libloading = "0.8.8"
 image = "0.25.6"
 parking_lot = "0.12.4"
+
+[features]
+debug_print = []

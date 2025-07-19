@@ -32,7 +32,8 @@ impl PdfiumPageObject {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            println!("New page {handle:?}");
+            #[cfg(feature = "debug_print")]
+            println!("New page_object {handle:?}");
             Ok(Self { handle })
         }
     }

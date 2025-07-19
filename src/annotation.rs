@@ -33,7 +33,8 @@ impl PdfiumAnnotation {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            println!("New page {handle:?}");
+            #[cfg(feature = "debug_print")]
+            println!("New annotation {handle:?}");
             Ok(Self { handle })
         }
     }
@@ -48,6 +49,7 @@ impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
 impl Drop for PdfiumAnnotation {
     /// # Closes this [`PdfiumAnnotation`], releasing held memory.
     fn drop(&mut self) {
+        #[cfg(feature = "debug_print")]
         println!("Closing annotation {:?}", self.handle);
         lib().FPDFPage_CloseAnnot(self);
     }

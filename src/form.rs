@@ -32,7 +32,8 @@ impl PdfiumForm {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            println!("New page {handle:?}");
+            #[cfg(feature = "debug_print")]
+            println!("New form {handle:?}");
             Ok(Self { handle })
         }
     }

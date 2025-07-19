@@ -33,7 +33,8 @@ impl PdfiumXObject {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            println!("New page {handle:?}");
+            #[cfg(feature = "debug_print")]
+            println!("New x_object {handle:?}");
             Ok(Self { handle })
         }
     }
@@ -48,7 +49,8 @@ impl From<&PdfiumXObject> for FPDF_XOBJECT {
 impl Drop for PdfiumXObject {
     /// # Closes this [`PdfiumXObject`], releasing held memory.
     fn drop(&mut self) {
-        println!("Closing XObject {:?}", self.handle);
+        #[cfg(feature = "debug_print")]
+        println!("Closing x_object {:?}", self.handle);
         lib().FPDF_CloseXObject(self);
     }
 }
