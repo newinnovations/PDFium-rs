@@ -19,44 +19,38 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    guard::lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::FPDF_PATHSEGMENT,
 };
 
-/// # Rust interface to FPDF_ANNOTATION
-pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+/// # Rust interface to FPDF_PATHSEGMENT
+pub struct PdfiumPathSegment {
+    handle: FPDF_PATHSEGMENT,
 }
 
-impl PdfiumAnnotation {
-    pub(crate) fn new_from_handle(handle: FPDF_ANNOTATION) -> PdfiumResult<Self> {
+impl PdfiumPathSegment {
+    pub(crate) fn new_from_handle(handle: FPDF_PATHSEGMENT) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
+            println!("New path_segment {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
+impl From<&PdfiumPathSegment> for FPDF_PATHSEGMENT {
+    fn from(value: &PdfiumPathSegment) -> Self {
         value.handle
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
-    }
-}
+// TODO: check lifecycle FPDF_PATHSEGMENT
 
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
+impl Drop for PdfiumPathSegment {
+    /// Closes this [`PdfiumPathSegment`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
+        println!("Closing path_segment {:?}", self.handle);
     }
 }

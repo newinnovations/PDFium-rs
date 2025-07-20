@@ -87,3 +87,23 @@ mod destination;
 pub use destination::PdfiumDestination;
 mod javascript_action;
 pub use javascript_action::PdfiumJavascriptAction;
+mod font;
+pub use font::PdfiumFont;
+mod glyph_path;
+pub use glyph_path::PdfiumGlyphPath;
+mod link;
+pub use link::PdfiumLink;
+mod page_link;
+pub use page_link::PdfiumPageLink;
+mod text_page;
+pub use text_page::PdfiumTextPage;
+mod page_object_mark;
+pub use page_object_mark::PdfiumPageObjectMark;
+mod path_segment;
+pub use path_segment::PdfiumPathSegment;
+
+mod search;
+pub use search::PdfiumSearch;
+
+mod signature;
+pub use signature::PdfiumSignature;

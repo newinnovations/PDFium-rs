@@ -20,43 +20,37 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     guard::lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::FPDF_FONT,
 };
 
-/// # Rust interface to FPDF_ANNOTATION
-pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+/// # Rust interface to FPDF_FONT
+pub struct PdfiumFont {
+    handle: FPDF_FONT,
 }
 
-impl PdfiumAnnotation {
-    pub(crate) fn new_from_handle(handle: FPDF_ANNOTATION) -> PdfiumResult<Self> {
+impl PdfiumFont {
+    pub(crate) fn new_from_handle(handle: FPDF_FONT) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
+            println!("New font {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
+impl From<&PdfiumFont> for FPDF_FONT {
+    fn from(value: &PdfiumFont) -> Self {
         value.handle
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
-    }
-}
-
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
+impl Drop for PdfiumFont {
+    /// Closes this [`PdfiumFont`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
+        println!("Closing font {:?}", self.handle);
+        lib().FPDFFont_Close(self);
     }
 }

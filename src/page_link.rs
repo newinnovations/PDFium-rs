@@ -20,43 +20,37 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     guard::lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::FPDF_PAGELINK,
 };
 
-/// # Rust interface to FPDF_ANNOTATION
-pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+/// # Rust interface to FPDF_PAGELINK
+pub struct PdfiumPageLink {
+    handle: FPDF_PAGELINK,
 }
 
-impl PdfiumAnnotation {
-    pub(crate) fn new_from_handle(handle: FPDF_ANNOTATION) -> PdfiumResult<Self> {
+impl PdfiumPageLink {
+    pub(crate) fn new_from_handle(handle: FPDF_PAGELINK) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
+            println!("New page_link {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
+impl From<&PdfiumPageLink> for FPDF_PAGELINK {
+    fn from(value: &PdfiumPageLink) -> Self {
         value.handle
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
-    }
-}
-
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
+impl Drop for PdfiumPageLink {
+    /// Closes this [`PdfiumPageLink`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
+        println!("Closing page_link {:?}", self.handle);
+        lib().FPDFLink_CloseWebLinks(self);
     }
 }

@@ -19,44 +19,38 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    guard::lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::FPDF_GLYPHPATH,
 };
 
-/// # Rust interface to FPDF_ANNOTATION
-pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+/// # Rust interface to FPDF_GLYPHPATH
+pub struct PdfiumGlyphPath {
+    handle: FPDF_GLYPHPATH,
 }
 
-impl PdfiumAnnotation {
-    pub(crate) fn new_from_handle(handle: FPDF_ANNOTATION) -> PdfiumResult<Self> {
+impl PdfiumGlyphPath {
+    pub(crate) fn new_from_handle(handle: FPDF_GLYPHPATH) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
+            println!("New glyph_path {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
+impl From<&PdfiumGlyphPath> for FPDF_GLYPHPATH {
+    fn from(value: &PdfiumGlyphPath) -> Self {
         value.handle
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
-    }
-}
+// TODO: check lifecycle FPDF_GLYPHPATH
 
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
+impl Drop for PdfiumGlyphPath {
+    /// Closes this [`PdfiumGlyphPath`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
+        println!("Closing glyph_path {:?}", self.handle);
     }
 }

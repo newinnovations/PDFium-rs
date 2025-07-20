@@ -20,43 +20,37 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     guard::lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::FPDF_SCHHANDLE,
 };
 
-/// # Rust interface to FPDF_ANNOTATION
-pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+/// # Rust interface to FPDF_SCHHANDLE
+pub struct PdfiumSearch {
+    handle: FPDF_SCHHANDLE,
 }
 
-impl PdfiumAnnotation {
-    pub(crate) fn new_from_handle(handle: FPDF_ANNOTATION) -> PdfiumResult<Self> {
+impl PdfiumSearch {
+    pub(crate) fn new_from_handle(handle: FPDF_SCHHANDLE) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
+            println!("New search {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
+impl From<&PdfiumSearch> for FPDF_SCHHANDLE {
+    fn from(value: &PdfiumSearch) -> Self {
         value.handle
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
-    }
-}
-
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
+impl Drop for PdfiumSearch {
+    /// Closes this [`PdfiumSearch`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
+        println!("Closing search {:?}", self.handle);
+        lib().FPDFText_FindClose(self);
     }
 }

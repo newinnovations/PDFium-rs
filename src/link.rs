@@ -19,44 +19,44 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    guard::lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::FPDF_LINK,
 };
 
-/// # Rust interface to FPDF_ANNOTATION
-pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+/// # Rust interface to FPDF_LINK
+pub struct PdfiumLink {
+    handle: FPDF_LINK,
 }
 
-impl PdfiumAnnotation {
-    pub(crate) fn new_from_handle(handle: FPDF_ANNOTATION) -> PdfiumResult<Self> {
+impl PdfiumLink {
+    pub(crate) fn new_from_handle(handle: FPDF_LINK) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
+            println!("New link {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
+impl From<&PdfiumLink> for FPDF_LINK {
+    fn from(value: &PdfiumLink) -> Self {
         value.handle
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
+impl From<&mut PdfiumLink> for *mut FPDF_LINK {
+    fn from(value: &mut PdfiumLink) -> Self {
+        value.handle as *mut FPDF_LINK
     }
 }
 
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
+// TODO: check lifecycle FPDF_LINK
+
+impl Drop for PdfiumLink {
+    /// Closes this [`PdfiumLink`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
+        println!("Closing link {:?}", self.handle);
     }
 }
