@@ -18,7 +18,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 pub mod pdfium;
+pub mod pdfium_bindings;
 pub mod pdfium_constants;
+pub mod pdfium_init;
 pub mod pdfium_types;
 
 use std::{
@@ -33,7 +35,7 @@ use crate::{
     pdfium_constants::{
         FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
     },
-    pdfium_sys::pdfium::Pdfium,
+    pdfium_sys::pdfium_bindings::Pdfium,
     pdfium_types::FPDF_LIBRARY_CONFIG,
 };
 

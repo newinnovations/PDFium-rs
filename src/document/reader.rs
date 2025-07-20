@@ -26,7 +26,7 @@ use std::{
 
 use crate::pdfium_types::FPDF_FILEACCESS;
 
-/// Enables Rust based readers (implementing `Read` and `Seek`) with PDFium.
+/// Enables Rust based readers (implementing `Read` + `Seek`) with PDFium.
 #[repr(C)]
 pub struct PdfiumReader {
     file_access_ptr: FPDF_FILEACCESS,
