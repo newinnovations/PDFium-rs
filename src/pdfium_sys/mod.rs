@@ -28,7 +28,14 @@ use std::{
 
 use libloading::{Library, Symbol};
 
-use crate::{PdfiumError, PdfiumLibraryConfig, pdfium_sys::pdfium::Pdfium};
+use crate::{
+    PdfiumError,
+    pdfium_constants::{
+        FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
+    },
+    pdfium_sys::pdfium::Pdfium,
+    pdfium_types::FPDF_LIBRARY_CONFIG,
+};
 
 impl Pdfium {
     /// Tries to load the PDFium dynamic library from the system
@@ -58,7 +65,6 @@ impl Pdfium {
     /// When a plain library filename is supplied, the locations in which the library is searched for
     /// are platform specific and cannot be adjusted in a portable manner.
     fn load_with_filename<P: AsRef<OsStr>>(filename: P) -> Result<Box<Pdfium>, PdfiumError> {
-        // let lib_name = library_filename("pdfium");
         let lib = unsafe { Library::new(filename) };
         let bindings = match lib {
             Ok(lib) => Pdfium::new(lib),
@@ -82,18 +88,32 @@ impl Pdfium {
     ///
     /// You have to call this function before you can call any PDF processing function.
     pub fn init(&self, use_skia: bool) {
-        let config = PdfiumLibraryConfig::new(use_skia);
+        let config = FPDF_LIBRARY_CONFIG {
+            version: 2,
+            m_pUserFontPaths: std::ptr::null_mut(), // default paths
+            m_pIsolate: std::ptr::null_mut(),       // let PDFium create one
+            m_v8EmbedderSlot: 0,                    // 0 is fine for most embedders
+            m_pPlatform: std::ptr::null_mut(),
+            m_RendererType: match use_skia {
+                true => FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
+                false => FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG,
+            },
+        };
         self.FPDF_InitLibraryWithConfig(&config);
     }
 }
 
 /// Retrieves function entries from the PDFium dynamic library
 pub fn lib_get<'a, T>(library: &'a Library, function: &str) -> Result<Symbol<'a, T>, PdfiumError> {
-    let function = CString::new(function)
-        .map_err(|_| PdfiumError::LibraryError("NULL in string".to_string()))?;
-    unsafe {
-        library
-            .get(function.as_bytes_with_nul())
-            .map_err(|e| PdfiumError::LibraryError(e.to_string()))
+    let function_c = CString::new(function).unwrap();
+    let symbol = unsafe { library.get(function_c.as_bytes_with_nul()) };
+    match symbol {
+        Ok(symbol) => Ok(symbol),
+        Err(e) => {
+            eprintln!("== Failed to get entry '{function}' from dynamic library");
+            let e = e.to_string().replace("\n", "");
+            eprintln!("== {e}");
+            Err(PdfiumError::LibraryError(e))
+        }
     }
 }

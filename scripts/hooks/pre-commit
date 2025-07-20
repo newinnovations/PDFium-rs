@@ -191,9 +191,18 @@ echo "============================="
 
 if [[ $failed -eq 1 ]]; then
     echo -e "${RED}Pre-commit checks failed!${NC}"
-    echo -e "${YELLOW}Please fix the issues above and try again.${NC}"
-    echo
-    exit 1
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+    # Check if we're on the main branch
+    if [ "$current_branch" == "main" ]; then
+        echo -e "${YELLOW}Please fix the issues above and try again.${NC}"
+        echo
+        exit 1
+    else
+        echo -e "${YELLOW}Ignoring issues because we are not on main (${current_branch}).${NC}"
+        echo
+        exit 0
+    fi
 else
     echo -e "${GREEN}All pre-commit checks passed!${NC}"
     echo

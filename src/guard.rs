@@ -58,7 +58,10 @@ impl PdfiumGuard {
                 pdfium: p as *const Box<Pdfium>,
                 _guard: guard,
             }),
-            Err(e) => Err(PdfiumError::LibraryError(e.to_string())),
+            Err(e) => Err(match e {
+                PdfiumError::LibraryError(msg) => PdfiumError::LibraryError(msg.to_string()),
+                _ => PdfiumError::Unknown,
+            }),
         }
     }
 }

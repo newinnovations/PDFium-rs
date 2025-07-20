@@ -17,49 +17,46 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#![allow(unreachable_code)]
-
 use crate::{
-    pdfium_constants::{
-        FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
-    },
-    pdfium_types::{FPDF_LIBRARY_CONFIG, FPDF_RENDERER_TYPE},
+    error::{PdfiumError, PdfiumResult},
+    guard::lib,
+    pdfium_types::FPDF_SYSFONTINFO,
 };
 
-/// Rust interface to FPDF_LIBRARY_CONFIG
-#[derive(Debug, Copy, Clone)]
-pub struct PdfiumLibraryConfig {
-    use_skia: bool,
+/// # Rust interface to FPDF_SYSFONTINFO
+pub struct PdfiumSystemFontInfo {
+    handle: *mut FPDF_SYSFONTINFO,
 }
 
-impl Default for PdfiumLibraryConfig {
-    fn default() -> Self {
-        Self::new(false)
-    }
-}
-
-impl PdfiumLibraryConfig {
-    pub fn new(use_skia: bool) -> Self {
-        Self { use_skia }
-    }
-
-    pub fn renderer_type(&self) -> FPDF_RENDERER_TYPE {
-        match self.use_skia {
-            true => FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
-            false => FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG,
+impl PdfiumSystemFontInfo {
+    pub(crate) fn new_from_handle(handle: *mut FPDF_SYSFONTINFO) -> PdfiumResult<Self> {
+        if handle.is_null() {
+            Err(PdfiumError::NullHandle)
+        } else {
+            #[cfg(feature = "debug_print")]
+            println!("New system_font_info {handle:?}");
+            Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumLibraryConfig> for FPDF_LIBRARY_CONFIG {
-    fn from(config: &PdfiumLibraryConfig) -> Self {
-        FPDF_LIBRARY_CONFIG {
-            version: 2,
-            m_pUserFontPaths: std::ptr::null_mut(), // default paths
-            m_pIsolate: std::ptr::null_mut(),       // let PDFium create one
-            m_v8EmbedderSlot: 0,                    // 0 is fine for most embedders
-            m_pPlatform: std::ptr::null_mut(),
-            m_RendererType: config.renderer_type(),
-        }
+impl From<&PdfiumSystemFontInfo> for *const FPDF_SYSFONTINFO {
+    fn from(value: &PdfiumSystemFontInfo) -> Self {
+        value.handle
+    }
+}
+
+impl From<&mut PdfiumSystemFontInfo> for *mut FPDF_SYSFONTINFO {
+    fn from(value: &mut PdfiumSystemFontInfo) -> Self {
+        value.handle
+    }
+}
+
+impl Drop for PdfiumSystemFontInfo {
+    /// # Closes this [`PdfiumSystemFontInfo`], releasing held memory.
+    fn drop(&mut self) {
+        #[cfg(feature = "debug_print")]
+        println!("Closing system_font_info {:?}", self.handle);
+        lib().FPDF_FreeDefaultSystemFontInfo(self);
     }
 }
