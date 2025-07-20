@@ -45,7 +45,7 @@ impl From<&PdfiumForm> for FPDF_FORMHANDLE {
     }
 }
 
-// FIXME: check that FPDF_FORMHANDLE gets destroyed by assigning it
+// TODO: check that FPDF_FORMHANDLE gets destroyed by assigning it
 
 // impl Drop for PdfiumForm {
 //     /// # Closes this [`PdfiumForm`], releasing held memory.

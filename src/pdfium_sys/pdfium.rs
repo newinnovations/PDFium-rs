@@ -27,10 +27,11 @@ use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 
 use super::lib_get;
 use crate::{
-    PdfiumAnnotation, PdfiumBitmap, PdfiumClipPath, PdfiumDocument, PdfiumError, PdfiumForm,
-    PdfiumPage, PdfiumPageObject, PdfiumPageRange, PdfiumResult, PdfiumStructElement,
-    PdfiumStructElementAttr, PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumSystemFontInfo,
-    PdfiumXObject, pdfium_types::*,
+    PdfiumAction, PdfiumAnnotation, PdfiumAttachment, PdfiumAvailability, PdfiumBitmap,
+    PdfiumBookmark, PdfiumClipPath, PdfiumDestination, PdfiumDocument, PdfiumError, PdfiumForm,
+    PdfiumJavascriptAction, PdfiumPage, PdfiumPageObject, PdfiumPageRange, PdfiumResult,
+    PdfiumStructElement, PdfiumStructElementAttr, PdfiumStructElementAttrValue, PdfiumStructTree,
+    PdfiumSystemFontInfo, PdfiumXObject, pdfium_types::*,
 };
 use libloading::Library;
 
@@ -220,6 +221,8 @@ pub struct Pdfium {
     ),
     fn_FPDF_GetFormType: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> c_int,
     fn_FPDF_LoadXFA: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> FPDF_BOOL,
+    fn_FPDFAnnot_IsSupportedSubtype:
+        unsafe extern "C" fn(subtype: FPDF_ANNOTATION_SUBTYPE) -> FPDF_BOOL,
     fn_FPDFPage_CreateAnnot:
         unsafe extern "C" fn(page: FPDF_PAGE, subtype: FPDF_ANNOTATION_SUBTYPE) -> FPDF_ANNOTATION,
     fn_FPDFPage_GetAnnotCount: unsafe extern "C" fn(page: FPDF_PAGE) -> c_int,
@@ -228,6 +231,333 @@ pub struct Pdfium {
         unsafe extern "C" fn(page: FPDF_PAGE, annot: FPDF_ANNOTATION) -> c_int,
     fn_FPDFPage_CloseAnnot: unsafe extern "C" fn(annot: FPDF_ANNOTATION),
     fn_FPDFPage_RemoveAnnot: unsafe extern "C" fn(page: FPDF_PAGE, index: c_int) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetSubtype:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> FPDF_ANNOTATION_SUBTYPE,
+    fn_FPDFAnnot_IsObjectSupportedSubtype:
+        unsafe extern "C" fn(subtype: FPDF_ANNOTATION_SUBTYPE) -> FPDF_BOOL,
+    fn_FPDFAnnot_UpdateObject:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, obj: FPDF_PAGEOBJECT) -> FPDF_BOOL,
+    fn_FPDFAnnot_AddInkStroke: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        points: *const FS_POINTF,
+        point_count: usize,
+    ) -> c_int,
+    fn_FPDFAnnot_RemoveInkList: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> FPDF_BOOL,
+    fn_FPDFAnnot_AppendObject:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, obj: FPDF_PAGEOBJECT) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetObjectCount: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_GetObject:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, index: c_int) -> FPDF_PAGEOBJECT,
+    fn_FPDFAnnot_RemoveObject:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, index: c_int) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetColor: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        type_: FPDFANNOT_COLORTYPE,
+        R: c_uint,
+        G: c_uint,
+        B: c_uint,
+        A: c_uint,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetColor: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        type_: FPDFANNOT_COLORTYPE,
+        R: *mut c_uint,
+        G: *mut c_uint,
+        B: *mut c_uint,
+        A: *mut c_uint,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_HasAttachmentPoints: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetAttachmentPoints: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        quad_index: usize,
+        quad_points: *const FS_QUADPOINTSF,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_AppendAttachmentPoints: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        quad_points: *const FS_QUADPOINTSF,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_CountAttachmentPoints: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> usize,
+    fn_FPDFAnnot_GetAttachmentPoints: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        quad_index: usize,
+        quad_points: *mut FS_QUADPOINTSF,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetRect:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, rect: *const FS_RECTF) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetRect:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, rect: *mut FS_RECTF) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetVertices: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        buffer: *mut FS_POINTF,
+        length: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetInkListCount: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> c_ulong,
+    fn_FPDFAnnot_GetInkListPath: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        path_index: c_ulong,
+        buffer: *mut FS_POINTF,
+        length: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetLine: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        start: *mut FS_POINTF,
+        end: *mut FS_POINTF,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetBorder: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        horizontal_radius: f32,
+        vertical_radius: f32,
+        border_width: f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetBorder: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        horizontal_radius: *mut f32,
+        vertical_radius: *mut f32,
+        border_width: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFormAdditionalActionJavaScript: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        event: c_int,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_HasKey:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, key: FPDF_BYTESTRING) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetValueType:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, key: FPDF_BYTESTRING) -> FPDF_OBJECT_TYPE,
+    fn_FPDFAnnot_SetStringValue: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        key: FPDF_BYTESTRING,
+        value: FPDF_WIDESTRING,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetStringValue: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        key: FPDF_BYTESTRING,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetNumberValue: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        key: FPDF_BYTESTRING,
+        value: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetAP: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        appearanceMode: FPDF_ANNOT_APPEARANCEMODE,
+        value: FPDF_WIDESTRING,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetAP: unsafe extern "C" fn(
+        annot: FPDF_ANNOTATION,
+        appearanceMode: FPDF_ANNOT_APPEARANCEMODE,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetLinkedAnnot:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, key: FPDF_BYTESTRING) -> FPDF_ANNOTATION,
+    fn_FPDFAnnot_GetFlags: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_SetFlags: unsafe extern "C" fn(annot: FPDF_ANNOTATION, flags: c_int) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFormFieldFlags:
+        unsafe extern "C" fn(handle: FPDF_FORMHANDLE, annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_SetFormFieldFlags: unsafe extern "C" fn(
+        handle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        flags: c_int,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFormFieldAtPoint: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        page: FPDF_PAGE,
+        point: *const FS_POINTF,
+    ) -> FPDF_ANNOTATION,
+    fn_FPDFAnnot_GetFormFieldName: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetFormFieldAlternateName: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetFormFieldType:
+        unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE, annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_GetFormFieldValue: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_GetOptionCount:
+        unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE, annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_GetOptionLabel: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        index: c_int,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_IsOptionSelected: unsafe extern "C" fn(
+        handle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        index: c_int,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFontSize: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        value: *mut f32,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetFontColor: unsafe extern "C" fn(
+        handle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        R: c_uint,
+        G: c_uint,
+        B: c_uint,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFontColor: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        R: *mut c_uint,
+        G: *mut c_uint,
+        B: *mut c_uint,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_IsChecked:
+        unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE, annot: FPDF_ANNOTATION) -> FPDF_BOOL,
+    fn_FPDFAnnot_SetFocusableSubtypes: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        subtypes: *const FPDF_ANNOTATION_SUBTYPE,
+        count: usize,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFocusableSubtypesCount: unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE) -> c_int,
+    fn_FPDFAnnot_GetFocusableSubtypes: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        subtypes: *mut FPDF_ANNOTATION_SUBTYPE,
+        count: usize,
+    ) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetLink: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> FPDF_LINK,
+    fn_FPDFAnnot_GetFormControlCount:
+        unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE, annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_GetFormControlIndex:
+        unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE, annot: FPDF_ANNOTATION) -> c_int,
+    fn_FPDFAnnot_GetFormFieldExportValue: unsafe extern "C" fn(
+        hHandle: FPDF_FORMHANDLE,
+        annot: FPDF_ANNOTATION,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAnnot_SetURI:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, uri: *const c_char) -> FPDF_BOOL,
+    fn_FPDFAnnot_GetFileAttachment: unsafe extern "C" fn(annot: FPDF_ANNOTATION) -> FPDF_ATTACHMENT,
+    fn_FPDFAnnot_AddFileAttachment:
+        unsafe extern "C" fn(annot: FPDF_ANNOTATION, name: FPDF_WIDESTRING) -> FPDF_ATTACHMENT,
+    fn_FPDFDoc_GetAttachmentCount: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> c_int,
+    fn_FPDFDoc_AddAttachment:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, name: FPDF_WIDESTRING) -> FPDF_ATTACHMENT,
+    fn_FPDFDoc_GetAttachment:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, index: c_int) -> FPDF_ATTACHMENT,
+    fn_FPDFDoc_DeleteAttachment:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, index: c_int) -> FPDF_BOOL,
+    fn_FPDFAttachment_GetName: unsafe extern "C" fn(
+        attachment: FPDF_ATTACHMENT,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAttachment_HasKey:
+        unsafe extern "C" fn(attachment: FPDF_ATTACHMENT, key: FPDF_BYTESTRING) -> FPDF_BOOL,
+    fn_FPDFAttachment_GetValueType:
+        unsafe extern "C" fn(attachment: FPDF_ATTACHMENT, key: FPDF_BYTESTRING) -> FPDF_OBJECT_TYPE,
+    fn_FPDFAttachment_SetStringValue: unsafe extern "C" fn(
+        attachment: FPDF_ATTACHMENT,
+        key: FPDF_BYTESTRING,
+        value: FPDF_WIDESTRING,
+    ) -> FPDF_BOOL,
+    fn_FPDFAttachment_GetStringValue: unsafe extern "C" fn(
+        attachment: FPDF_ATTACHMENT,
+        key: FPDF_BYTESTRING,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFAttachment_SetFile: unsafe extern "C" fn(
+        attachment: FPDF_ATTACHMENT,
+        document: FPDF_DOCUMENT,
+        contents: *const c_void,
+        len: c_ulong,
+    ) -> FPDF_BOOL,
+    fn_FPDFAttachment_GetFile: unsafe extern "C" fn(
+        attachment: FPDF_ATTACHMENT,
+        buffer: *mut c_void,
+        buflen: c_ulong,
+        out_buflen: *mut c_ulong,
+    ) -> FPDF_BOOL,
+    fn_FPDFAttachment_GetSubtype: unsafe extern "C" fn(
+        attachment: FPDF_ATTACHMENT,
+        buffer: *mut FPDF_WCHAR,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFCatalog_IsTagged: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> FPDF_BOOL,
+    fn_FPDFCatalog_SetLanguage:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, language: FPDF_BYTESTRING) -> FPDF_BOOL,
+    fn_FPDFAvail_Create: unsafe extern "C" fn(
+        file_avail: *mut FX_FILEAVAIL,
+        file: *mut FPDF_FILEACCESS,
+    ) -> FPDF_AVAIL,
+    fn_FPDFAvail_Destroy: unsafe extern "C" fn(avail: FPDF_AVAIL),
+    fn_FPDFAvail_IsDocAvail:
+        unsafe extern "C" fn(avail: FPDF_AVAIL, hints: *mut FX_DOWNLOADHINTS) -> c_int,
+    fn_FPDFAvail_GetDocument:
+        unsafe extern "C" fn(avail: FPDF_AVAIL, password: FPDF_BYTESTRING) -> FPDF_DOCUMENT,
+    fn_FPDFAvail_GetFirstPageNum: unsafe extern "C" fn(doc: FPDF_DOCUMENT) -> c_int,
+    fn_FPDFAvail_IsPageAvail: unsafe extern "C" fn(
+        avail: FPDF_AVAIL,
+        page_index: c_int,
+        hints: *mut FX_DOWNLOADHINTS,
+    ) -> c_int,
+    fn_FPDFAvail_IsFormAvail:
+        unsafe extern "C" fn(avail: FPDF_AVAIL, hints: *mut FX_DOWNLOADHINTS) -> c_int,
+    fn_FPDFAvail_IsLinearized: unsafe extern "C" fn(avail: FPDF_AVAIL) -> c_int,
+    fn_FPDFBookmark_GetFirstChild:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, bookmark: FPDF_BOOKMARK) -> FPDF_BOOKMARK,
+    fn_FPDFBookmark_GetNextSibling:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, bookmark: FPDF_BOOKMARK) -> FPDF_BOOKMARK,
+    fn_FPDFBookmark_GetTitle: unsafe extern "C" fn(
+        bookmark: FPDF_BOOKMARK,
+        buffer: *mut c_void,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFBookmark_GetCount: unsafe extern "C" fn(bookmark: FPDF_BOOKMARK) -> c_int,
+    fn_FPDFBookmark_Find:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, title: FPDF_WIDESTRING) -> FPDF_BOOKMARK,
+    fn_FPDFBookmark_GetDest:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, bookmark: FPDF_BOOKMARK) -> FPDF_DEST,
+    fn_FPDFBookmark_GetAction: unsafe extern "C" fn(bookmark: FPDF_BOOKMARK) -> FPDF_ACTION,
+    fn_FPDFAction_GetType: unsafe extern "C" fn(action: FPDF_ACTION) -> c_ulong,
+    fn_FPDFAction_GetDest:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, action: FPDF_ACTION) -> FPDF_DEST,
+    fn_FPDFAction_GetFilePath:
+        unsafe extern "C" fn(action: FPDF_ACTION, buffer: *mut c_void, buflen: c_ulong) -> c_ulong,
+    fn_FPDFAction_GetURIPath: unsafe extern "C" fn(
+        document: FPDF_DOCUMENT,
+        action: FPDF_ACTION,
+        buffer: *mut c_void,
+        buflen: c_ulong,
+    ) -> c_ulong,
+    fn_FPDFDest_GetDestPageIndex:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, dest: FPDF_DEST) -> c_int,
+    fn_FPDFDest_GetView: unsafe extern "C" fn(
+        dest: FPDF_DEST,
+        pNumParams: *mut c_ulong,
+        pParams: *mut FS_FLOAT,
+    ) -> c_ulong,
+    fn_FPDFDest_GetLocationInPage: unsafe extern "C" fn(
+        dest: FPDF_DEST,
+        hasXVal: *mut FPDF_BOOL,
+        hasYVal: *mut FPDF_BOOL,
+        hasZoomVal: *mut FPDF_BOOL,
+        x: *mut FS_FLOAT,
+        y: *mut FS_FLOAT,
+        zoom: *mut FS_FLOAT,
+    ) -> FPDF_BOOL,
     fn_FPDF_GetPageAAction: unsafe extern "C" fn(page: FPDF_PAGE, aa_type: c_int) -> FPDF_ACTION,
     fn_FPDF_GetFileIdentifier: unsafe extern "C" fn(
         document: FPDF_DOCUMENT,
@@ -277,7 +607,12 @@ pub struct Pdfium {
     fn_FPDFPage_GenerateContent: unsafe extern "C" fn(page: FPDF_PAGE) -> FPDF_BOOL,
     fn_FPDFPage_TransformAnnots:
         unsafe extern "C" fn(page: FPDF_PAGE, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64),
+    fn_FPDFDoc_GetPageMode: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> c_int,
     fn_FPDFPage_Flatten: unsafe extern "C" fn(page: FPDF_PAGE, nFlag: c_int) -> c_int,
+    fn_FPDFDoc_GetJavaScriptActionCount: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> c_int,
+    fn_FPDFDoc_GetJavaScriptAction:
+        unsafe extern "C" fn(document: FPDF_DOCUMENT, index: c_int) -> FPDF_JAVASCRIPT_ACTION,
+    fn_FPDFDoc_CloseJavaScriptAction: unsafe extern "C" fn(javascript: FPDF_JAVASCRIPT_ACTION),
     fn_FPDF_ImportPagesByIndex: unsafe extern "C" fn(
         dest_doc: FPDF_DOCUMENT,
         src_doc: FPDF_DOCUMENT,
@@ -521,6 +856,14 @@ pub struct Pdfium {
         matrix: *const FS_MATRIX,
         clipRect: *const FS_RECTF,
     ) -> FPDF_BOOL,
+    fn_FPDFClipPath_CountPaths: unsafe extern "C" fn(clip_path: FPDF_CLIPPATH) -> c_int,
+    fn_FPDFClipPath_CountPathSegments:
+        unsafe extern "C" fn(clip_path: FPDF_CLIPPATH, path_index: c_int) -> c_int,
+    fn_FPDFClipPath_GetPathSegment: unsafe extern "C" fn(
+        clip_path: FPDF_CLIPPATH,
+        path_index: c_int,
+        segment_index: c_int,
+    ) -> FPDF_PATHSEGMENT,
     fn_FPDF_CreateClipPath:
         unsafe extern "C" fn(left: f32, bottom: f32, right: f32, top: f32) -> FPDF_CLIPPATH,
     fn_FPDF_DestroyClipPath: unsafe extern "C" fn(clipPath: FPDF_CLIPPATH),
@@ -623,12 +966,129 @@ impl Pdfium {
             fn_FPDF_FFLDraw: *(lib_get(&lib, "FPDF_FFLDraw")?),
             fn_FPDF_GetFormType: *(lib_get(&lib, "FPDF_GetFormType")?),
             fn_FPDF_LoadXFA: *(lib_get(&lib, "FPDF_LoadXFA")?),
+            fn_FPDFAnnot_IsSupportedSubtype: *(lib_get(&lib, "FPDFAnnot_IsSupportedSubtype")?),
             fn_FPDFPage_CreateAnnot: *(lib_get(&lib, "FPDFPage_CreateAnnot")?),
             fn_FPDFPage_GetAnnotCount: *(lib_get(&lib, "FPDFPage_GetAnnotCount")?),
             fn_FPDFPage_GetAnnot: *(lib_get(&lib, "FPDFPage_GetAnnot")?),
             fn_FPDFPage_GetAnnotIndex: *(lib_get(&lib, "FPDFPage_GetAnnotIndex")?),
             fn_FPDFPage_CloseAnnot: *(lib_get(&lib, "FPDFPage_CloseAnnot")?),
             fn_FPDFPage_RemoveAnnot: *(lib_get(&lib, "FPDFPage_RemoveAnnot")?),
+            fn_FPDFAnnot_GetSubtype: *(lib_get(&lib, "FPDFAnnot_GetSubtype")?),
+            fn_FPDFAnnot_IsObjectSupportedSubtype: *(lib_get(
+                &lib,
+                "FPDFAnnot_IsObjectSupportedSubtype",
+            )?),
+            fn_FPDFAnnot_UpdateObject: *(lib_get(&lib, "FPDFAnnot_UpdateObject")?),
+            fn_FPDFAnnot_AddInkStroke: *(lib_get(&lib, "FPDFAnnot_AddInkStroke")?),
+            fn_FPDFAnnot_RemoveInkList: *(lib_get(&lib, "FPDFAnnot_RemoveInkList")?),
+            fn_FPDFAnnot_AppendObject: *(lib_get(&lib, "FPDFAnnot_AppendObject")?),
+            fn_FPDFAnnot_GetObjectCount: *(lib_get(&lib, "FPDFAnnot_GetObjectCount")?),
+            fn_FPDFAnnot_GetObject: *(lib_get(&lib, "FPDFAnnot_GetObject")?),
+            fn_FPDFAnnot_RemoveObject: *(lib_get(&lib, "FPDFAnnot_RemoveObject")?),
+            fn_FPDFAnnot_SetColor: *(lib_get(&lib, "FPDFAnnot_SetColor")?),
+            fn_FPDFAnnot_GetColor: *(lib_get(&lib, "FPDFAnnot_GetColor")?),
+            fn_FPDFAnnot_HasAttachmentPoints: *(lib_get(&lib, "FPDFAnnot_HasAttachmentPoints")?),
+            fn_FPDFAnnot_SetAttachmentPoints: *(lib_get(&lib, "FPDFAnnot_SetAttachmentPoints")?),
+            fn_FPDFAnnot_AppendAttachmentPoints: *(lib_get(
+                &lib,
+                "FPDFAnnot_AppendAttachmentPoints",
+            )?),
+            fn_FPDFAnnot_CountAttachmentPoints: *(lib_get(
+                &lib,
+                "FPDFAnnot_CountAttachmentPoints",
+            )?),
+            fn_FPDFAnnot_GetAttachmentPoints: *(lib_get(&lib, "FPDFAnnot_GetAttachmentPoints")?),
+            fn_FPDFAnnot_SetRect: *(lib_get(&lib, "FPDFAnnot_SetRect")?),
+            fn_FPDFAnnot_GetRect: *(lib_get(&lib, "FPDFAnnot_GetRect")?),
+            fn_FPDFAnnot_GetVertices: *(lib_get(&lib, "FPDFAnnot_GetVertices")?),
+            fn_FPDFAnnot_GetInkListCount: *(lib_get(&lib, "FPDFAnnot_GetInkListCount")?),
+            fn_FPDFAnnot_GetInkListPath: *(lib_get(&lib, "FPDFAnnot_GetInkListPath")?),
+            fn_FPDFAnnot_GetLine: *(lib_get(&lib, "FPDFAnnot_GetLine")?),
+            fn_FPDFAnnot_SetBorder: *(lib_get(&lib, "FPDFAnnot_SetBorder")?),
+            fn_FPDFAnnot_GetBorder: *(lib_get(&lib, "FPDFAnnot_GetBorder")?),
+            fn_FPDFAnnot_GetFormAdditionalActionJavaScript: *(lib_get(
+                &lib,
+                "FPDFAnnot_GetFormAdditionalActionJavaScript",
+            )?),
+            fn_FPDFAnnot_HasKey: *(lib_get(&lib, "FPDFAnnot_HasKey")?),
+            fn_FPDFAnnot_GetValueType: *(lib_get(&lib, "FPDFAnnot_GetValueType")?),
+            fn_FPDFAnnot_SetStringValue: *(lib_get(&lib, "FPDFAnnot_SetStringValue")?),
+            fn_FPDFAnnot_GetStringValue: *(lib_get(&lib, "FPDFAnnot_GetStringValue")?),
+            fn_FPDFAnnot_GetNumberValue: *(lib_get(&lib, "FPDFAnnot_GetNumberValue")?),
+            fn_FPDFAnnot_SetAP: *(lib_get(&lib, "FPDFAnnot_SetAP")?),
+            fn_FPDFAnnot_GetAP: *(lib_get(&lib, "FPDFAnnot_GetAP")?),
+            fn_FPDFAnnot_GetLinkedAnnot: *(lib_get(&lib, "FPDFAnnot_GetLinkedAnnot")?),
+            fn_FPDFAnnot_GetFlags: *(lib_get(&lib, "FPDFAnnot_GetFlags")?),
+            fn_FPDFAnnot_SetFlags: *(lib_get(&lib, "FPDFAnnot_SetFlags")?),
+            fn_FPDFAnnot_GetFormFieldFlags: *(lib_get(&lib, "FPDFAnnot_GetFormFieldFlags")?),
+            fn_FPDFAnnot_SetFormFieldFlags: *(lib_get(&lib, "FPDFAnnot_SetFormFieldFlags")?),
+            fn_FPDFAnnot_GetFormFieldAtPoint: *(lib_get(&lib, "FPDFAnnot_GetFormFieldAtPoint")?),
+            fn_FPDFAnnot_GetFormFieldName: *(lib_get(&lib, "FPDFAnnot_GetFormFieldName")?),
+            fn_FPDFAnnot_GetFormFieldAlternateName: *(lib_get(
+                &lib,
+                "FPDFAnnot_GetFormFieldAlternateName",
+            )?),
+            fn_FPDFAnnot_GetFormFieldType: *(lib_get(&lib, "FPDFAnnot_GetFormFieldType")?),
+            fn_FPDFAnnot_GetFormFieldValue: *(lib_get(&lib, "FPDFAnnot_GetFormFieldValue")?),
+            fn_FPDFAnnot_GetOptionCount: *(lib_get(&lib, "FPDFAnnot_GetOptionCount")?),
+            fn_FPDFAnnot_GetOptionLabel: *(lib_get(&lib, "FPDFAnnot_GetOptionLabel")?),
+            fn_FPDFAnnot_IsOptionSelected: *(lib_get(&lib, "FPDFAnnot_IsOptionSelected")?),
+            fn_FPDFAnnot_GetFontSize: *(lib_get(&lib, "FPDFAnnot_GetFontSize")?),
+            fn_FPDFAnnot_SetFontColor: *(lib_get(&lib, "FPDFAnnot_SetFontColor")?),
+            fn_FPDFAnnot_GetFontColor: *(lib_get(&lib, "FPDFAnnot_GetFontColor")?),
+            fn_FPDFAnnot_IsChecked: *(lib_get(&lib, "FPDFAnnot_IsChecked")?),
+            fn_FPDFAnnot_SetFocusableSubtypes: *(lib_get(&lib, "FPDFAnnot_SetFocusableSubtypes")?),
+            fn_FPDFAnnot_GetFocusableSubtypesCount: *(lib_get(
+                &lib,
+                "FPDFAnnot_GetFocusableSubtypesCount",
+            )?),
+            fn_FPDFAnnot_GetFocusableSubtypes: *(lib_get(&lib, "FPDFAnnot_GetFocusableSubtypes")?),
+            fn_FPDFAnnot_GetLink: *(lib_get(&lib, "FPDFAnnot_GetLink")?),
+            fn_FPDFAnnot_GetFormControlCount: *(lib_get(&lib, "FPDFAnnot_GetFormControlCount")?),
+            fn_FPDFAnnot_GetFormControlIndex: *(lib_get(&lib, "FPDFAnnot_GetFormControlIndex")?),
+            fn_FPDFAnnot_GetFormFieldExportValue: *(lib_get(
+                &lib,
+                "FPDFAnnot_GetFormFieldExportValue",
+            )?),
+            fn_FPDFAnnot_SetURI: *(lib_get(&lib, "FPDFAnnot_SetURI")?),
+            fn_FPDFAnnot_GetFileAttachment: *(lib_get(&lib, "FPDFAnnot_GetFileAttachment")?),
+            fn_FPDFAnnot_AddFileAttachment: *(lib_get(&lib, "FPDFAnnot_AddFileAttachment")?),
+            fn_FPDFDoc_GetAttachmentCount: *(lib_get(&lib, "FPDFDoc_GetAttachmentCount")?),
+            fn_FPDFDoc_AddAttachment: *(lib_get(&lib, "FPDFDoc_AddAttachment")?),
+            fn_FPDFDoc_GetAttachment: *(lib_get(&lib, "FPDFDoc_GetAttachment")?),
+            fn_FPDFDoc_DeleteAttachment: *(lib_get(&lib, "FPDFDoc_DeleteAttachment")?),
+            fn_FPDFAttachment_GetName: *(lib_get(&lib, "FPDFAttachment_GetName")?),
+            fn_FPDFAttachment_HasKey: *(lib_get(&lib, "FPDFAttachment_HasKey")?),
+            fn_FPDFAttachment_GetValueType: *(lib_get(&lib, "FPDFAttachment_GetValueType")?),
+            fn_FPDFAttachment_SetStringValue: *(lib_get(&lib, "FPDFAttachment_SetStringValue")?),
+            fn_FPDFAttachment_GetStringValue: *(lib_get(&lib, "FPDFAttachment_GetStringValue")?),
+            fn_FPDFAttachment_SetFile: *(lib_get(&lib, "FPDFAttachment_SetFile")?),
+            fn_FPDFAttachment_GetFile: *(lib_get(&lib, "FPDFAttachment_GetFile")?),
+            fn_FPDFAttachment_GetSubtype: *(lib_get(&lib, "FPDFAttachment_GetSubtype")?),
+            fn_FPDFCatalog_IsTagged: *(lib_get(&lib, "FPDFCatalog_IsTagged")?),
+            fn_FPDFCatalog_SetLanguage: *(lib_get(&lib, "FPDFCatalog_SetLanguage")?),
+            fn_FPDFAvail_Create: *(lib_get(&lib, "FPDFAvail_Create")?),
+            fn_FPDFAvail_Destroy: *(lib_get(&lib, "FPDFAvail_Destroy")?),
+            fn_FPDFAvail_IsDocAvail: *(lib_get(&lib, "FPDFAvail_IsDocAvail")?),
+            fn_FPDFAvail_GetDocument: *(lib_get(&lib, "FPDFAvail_GetDocument")?),
+            fn_FPDFAvail_GetFirstPageNum: *(lib_get(&lib, "FPDFAvail_GetFirstPageNum")?),
+            fn_FPDFAvail_IsPageAvail: *(lib_get(&lib, "FPDFAvail_IsPageAvail")?),
+            fn_FPDFAvail_IsFormAvail: *(lib_get(&lib, "FPDFAvail_IsFormAvail")?),
+            fn_FPDFAvail_IsLinearized: *(lib_get(&lib, "FPDFAvail_IsLinearized")?),
+            fn_FPDFBookmark_GetFirstChild: *(lib_get(&lib, "FPDFBookmark_GetFirstChild")?),
+            fn_FPDFBookmark_GetNextSibling: *(lib_get(&lib, "FPDFBookmark_GetNextSibling")?),
+            fn_FPDFBookmark_GetTitle: *(lib_get(&lib, "FPDFBookmark_GetTitle")?),
+            fn_FPDFBookmark_GetCount: *(lib_get(&lib, "FPDFBookmark_GetCount")?),
+            fn_FPDFBookmark_Find: *(lib_get(&lib, "FPDFBookmark_Find")?),
+            fn_FPDFBookmark_GetDest: *(lib_get(&lib, "FPDFBookmark_GetDest")?),
+            fn_FPDFBookmark_GetAction: *(lib_get(&lib, "FPDFBookmark_GetAction")?),
+            fn_FPDFAction_GetType: *(lib_get(&lib, "FPDFAction_GetType")?),
+            fn_FPDFAction_GetDest: *(lib_get(&lib, "FPDFAction_GetDest")?),
+            fn_FPDFAction_GetFilePath: *(lib_get(&lib, "FPDFAction_GetFilePath")?),
+            fn_FPDFAction_GetURIPath: *(lib_get(&lib, "FPDFAction_GetURIPath")?),
+            fn_FPDFDest_GetDestPageIndex: *(lib_get(&lib, "FPDFDest_GetDestPageIndex")?),
+            fn_FPDFDest_GetView: *(lib_get(&lib, "FPDFDest_GetView")?),
+            fn_FPDFDest_GetLocationInPage: *(lib_get(&lib, "FPDFDest_GetLocationInPage")?),
             fn_FPDF_GetPageAAction: *(lib_get(&lib, "FPDF_GetPageAAction")?),
             fn_FPDF_GetFileIdentifier: *(lib_get(&lib, "FPDF_GetFileIdentifier")?),
             fn_FPDF_GetMetaText: *(lib_get(&lib, "FPDF_GetMetaText")?),
@@ -647,7 +1107,14 @@ impl Pdfium {
             fn_FPDFPage_HasTransparency: *(lib_get(&lib, "FPDFPage_HasTransparency")?),
             fn_FPDFPage_GenerateContent: *(lib_get(&lib, "FPDFPage_GenerateContent")?),
             fn_FPDFPage_TransformAnnots: *(lib_get(&lib, "FPDFPage_TransformAnnots")?),
+            fn_FPDFDoc_GetPageMode: *(lib_get(&lib, "FPDFDoc_GetPageMode")?),
             fn_FPDFPage_Flatten: *(lib_get(&lib, "FPDFPage_Flatten")?),
+            fn_FPDFDoc_GetJavaScriptActionCount: *(lib_get(
+                &lib,
+                "FPDFDoc_GetJavaScriptActionCount",
+            )?),
+            fn_FPDFDoc_GetJavaScriptAction: *(lib_get(&lib, "FPDFDoc_GetJavaScriptAction")?),
+            fn_FPDFDoc_CloseJavaScriptAction: *(lib_get(&lib, "FPDFDoc_CloseJavaScriptAction")?),
             fn_FPDF_ImportPagesByIndex: *(lib_get(&lib, "FPDF_ImportPagesByIndex")?),
             fn_FPDF_ImportPages: *(lib_get(&lib, "FPDF_ImportPages")?),
             fn_FPDF_ImportNPagesToOne: *(lib_get(&lib, "FPDF_ImportNPagesToOne")?),
@@ -784,6 +1251,9 @@ impl Pdfium {
             fn_FPDFPage_GetTrimBox: *(lib_get(&lib, "FPDFPage_GetTrimBox")?),
             fn_FPDFPage_GetArtBox: *(lib_get(&lib, "FPDFPage_GetArtBox")?),
             fn_FPDFPage_TransFormWithClip: *(lib_get(&lib, "FPDFPage_TransFormWithClip")?),
+            fn_FPDFClipPath_CountPaths: *(lib_get(&lib, "FPDFClipPath_CountPaths")?),
+            fn_FPDFClipPath_CountPathSegments: *(lib_get(&lib, "FPDFClipPath_CountPathSegments")?),
+            fn_FPDFClipPath_GetPathSegment: *(lib_get(&lib, "FPDFClipPath_GetPathSegment")?),
             fn_FPDF_CreateClipPath: *(lib_get(&lib, "FPDF_CreateClipPath")?),
             fn_FPDF_DestroyClipPath: *(lib_get(&lib, "FPDF_DestroyClipPath")?),
             fn_FPDFPage_InsertClipPath: *(lib_get(&lib, "FPDFPage_InsertClipPath")?),
@@ -1887,8 +2357,14 @@ impl Pdfium {
     /// Return value:
     ///          The handle to the destination.
     /// ```
-    pub fn FPDF_GetNamedDestByName(&self, document: &PdfiumDocument, name: &CString) -> FPDF_DEST {
-        unsafe { (self.fn_FPDF_GetNamedDestByName)(document.into(), name.as_ptr()) }
+    pub fn FPDF_GetNamedDestByName(
+        &self,
+        document: &PdfiumDocument,
+        name: &CString,
+    ) -> PdfiumResult<PdfiumDestination> {
+        PdfiumDestination::new_from_handle(unsafe {
+            (self.fn_FPDF_GetNamedDestByName)(document.into(), name.as_ptr())
+        })
     }
 
     /// C documentation for FPDF_GetNamedDest:
@@ -1922,10 +2398,10 @@ impl Pdfium {
         index: i32,
         buffer: Option<&mut [u8]>,
         buflen: &mut c_long,
-    ) -> FPDF_DEST {
-        unsafe {
+    ) -> PdfiumResult<PdfiumDestination> {
+        PdfiumDestination::new_from_handle(unsafe {
             (self.fn_FPDF_GetNamedDest)(document.into(), index, to_void_ptr_mut(buffer), buflen)
-        }
+        })
     }
 
     /// C documentation for FPDF_GetXFAPacketCount:
@@ -2289,6 +2765,37 @@ impl Pdfium {
         to_result(unsafe { (self.fn_FPDF_LoadXFA)(document.into()) })
     }
 
+    /// C documentation for FPDFAnnot_IsSupportedSubtype:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Check if an annotation subtype is currently supported for creation.
+    /// Currently supported subtypes:
+    ///    - circle
+    ///    - fileattachment
+    ///    - freetext
+    ///    - highlight
+    ///    - ink
+    ///    - link
+    ///    - popup
+    ///    - square,
+    ///    - squiggly
+    ///    - stamp
+    ///    - strikeout
+    ///    - text
+    ///    - underline
+    ///
+    ///   subtype   - the subtype to be checked.
+    ///
+    /// Returns true if this subtype supported.
+    /// ```
+    pub fn FPDFAnnot_IsSupportedSubtype(
+        &self,
+        subtype: FPDF_ANNOTATION_SUBTYPE,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_IsSupportedSubtype)(subtype) })
+    }
+
     /// C documentation for FPDFPage_CreateAnnot:
     ///
     /// ```text
@@ -2394,6 +2901,2292 @@ impl Pdfium {
         to_result(unsafe { (self.fn_FPDFPage_RemoveAnnot)(page.into(), index) })
     }
 
+    /// C documentation for FPDFAnnot_GetSubtype:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the subtype of an annotation.
+    ///
+    ///   annot  - handle to an annotation.
+    ///
+    /// Returns the annotation subtype.
+    /// ```
+    pub fn FPDFAnnot_GetSubtype(&self, annot: &PdfiumAnnotation) -> FPDF_ANNOTATION_SUBTYPE {
+        unsafe { (self.fn_FPDFAnnot_GetSubtype)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_IsObjectSupportedSubtype:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Check if an annotation subtype is currently supported for object extraction,
+    /// update, and removal.
+    /// Currently supported subtypes: ink and stamp.
+    ///
+    ///   subtype   - the subtype to be checked.
+    ///
+    /// Returns true if this subtype supported.
+    /// ```
+    pub fn FPDFAnnot_IsObjectSupportedSubtype(
+        &self,
+        subtype: FPDF_ANNOTATION_SUBTYPE,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_IsObjectSupportedSubtype)(subtype) })
+    }
+
+    /// C documentation for FPDFAnnot_UpdateObject:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Update |obj| in |annot|. |obj| must be in |annot| already and must have
+    /// been retrieved by FPDFAnnot_GetObject(). Currently, only ink and stamp
+    /// annotations are supported by this API. Also note that only path, image, and
+    /// text objects have APIs for modification; see FPDFPath_*(), FPDFText_*(), and
+    /// FPDFImageObj_*().
+    ///
+    ///   annot  - handle to an annotation.
+    ///   obj    - handle to the object that |annot| needs to update.
+    ///
+    /// Return true if successful.
+    /// ```
+    pub fn FPDFAnnot_UpdateObject(
+        &self,
+        annot: &PdfiumAnnotation,
+        obj: &PdfiumPageObject,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_UpdateObject)(annot.into(), obj.into()) })
+    }
+
+    /// C documentation for FPDFAnnot_AddInkStroke:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Add a new InkStroke, represented by an array of points, to the InkList of
+    /// |annot|. The API creates an InkList if one doesn't already exist in |annot|.
+    /// This API works only for ink annotations. Please refer to ISO 32000-1:2008
+    /// spec, section 12.5.6.13.
+    ///
+    ///   annot       - handle to an annotation.
+    ///   points      - pointer to a FS_POINTF array representing input points.
+    ///   point_count - number of elements in |points| array. This should not exceed
+    ///                 the maximum value that can be represented by an int32_t).
+    ///
+    /// Returns the 0-based index at which the new InkStroke is added in the InkList
+    /// of the |annot|. Returns -1 on failure.
+    /// ```
+    pub fn FPDFAnnot_AddInkStroke(
+        &self,
+        annot: &PdfiumAnnotation,
+        points: &FS_POINTF,
+        point_count: usize,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_AddInkStroke)(annot.into(), points, point_count) }
+    }
+
+    /// C documentation for FPDFAnnot_RemoveInkList:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Removes an InkList in |annot|.
+    /// This API works only for ink annotations.
+    ///
+    ///   annot  - handle to an annotation.
+    ///
+    /// Return true on successful removal of /InkList entry from context of the
+    /// non-null ink |annot|. Returns false on failure.
+    /// ```
+    pub fn FPDFAnnot_RemoveInkList(&self, annot: &PdfiumAnnotation) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_RemoveInkList)(annot.into()) })
+    }
+
+    /// C documentation for FPDFAnnot_AppendObject:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Add |obj| to |annot|. |obj| must have been created by
+    /// FPDFPageObj_CreateNew{Path|Rect}() or FPDFPageObj_New{Text|Image}Obj(), and
+    /// will be owned by |annot|. Note that an |obj| cannot belong to more than one
+    /// |annot|. Currently, only ink and stamp annotations are supported by this API.
+    /// Also note that only path, image, and text objects have APIs for creation.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   obj    - handle to the object that is to be added to |annot|.
+    ///
+    /// Return true if successful.
+    /// ```
+    pub fn FPDFAnnot_AppendObject(
+        &self,
+        annot: &PdfiumAnnotation,
+        obj: &PdfiumPageObject,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_AppendObject)(annot.into(), obj.into()) })
+    }
+
+    /// C documentation for FPDFAnnot_GetObjectCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the total number of objects in |annot|, including path objects, text
+    /// objects, external objects, image objects, and shading objects.
+    ///
+    ///   annot  - handle to an annotation.
+    ///
+    /// Returns the number of objects in |annot|.
+    /// ```
+    pub fn FPDFAnnot_GetObjectCount(&self, annot: &PdfiumAnnotation) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetObjectCount)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetObject:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the object in |annot| at |index|.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   index  - the index of the object.
+    ///
+    /// Return a handle to the object, or NULL on failure.
+    /// ```
+    pub fn FPDFAnnot_GetObject(
+        &self,
+        annot: &PdfiumAnnotation,
+        index: i32,
+    ) -> PdfiumResult<PdfiumPageObject> {
+        PdfiumPageObject::new_from_handle(unsafe {
+            (self.fn_FPDFAnnot_GetObject)(annot.into(), index)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_RemoveObject:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Remove the object in |annot| at |index|.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   index  - the index of the object to be removed.
+    ///
+    /// Return true if successful.
+    /// ```
+    pub fn FPDFAnnot_RemoveObject(&self, annot: &PdfiumAnnotation, index: i32) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_RemoveObject)(annot.into(), index) })
+    }
+
+    /// C documentation for FPDFAnnot_SetColor:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the color of an annotation. Fails when called on annotations with
+    /// appearance streams already defined; instead use
+    /// FPDFPageObj_Set{Stroke|Fill}Color().
+    ///
+    ///   annot    - handle to an annotation.
+    ///   type     - type of the color to be set.
+    ///   R, G, B  - buffer to hold the RGB value of the color. Ranges from 0 to 255.
+    ///   A        - buffer to hold the opacity. Ranges from 0 to 255.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetColor(
+        &self,
+        annot: &PdfiumAnnotation,
+        type_: FPDFANNOT_COLORTYPE,
+        R: u32,
+        G: u32,
+        B: u32,
+        A: u32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_SetColor)(annot.into(), type_, R, G, B, A) })
+    }
+
+    /// C documentation for FPDFAnnot_GetColor:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the color of an annotation. If no color is specified, default to yellow
+    /// for highlight annotation, black for all else. Fails when called on
+    /// annotations with appearance streams already defined; instead use
+    /// FPDFPageObj_Get{Stroke|Fill}Color().
+    ///
+    ///   annot    - handle to an annotation.
+    ///   type     - type of the color requested.
+    ///   R, G, B  - buffer to hold the RGB value of the color. Ranges from 0 to 255.
+    ///   A        - buffer to hold the opacity. Ranges from 0 to 255.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_GetColor(
+        &self,
+        annot: &PdfiumAnnotation,
+        type_: FPDFANNOT_COLORTYPE,
+        R: &mut u32,
+        G: &mut u32,
+        B: &mut u32,
+        A: &mut u32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_GetColor)(annot.into(), type_, R, G, B, A) })
+    }
+
+    /// C documentation for FPDFAnnot_HasAttachmentPoints:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Check if the annotation is of a type that has attachment points
+    /// (i.e. quadpoints). Quadpoints are the vertices of the rectangle that
+    /// encompasses the texts affected by the annotation. They provide the
+    /// coordinates in the page where the annotation is attached. Only text markup
+    /// annotations (i.e. highlight, strikeout, squiggly, and underline) and link
+    /// annotations have quadpoints.
+    ///
+    ///   annot  - handle to an annotation.
+    ///
+    /// Returns true if the annotation is of a type that has quadpoints, false
+    /// otherwise.
+    /// ```
+    pub fn FPDFAnnot_HasAttachmentPoints(&self, annot: &PdfiumAnnotation) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_HasAttachmentPoints)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_SetAttachmentPoints:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Replace the attachment points (i.e. quadpoints) set of an annotation at
+    /// |quad_index|. This index needs to be within the result of
+    /// FPDFAnnot_CountAttachmentPoints().
+    /// If the annotation's appearance stream is defined and this annotation is of a
+    /// type with quadpoints, then update the bounding box too if the new quadpoints
+    /// define a bigger one.
+    ///
+    ///   annot       - handle to an annotation.
+    ///   quad_index  - index of the set of quadpoints.
+    ///   quad_points - the quadpoints to be set.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetAttachmentPoints(
+        &self,
+        annot: &PdfiumAnnotation,
+        quad_index: usize,
+        quad_points: &FS_QUADPOINTSF,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_SetAttachmentPoints)(annot.into(), quad_index, quad_points)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_AppendAttachmentPoints:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Append to the list of attachment points (i.e. quadpoints) of an annotation.
+    /// If the annotation's appearance stream is defined and this annotation is of a
+    /// type with quadpoints, then update the bounding box too if the new quadpoints
+    /// define a bigger one.
+    ///
+    ///   annot       - handle to an annotation.
+    ///   quad_points - the quadpoints to be set.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_AppendAttachmentPoints(
+        &self,
+        annot: &PdfiumAnnotation,
+        quad_points: &FS_QUADPOINTSF,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_AppendAttachmentPoints)(annot.into(), quad_points) })
+    }
+
+    /// C documentation for FPDFAnnot_CountAttachmentPoints:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of sets of quadpoints of an annotation.
+    ///
+    ///   annot  - handle to an annotation.
+    ///
+    /// Returns the number of sets of quadpoints, or 0 on failure.
+    /// ```
+    pub fn FPDFAnnot_CountAttachmentPoints(&self, annot: &PdfiumAnnotation) -> usize {
+        unsafe { (self.fn_FPDFAnnot_CountAttachmentPoints)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetAttachmentPoints:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the attachment points (i.e. quadpoints) of an annotation.
+    ///
+    ///   annot       - handle to an annotation.
+    ///   quad_index  - index of the set of quadpoints.
+    ///   quad_points - receives the quadpoints; must not be NULL.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_GetAttachmentPoints(
+        &self,
+        annot: &PdfiumAnnotation,
+        quad_index: usize,
+        quad_points: &mut FS_QUADPOINTSF,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_GetAttachmentPoints)(annot.into(), quad_index, quad_points)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_SetRect:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the annotation rectangle defining the location of the annotation. If the
+    /// annotation's appearance stream is defined and this annotation is of a type
+    /// without quadpoints, then update the bounding box too if the new rectangle
+    /// defines a bigger one.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   rect   - the annotation rectangle to be set.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetRect(&self, annot: &PdfiumAnnotation, rect: &FS_RECTF) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_SetRect)(annot.into(), rect) })
+    }
+
+    /// C documentation for FPDFAnnot_GetRect:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the annotation rectangle defining the location of the annotation.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   rect   - receives the rectangle; must not be NULL.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_GetRect(
+        &self,
+        annot: &PdfiumAnnotation,
+        rect: &mut FS_RECTF,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_GetRect)(annot.into(), rect) })
+    }
+
+    /// C documentation for FPDFAnnot_GetVertices:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the vertices of a polygon or polyline annotation. |buffer| is an array of
+    /// points of the annotation. If |length| is less than the returned length, or
+    /// |annot| or |buffer| is NULL, |buffer| will not be modified.
+    ///
+    ///   annot  - handle to an annotation, as returned by e.g. FPDFPage_GetAnnot()
+    ///   buffer - buffer for holding the points.
+    ///   length - length of the buffer in points.
+    ///
+    /// Returns the number of points if the annotation is of type polygon or
+    /// polyline, 0 otherwise.
+    /// ```
+    pub fn FPDFAnnot_GetVertices(
+        &self,
+        annot: &PdfiumAnnotation,
+        buffer: &mut FS_POINTF,
+        length: c_ulong,
+    ) -> c_ulong {
+        unsafe { (self.fn_FPDFAnnot_GetVertices)(annot.into(), buffer, length) }
+    }
+
+    /// C documentation for FPDFAnnot_GetInkListCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of paths in the ink list of an ink annotation.
+    ///
+    ///   annot  - handle to an annotation, as returned by e.g. FPDFPage_GetAnnot()
+    ///
+    /// Returns the number of paths in the ink list if the annotation is of type ink,
+    /// 0 otherwise.
+    /// ```
+    pub fn FPDFAnnot_GetInkListCount(&self, annot: &PdfiumAnnotation) -> c_ulong {
+        unsafe { (self.fn_FPDFAnnot_GetInkListCount)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetInkListPath:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get a path in the ink list of an ink annotation. |buffer| is an array of
+    /// points of the path. If |length| is less than the returned length, or |annot|
+    /// or |buffer| is NULL, |buffer| will not be modified.
+    ///
+    ///   annot  - handle to an annotation, as returned by e.g. FPDFPage_GetAnnot()
+    ///   path_index - index of the path
+    ///   buffer - buffer for holding the points.
+    ///   length - length of the buffer in points.
+    ///
+    /// Returns the number of points of the path if the annotation is of type ink, 0
+    /// otherwise.
+    /// ```
+    pub fn FPDFAnnot_GetInkListPath(
+        &self,
+        annot: &PdfiumAnnotation,
+        path_index: c_ulong,
+        buffer: &mut FS_POINTF,
+        length: c_ulong,
+    ) -> c_ulong {
+        unsafe { (self.fn_FPDFAnnot_GetInkListPath)(annot.into(), path_index, buffer, length) }
+    }
+
+    /// C documentation for FPDFAnnot_GetLine:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the starting and ending coordinates of a line annotation.
+    ///
+    ///   annot  - handle to an annotation, as returned by e.g. FPDFPage_GetAnnot()
+    ///   start - starting point
+    ///   end - ending point
+    ///
+    /// Returns true if the annotation is of type line, |start| and |end| are not
+    /// NULL, false otherwise.
+    /// ```
+    pub fn FPDFAnnot_GetLine(
+        &self,
+        annot: &PdfiumAnnotation,
+        start: &mut FS_POINTF,
+        end: &mut FS_POINTF,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_GetLine)(annot.into(), start, end) })
+    }
+
+    /// C documentation for FPDFAnnot_SetBorder:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the characteristics of the annotation's border (rounded rectangle).
+    ///
+    ///   annot              - handle to an annotation
+    ///   horizontal_radius  - horizontal corner radius, in default user space units
+    ///   vertical_radius    - vertical corner radius, in default user space units
+    ///   border_width       - border width, in default user space units
+    ///
+    /// Returns true if setting the border for |annot| succeeds, false otherwise.
+    ///
+    /// If |annot| contains an appearance stream that overrides the border values,
+    /// then the appearance stream will be removed on success.
+    /// ```
+    pub fn FPDFAnnot_SetBorder(
+        &self,
+        annot: &PdfiumAnnotation,
+        horizontal_radius: f32,
+        vertical_radius: f32,
+        border_width: f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_SetBorder)(
+                annot.into(),
+                horizontal_radius,
+                vertical_radius,
+                border_width,
+            )
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetBorder:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the characteristics of the annotation's border (rounded rectangle).
+    ///
+    ///   annot              - handle to an annotation
+    ///   horizontal_radius  - horizontal corner radius, in default user space units
+    ///   vertical_radius    - vertical corner radius, in default user space units
+    ///   border_width       - border width, in default user space units
+    ///
+    /// Returns true if |horizontal_radius|, |vertical_radius| and |border_width| are
+    /// not NULL, false otherwise.
+    /// ```
+    pub fn FPDFAnnot_GetBorder(
+        &self,
+        annot: &PdfiumAnnotation,
+        horizontal_radius: &mut f32,
+        vertical_radius: &mut f32,
+        border_width: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_GetBorder)(
+                annot.into(),
+                horizontal_radius,
+                vertical_radius,
+                border_width,
+            )
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetFormAdditionalActionJavaScript:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the JavaScript of an event of the annotation's additional actions.
+    /// |buffer| is only modified if |buflen| is large enough to hold the whole
+    /// JavaScript string. If |buflen| is smaller, the total size of the JavaScript
+    /// is still returned, but nothing is copied.  If there is no JavaScript for
+    /// |event| in |annot|, an empty string is written to |buf| and 2 is returned,
+    /// denoting the size of the null terminator in the buffer.  On other errors,
+    /// nothing is written to |buffer| and 0 is returned.
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///    event       -   event type, one of the FPDF_ANNOT_AACTION_* values.
+    ///    buffer      -   buffer for holding the value string, encoded in UTF-16LE.
+    ///    buflen      -   length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes, including the 2-byte
+    /// null terminator.
+    /// ```
+    pub fn FPDFAnnot_GetFormAdditionalActionJavaScript(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        event: i32,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetFormAdditionalActionJavaScript)(
+                hHandle.into(),
+                annot.into(),
+                event,
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_HasKey:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Check if |annot|'s dictionary has |key| as a key.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   key    - the key to look for, encoded in UTF-8.
+    ///
+    /// Returns true if |key| exists.
+    /// ```
+    pub fn FPDFAnnot_HasKey(&self, annot: &PdfiumAnnotation, key: &CString) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_HasKey)(annot.into(), key.as_ptr()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetValueType:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the type of the value corresponding to |key| in |annot|'s dictionary.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   key    - the key to look for, encoded in UTF-8.
+    ///
+    /// Returns the type of the dictionary value.
+    /// ```
+    pub fn FPDFAnnot_GetValueType(
+        &self,
+        annot: &PdfiumAnnotation,
+        key: &CString,
+    ) -> FPDF_OBJECT_TYPE {
+        unsafe { (self.fn_FPDFAnnot_GetValueType)(annot.into(), key.as_ptr()) }
+    }
+
+    /// C documentation for FPDFAnnot_SetStringValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the string value corresponding to |key| in |annot|'s dictionary,
+    /// overwriting the existing value if any. The value type would be
+    /// FPDF_OBJECT_STRING after this function call succeeds.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   key    - the key to the dictionary entry to be set, encoded in UTF-8.
+    ///   value  - the string value to be set, encoded in UTF-16LE.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetStringValue(
+        &self,
+        annot: &PdfiumAnnotation,
+        key: &CString,
+        value: &str,
+    ) -> PdfiumResult<()> {
+        let value = str_to_utf16le_vec(value);
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_SetStringValue)(annot.into(), key.as_ptr(), value.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetStringValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the string value corresponding to |key| in |annot|'s dictionary. |buffer|
+    /// is only modified if |buflen| is longer than the length of contents. Note that
+    /// if |key| does not exist in the dictionary or if |key|'s corresponding value
+    /// in the dictionary is not a string (i.e. the value is not of type
+    /// FPDF_OBJECT_STRING or FPDF_OBJECT_NAME), then an empty string would be copied
+    /// to |buffer| and the return value would be 2. On other errors, nothing would
+    /// be added to |buffer| and the return value would be 0.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   key    - the key to the requested dictionary entry, encoded in UTF-8.
+    ///   buffer - buffer for holding the value string, encoded in UTF-16LE.
+    ///   buflen - length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// ```
+    pub fn FPDFAnnot_GetStringValue(
+        &self,
+        annot: &PdfiumAnnotation,
+        key: &CString,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetStringValue)(
+                annot.into(),
+                key.as_ptr(),
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_GetNumberValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the float value corresponding to |key| in |annot|'s dictionary. Writes
+    /// value to |value| and returns True if |key| exists in the dictionary and
+    /// |key|'s corresponding value is a number (FPDF_OBJECT_NUMBER), False
+    /// otherwise.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   key    - the key to the requested dictionary entry, encoded in UTF-8.
+    ///   value  - receives the value, must not be NULL.
+    ///
+    /// Returns True if value found, False otherwise.
+    /// ```
+    pub fn FPDFAnnot_GetNumberValue(
+        &self,
+        annot: &PdfiumAnnotation,
+        key: &CString,
+        value: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_GetNumberValue)(annot.into(), key.as_ptr(), value) })
+    }
+
+    /// C documentation for FPDFAnnot_SetAP:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the AP (appearance string) in |annot|'s dictionary for a given
+    /// |appearanceMode|.
+    ///
+    ///   annot          - handle to an annotation.
+    ///   appearanceMode - the appearance mode (normal, rollover or down) for which
+    ///                    to get the AP.
+    ///   value          - the string value to be set, encoded in UTF-16LE. If
+    ///                    nullptr is passed, the AP is cleared for that mode. If the
+    ///                    mode is Normal, APs for all modes are cleared.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetAP(
+        &self,
+        annot: &PdfiumAnnotation,
+        appearanceMode: FPDF_ANNOT_APPEARANCEMODE,
+        value: &str,
+    ) -> PdfiumResult<()> {
+        let value = str_to_utf16le_vec(value);
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_SetAP)(annot.into(), appearanceMode, value.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetAP:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the AP (appearance string) from |annot|'s dictionary for a given
+    /// |appearanceMode|.
+    /// |buffer| is only modified if |buflen| is large enough to hold the whole AP
+    /// string. If |buflen| is smaller, the total size of the AP is still returned,
+    /// but nothing is copied.
+    /// If there is no appearance stream for |annot| in |appearanceMode|, an empty
+    /// string is written to |buf| and 2 is returned.
+    /// On other errors, nothing is written to |buffer| and 0 is returned.
+    ///
+    ///   annot          - handle to an annotation.
+    ///   appearanceMode - the appearance mode (normal, rollover or down) for which
+    ///                    to get the AP.
+    ///   buffer         - buffer for holding the value string, encoded in UTF-16LE.
+    ///   buflen         - length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// ```
+    pub fn FPDFAnnot_GetAP(
+        &self,
+        annot: &PdfiumAnnotation,
+        appearanceMode: FPDF_ANNOT_APPEARANCEMODE,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetAP)(annot.into(), appearanceMode, buffer.as_mut_ptr(), buflen)
+        }
+    }
+
+    /// C documentation for FPDFAnnot_GetLinkedAnnot:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the annotation corresponding to |key| in |annot|'s dictionary. Common
+    /// keys for linking annotations include "IRT" and "Popup". Must call
+    /// FPDFPage_CloseAnnot() when the annotation returned by this function is no
+    /// longer needed.
+    ///
+    ///   annot  - handle to an annotation.
+    ///   key    - the key to the requested dictionary entry, encoded in UTF-8.
+    ///
+    /// Returns a handle to the linked annotation object, or NULL on failure.
+    /// ```
+    pub fn FPDFAnnot_GetLinkedAnnot(
+        &self,
+        annot: &PdfiumAnnotation,
+        key: &CString,
+    ) -> PdfiumResult<PdfiumAnnotation> {
+        PdfiumAnnotation::new_from_handle(unsafe {
+            (self.fn_FPDFAnnot_GetLinkedAnnot)(annot.into(), key.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetFlags:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the annotation flags of |annot|.
+    ///
+    ///   annot    - handle to an annotation.
+    ///
+    /// Returns the annotation flags.
+    /// ```
+    pub fn FPDFAnnot_GetFlags(&self, annot: &PdfiumAnnotation) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetFlags)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_SetFlags:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the |annot|'s flags to be of the value |flags|.
+    ///
+    ///   annot      - handle to an annotation.
+    ///   flags      - the flag values to be set.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetFlags(&self, annot: &PdfiumAnnotation, flags: i32) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_SetFlags)(annot.into(), flags) })
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldFlags:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the annotation flags of |annot|.
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///
+    /// Returns the annotation flags specific to interactive forms.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldFlags(
+        &self,
+        handle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetFormFieldFlags)(handle.into(), annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_SetFormFieldFlags:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Sets the form field flags for an interactive form annotation.
+    ///
+    ///   handle       -   the handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///   annot        -   handle to an interactive form annotation.
+    ///   flags        -   the form field flags to be set.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetFormFieldFlags(
+        &self,
+        handle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        flags: i32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_SetFormFieldFlags)(handle.into(), annot.into(), flags)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldAtPoint:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Retrieves an interactive form annotation whose rectangle contains a given
+    /// point on a page. Must call FPDFPage_CloseAnnot() when the annotation returned
+    /// is no longer needed.
+    ///
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    page        -   handle to the page, returned by FPDF_LoadPage function.
+    ///    point       -   position in PDF "user space".
+    ///
+    /// Returns the interactive form annotation whose rectangle contains the given
+    /// coordinates on the page. If there is no such annotation, return NULL.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldAtPoint(
+        &self,
+        hHandle: &PdfiumForm,
+        page: &PdfiumPage,
+        point: &FS_POINTF,
+    ) -> PdfiumResult<PdfiumAnnotation> {
+        PdfiumAnnotation::new_from_handle(unsafe {
+            (self.fn_FPDFAnnot_GetFormFieldAtPoint)(hHandle.into(), page.into(), point)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldName:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the name of |annot|, which is an interactive form annotation.
+    /// |buffer| is only modified if |buflen| is longer than the length of contents.
+    /// In case of error, nothing will be added to |buffer| and the return value will
+    /// be 0. Note that return value of empty string is 2 for "\\0\\0".
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///    buffer      -   buffer for holding the name string, encoded in UTF-16LE.
+    ///    buflen      -   length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldName(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetFormFieldName)(
+                hHandle.into(),
+                annot.into(),
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldAlternateName:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the alternate name of |annot|, which is an interactive form annotation.
+    /// |buffer| is only modified if |buflen| is longer than the length of contents.
+    /// In case of error, nothing will be added to |buffer| and the return value will
+    /// be 0. Note that return value of empty string is 2 for "\\0\\0".
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///    buffer      -   buffer for holding the alternate name string, encoded in
+    ///                    UTF-16LE.
+    ///    buflen      -   length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldAlternateName(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetFormFieldAlternateName)(
+                hHandle.into(),
+                annot.into(),
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldType:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the form field type of |annot|, which is an interactive form annotation.
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///
+    /// Returns the type of the form field (one of the FPDF_FORMFIELD_* values) on
+    /// success. Returns -1 on error.
+    /// See field types in fpdf_formfill.h.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldType(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetFormFieldType)(hHandle.into(), annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the value of |annot|, which is an interactive form annotation.
+    /// |buffer| is only modified if |buflen| is longer than the length of contents.
+    /// In case of error, nothing will be added to |buffer| and the return value will
+    /// be 0. Note that return value of empty string is 2 for "\\0\\0".
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///    buffer      -   buffer for holding the value string, encoded in UTF-16LE.
+    ///    buflen      -   length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldValue(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetFormFieldValue)(
+                hHandle.into(),
+                annot.into(),
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_GetOptionCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of options in the |annot|'s "Opt" dictionary. Intended for
+    /// use with listbox and combobox widget annotations.
+    ///
+    ///   hHandle - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///
+    /// Returns the number of options in "Opt" dictionary on success. Return value
+    /// will be -1 if annotation does not have an "Opt" dictionary or other error.
+    /// ```
+    pub fn FPDFAnnot_GetOptionCount(&self, hHandle: &PdfiumForm, annot: &PdfiumAnnotation) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetOptionCount)(hHandle.into(), annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetOptionLabel:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the string value for the label of the option at |index| in |annot|'s
+    /// "Opt" dictionary. Intended for use with listbox and combobox widget
+    /// annotations. |buffer| is only modified if |buflen| is longer than the length
+    /// of contents. If index is out of range or in case of other error, nothing
+    /// will be added to |buffer| and the return value will be 0. Note that
+    /// return value of empty string is 2 for "\\0\\0".
+    ///
+    ///   hHandle - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///   index   - numeric index of the option in the "Opt" array
+    ///   buffer  - buffer for holding the value string, encoded in UTF-16LE.
+    ///   buflen  - length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// If |annot| does not have an "Opt" array, |index| is out of range or if any
+    /// other error occurs, returns 0.
+    /// ```
+    pub fn FPDFAnnot_GetOptionLabel(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        index: i32,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetOptionLabel)(
+                hHandle.into(),
+                annot.into(),
+                index,
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_IsOptionSelected:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Determine whether or not the option at |index| in |annot|'s "Opt" dictionary
+    /// is selected. Intended for use with listbox and combobox widget annotations.
+    ///
+    ///   handle  - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///   index   - numeric index of the option in the "Opt" array.
+    ///
+    /// Returns true if the option at |index| in |annot|'s "Opt" dictionary is
+    /// selected, false otherwise.
+    /// ```
+    pub fn FPDFAnnot_IsOptionSelected(
+        &self,
+        handle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        index: i32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_IsOptionSelected)(handle.into(), annot.into(), index)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetFontSize:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the float value of the font size for an |annot| with variable text.
+    /// If 0, the font is to be auto-sized: its size is computed as a function of
+    /// the height of the annotation rectangle.
+    ///
+    ///   hHandle - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///   value   - Required. Float which will be set to font size on success.
+    ///
+    /// Returns true if the font size was set in |value|, false on error or if
+    /// |value| not provided.
+    /// ```
+    pub fn FPDFAnnot_GetFontSize(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        value: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_GetFontSize)(hHandle.into(), annot.into(), value) })
+    }
+
+    /// C documentation for FPDFAnnot_SetFontColor:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the text color of an annotation.
+    ///
+    ///   handle   - handle to the form fill module, returned by
+    ///              FPDFDOC_InitFormFillEnvironment.
+    ///   annot    - handle to an annotation.
+    ///   R        - the red component for the text color.
+    ///   G        - the green component for the text color.
+    ///   B        - the blue component for the text color.
+    ///
+    /// Returns true if successful.
+    ///
+    /// Currently supported subtypes: freetext.
+    /// The range for the color components is 0 to 255.
+    /// ```
+    pub fn FPDFAnnot_SetFontColor(
+        &self,
+        handle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        R: u32,
+        G: u32,
+        B: u32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_SetFontColor)(handle.into(), annot.into(), R, G, B) })
+    }
+
+    /// C documentation for FPDFAnnot_GetFontColor:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the RGB value of the font color for an |annot| with variable text.
+    ///
+    ///   hHandle  - handle to the form fill module, returned by
+    ///              FPDFDOC_InitFormFillEnvironment.
+    ///   annot    - handle to an annotation.
+    ///   R, G, B  - buffer to hold the RGB value of the color. Ranges from 0 to 255.
+    ///
+    /// Returns true if the font color was set, false on error or if the font
+    /// color was not provided.
+    /// ```
+    pub fn FPDFAnnot_GetFontColor(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        R: &mut u32,
+        G: &mut u32,
+        B: &mut u32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_GetFontColor)(hHandle.into(), annot.into(), R, G, B)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_IsChecked:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Determine if |annot| is a form widget that is checked. Intended for use with
+    /// checkbox and radio button widgets.
+    ///
+    ///   hHandle - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///
+    /// Returns true if |annot| is a form widget and is checked, false otherwise.
+    /// ```
+    pub fn FPDFAnnot_IsChecked(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_IsChecked)(hHandle.into(), annot.into()) })
+    }
+
+    /// C documentation for FPDFAnnot_SetFocusableSubtypes:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the list of focusable annotation subtypes. Annotations of subtype
+    /// FPDF_ANNOT_WIDGET are by default focusable. New subtypes set using this API
+    /// will override the existing subtypes.
+    ///
+    ///   hHandle  - handle to the form fill module, returned by
+    ///              FPDFDOC_InitFormFillEnvironment.
+    ///   subtypes - list of annotation subtype which can be tabbed over.
+    ///   count    - total number of annotation subtype in list.
+    /// Returns true if list of annotation subtype is set successfully, false
+    /// otherwise.
+    /// ```
+    pub fn FPDFAnnot_SetFocusableSubtypes(
+        &self,
+        hHandle: &PdfiumForm,
+        subtypes: &FPDF_ANNOTATION_SUBTYPE,
+        count: usize,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_SetFocusableSubtypes)(hHandle.into(), subtypes, count)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetFocusableSubtypesCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the count of focusable annotation subtypes as set by host
+    /// for a |hHandle|.
+    ///
+    ///   hHandle  - handle to the form fill module, returned by
+    ///              FPDFDOC_InitFormFillEnvironment.
+    /// Returns the count of focusable annotation subtypes or -1 on error.
+    /// Note : Annotations of type FPDF_ANNOT_WIDGET are by default focusable.
+    /// ```
+    pub fn FPDFAnnot_GetFocusableSubtypesCount(&self, hHandle: &PdfiumForm) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetFocusableSubtypesCount)(hHandle.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetFocusableSubtypes:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the list of focusable annotation subtype as set by host.
+    ///
+    ///   hHandle  - handle to the form fill module, returned by
+    ///              FPDFDOC_InitFormFillEnvironment.
+    ///   subtypes - receives the list of annotation subtype which can be tabbed
+    ///              over. Caller must have allocated |subtypes| more than or
+    ///              equal to the count obtained from
+    ///              FPDFAnnot_GetFocusableSubtypesCount() API.
+    ///   count    - size of |subtypes|.
+    /// Returns true on success and set list of annotation subtype to |subtypes|,
+    /// false otherwise.
+    /// Note : Annotations of type FPDF_ANNOT_WIDGET are by default focusable.
+    /// ```
+    pub fn FPDFAnnot_GetFocusableSubtypes(
+        &self,
+        hHandle: &PdfiumForm,
+        subtypes: &mut FPDF_ANNOTATION_SUBTYPE,
+        count: usize,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAnnot_GetFocusableSubtypes)(hHandle.into(), subtypes, count)
+        })
+    }
+
+    /// C documentation for FPDFAnnot_GetLink:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets FPDF_LINK object for |annot|. Intended to use for link annotations.
+    ///
+    ///   annot   - handle to an annotation.
+    ///
+    /// Returns FPDF_LINK from the FPDF_ANNOTATION and NULL on failure,
+    /// if the input annot is NULL or input annot's subtype is not link.
+    /// ```
+    pub fn FPDFAnnot_GetLink(&self, annot: &PdfiumAnnotation) -> FPDF_LINK {
+        unsafe { (self.fn_FPDFAnnot_GetLink)(annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetFormControlCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the count of annotations in the |annot|'s control group.
+    /// A group of interactive form annotations is collectively called a form
+    /// control group. Here, |annot|, an interactive form annotation, should be
+    /// either a radio button or a checkbox.
+    ///
+    ///   hHandle - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///
+    /// Returns number of controls in its control group or -1 on error.
+    /// ```
+    pub fn FPDFAnnot_GetFormControlCount(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetFormControlCount)(hHandle.into(), annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetFormControlIndex:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the index of |annot| in |annot|'s control group.
+    /// A group of interactive form annotations is collectively called a form
+    /// control group. Here, |annot|, an interactive form annotation, should be
+    /// either a radio button or a checkbox.
+    ///
+    ///   hHandle - handle to the form fill module, returned by
+    ///             FPDFDOC_InitFormFillEnvironment.
+    ///   annot   - handle to an annotation.
+    ///
+    /// Returns index of a given |annot| in its control group or -1 on error.
+    /// ```
+    pub fn FPDFAnnot_GetFormControlIndex(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAnnot_GetFormControlIndex)(hHandle.into(), annot.into()) }
+    }
+
+    /// C documentation for FPDFAnnot_GetFormFieldExportValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Gets the export value of |annot| which is an interactive form annotation.
+    /// Intended for use with radio button and checkbox widget annotations.
+    /// |buffer| is only modified if |buflen| is longer than the length of contents.
+    /// In case of error, nothing will be added to |buffer| and the return value
+    /// will be 0. Note that return value of empty string is 2 for "\\0\\0".
+    ///
+    ///    hHandle     -   handle to the form fill module, returned by
+    ///                    FPDFDOC_InitFormFillEnvironment().
+    ///    annot       -   handle to an interactive form annotation.
+    ///    buffer      -   buffer for holding the value string, encoded in UTF-16LE.
+    ///    buflen      -   length of the buffer in bytes.
+    ///
+    /// Returns the length of the string value in bytes.
+    /// ```
+    pub fn FPDFAnnot_GetFormFieldExportValue(
+        &self,
+        hHandle: &PdfiumForm,
+        annot: &PdfiumAnnotation,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAnnot_GetFormFieldExportValue)(
+                hHandle.into(),
+                annot.into(),
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAnnot_SetURI:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Add a URI action to |annot|, overwriting the existing action, if any.
+    ///
+    ///   annot  - handle to a link annotation.
+    ///   uri    - the URI to be set, encoded in 7-bit ASCII.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAnnot_SetURI(
+        &self,
+        annot: &PdfiumAnnotation,
+        uri: Option<&[i8]>,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFAnnot_SetURI)(annot.into(), to_char_ptr(uri)) })
+    }
+
+    /// C documentation for FPDFAnnot_GetFileAttachment:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the attachment from |annot|.
+    ///
+    ///   annot - handle to a file annotation.
+    ///
+    /// Returns the handle to the attachment object, or NULL on failure.
+    /// ```
+    pub fn FPDFAnnot_GetFileAttachment(
+        &self,
+        annot: &PdfiumAnnotation,
+    ) -> PdfiumResult<PdfiumAttachment> {
+        PdfiumAttachment::new_from_handle(unsafe {
+            (self.fn_FPDFAnnot_GetFileAttachment)(annot.into())
+        })
+    }
+
+    /// C documentation for FPDFAnnot_AddFileAttachment:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Add an embedded file with |name| to |annot|.
+    ///
+    ///   annot    - handle to a file annotation.
+    ///   name     - name of the new attachment.
+    ///
+    /// Returns a handle to the new attachment object, or NULL on failure.
+    /// ```
+    pub fn FPDFAnnot_AddFileAttachment(
+        &self,
+        annot: &PdfiumAnnotation,
+        name: &str,
+    ) -> PdfiumResult<PdfiumAttachment> {
+        let name = str_to_utf16le_vec(name);
+        PdfiumAttachment::new_from_handle(unsafe {
+            (self.fn_FPDFAnnot_AddFileAttachment)(annot.into(), name.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFDoc_GetAttachmentCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of embedded files in |document|.
+    ///
+    ///   document - handle to a document.
+    ///
+    /// Returns the number of embedded files in |document|.
+    /// ```
+    pub fn FPDFDoc_GetAttachmentCount(&self, document: &PdfiumDocument) -> i32 {
+        unsafe { (self.fn_FPDFDoc_GetAttachmentCount)(document.into()) }
+    }
+
+    /// C documentation for FPDFDoc_AddAttachment:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Add an embedded file with |name| in |document|. If |name| is empty, or if
+    /// |name| is the name of a existing embedded file in |document|, or if
+    /// |document|'s embedded file name tree is too deep (i.e. |document| has too
+    /// many embedded files already), then a new attachment will not be added.
+    ///
+    ///   document - handle to a document.
+    ///   name     - name of the new attachment.
+    ///
+    /// Returns a handle to the new attachment object, or NULL on failure.
+    /// ```
+    pub fn FPDFDoc_AddAttachment(
+        &self,
+        document: &PdfiumDocument,
+        name: &str,
+    ) -> PdfiumResult<PdfiumAttachment> {
+        let name = str_to_utf16le_vec(name);
+        PdfiumAttachment::new_from_handle(unsafe {
+            (self.fn_FPDFDoc_AddAttachment)(document.into(), name.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFDoc_GetAttachment:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the embedded attachment at |index| in |document|. Note that the returned
+    /// attachment handle is only valid while |document| is open.
+    ///
+    ///   document - handle to a document.
+    ///   index    - the index of the requested embedded file.
+    ///
+    /// Returns the handle to the attachment object, or NULL on failure.
+    /// ```
+    pub fn FPDFDoc_GetAttachment(
+        &self,
+        document: &PdfiumDocument,
+        index: i32,
+    ) -> PdfiumResult<PdfiumAttachment> {
+        PdfiumAttachment::new_from_handle(unsafe {
+            (self.fn_FPDFDoc_GetAttachment)(document.into(), index)
+        })
+    }
+
+    /// C documentation for FPDFDoc_DeleteAttachment:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Delete the embedded attachment at |index| in |document|. Note that this does
+    /// not remove the attachment data from the PDF file; it simply removes the
+    /// file's entry in the embedded files name tree so that it does not appear in
+    /// the attachment list. This behavior may change in the future.
+    ///
+    ///   document - handle to a document.
+    ///   index    - the index of the embedded file to be deleted.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFDoc_DeleteAttachment(
+        &self,
+        document: &PdfiumDocument,
+        index: i32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFDoc_DeleteAttachment)(document.into(), index) })
+    }
+
+    /// C documentation for FPDFAttachment_GetName:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the name of the |attachment| file. |buffer| is only modified if |buflen|
+    /// is longer than the length of the file name. On errors, |buffer| is unmodified
+    /// and the returned length is 0.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   buffer     - buffer for holding the file name, encoded in UTF-16LE.
+    ///   buflen     - length of the buffer in bytes.
+    ///
+    /// Returns the length of the file name in bytes.
+    /// ```
+    pub fn FPDFAttachment_GetName(
+        &self,
+        attachment: &PdfiumAttachment,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe { (self.fn_FPDFAttachment_GetName)(attachment.into(), buffer.as_mut_ptr(), buflen) }
+    }
+
+    /// C documentation for FPDFAttachment_HasKey:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Check if the params dictionary of |attachment| has |key| as a key.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   key        - the key to look for, encoded in UTF-8.
+    ///
+    /// Returns true if |key| exists.
+    /// ```
+    pub fn FPDFAttachment_HasKey(&self, attachment: &PdfiumAttachment, key: &CString) -> i32 {
+        unsafe { (self.fn_FPDFAttachment_HasKey)(attachment.into(), key.as_ptr()) }
+    }
+
+    /// C documentation for FPDFAttachment_GetValueType:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the type of the value corresponding to |key| in the params dictionary of
+    /// the embedded |attachment|.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   key        - the key to look for, encoded in UTF-8.
+    ///
+    /// Returns the type of the dictionary value.
+    /// ```
+    pub fn FPDFAttachment_GetValueType(
+        &self,
+        attachment: &PdfiumAttachment,
+        key: &CString,
+    ) -> FPDF_OBJECT_TYPE {
+        unsafe { (self.fn_FPDFAttachment_GetValueType)(attachment.into(), key.as_ptr()) }
+    }
+
+    /// C documentation for FPDFAttachment_SetStringValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the string value corresponding to |key| in the params dictionary of the
+    /// embedded file |attachment|, overwriting the existing value if any. The value
+    /// type should be FPDF_OBJECT_STRING after this function call succeeds.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   key        - the key to the dictionary entry, encoded in UTF-8.
+    ///   value      - the string value to be set, encoded in UTF-16LE.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAttachment_SetStringValue(
+        &self,
+        attachment: &PdfiumAttachment,
+        key: &CString,
+        value: &str,
+    ) -> PdfiumResult<()> {
+        let value = str_to_utf16le_vec(value);
+        to_result(unsafe {
+            (self.fn_FPDFAttachment_SetStringValue)(attachment.into(), key.as_ptr(), value.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFAttachment_GetStringValue:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the string value corresponding to |key| in the params dictionary of the
+    /// embedded file |attachment|. |buffer| is only modified if |buflen| is longer
+    /// than the length of the string value. Note that if |key| does not exist in the
+    /// dictionary or if |key|'s corresponding value in the dictionary is not a
+    /// string (i.e. the value is not of type FPDF_OBJECT_STRING or
+    /// FPDF_OBJECT_NAME), then an empty string would be copied to |buffer| and the
+    /// return value would be 2. On other errors, nothing would be added to |buffer|
+    /// and the return value would be 0.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   key        - the key to the requested string value, encoded in UTF-8.
+    ///   buffer     - buffer for holding the string value encoded in UTF-16LE.
+    ///   buflen     - length of the buffer in bytes.
+    ///
+    /// Returns the length of the dictionary value string in bytes.
+    /// ```
+    pub fn FPDFAttachment_GetStringValue(
+        &self,
+        attachment: &PdfiumAttachment,
+        key: &CString,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAttachment_GetStringValue)(
+                attachment.into(),
+                key.as_ptr(),
+                buffer.as_mut_ptr(),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFAttachment_SetFile:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Set the file data of |attachment|, overwriting the existing file data if any.
+    /// The creation date and checksum will be updated, while all other dictionary
+    /// entries will be deleted. Note that only contents with |len| smaller than
+    /// INT_MAX is supported.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   contents   - buffer holding the file data to write to |attachment|.
+    ///   len        - length of file data in bytes.
+    ///
+    /// Returns true if successful.
+    /// ```
+    pub fn FPDFAttachment_SetFile(
+        &self,
+        attachment: &PdfiumAttachment,
+        document: &PdfiumDocument,
+        contents: Option<&[u8]>,
+        len: c_ulong,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAttachment_SetFile)(
+                attachment.into(),
+                document.into(),
+                to_void_ptr(contents),
+                len,
+            )
+        })
+    }
+
+    /// C documentation for FPDFAttachment_GetFile:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the file data of |attachment|.
+    /// When the attachment file data is readable, true is returned, and |out_buflen|
+    /// is updated to indicate the file data size. |buffer| is only modified if
+    /// |buflen| is non-null and long enough to contain the entire file data. Callers
+    /// must check both the return value and the input |buflen| is no less than the
+    /// returned |out_buflen| before using the data.
+    ///
+    /// Otherwise, when the attachment file data is unreadable or when |out_buflen|
+    /// is null, false is returned and |buffer| and |out_buflen| remain unmodified.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   buffer     - buffer for holding the file data from |attachment|.
+    ///   buflen     - length of the buffer in bytes.
+    ///   out_buflen - pointer to the variable that will receive the minimum buffer
+    ///                size to contain the file data of |attachment|.
+    ///
+    /// Returns true on success, false otherwise.
+    /// ```
+    pub fn FPDFAttachment_GetFile(
+        &self,
+        attachment: &PdfiumAttachment,
+        buffer: Option<&mut [u8]>,
+        buflen: c_ulong,
+        out_buflen: &mut c_ulong,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFAttachment_GetFile)(
+                attachment.into(),
+                to_void_ptr_mut(buffer),
+                buflen,
+                out_buflen,
+            )
+        })
+    }
+
+    /// C documentation for FPDFAttachment_GetSubtype:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the MIME type (Subtype) of the embedded file |attachment|. |buffer| is
+    /// only modified if |buflen| is longer than the length of the MIME type string.
+    /// If the Subtype is not found or if there is no file stream, an empty string
+    /// would be copied to |buffer| and the return value would be 2. On other errors,
+    /// nothing would be added to |buffer| and the return value would be 0.
+    ///
+    ///   attachment - handle to an attachment.
+    ///   buffer     - buffer for holding the MIME type string encoded in UTF-16LE.
+    ///   buflen     - length of the buffer in bytes.
+    ///
+    /// Returns the length of the MIME type string in bytes.
+    /// ```
+    pub fn FPDFAttachment_GetSubtype(
+        &self,
+        attachment: &PdfiumAttachment,
+        buffer: &mut Vec<u16>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAttachment_GetSubtype)(attachment.into(), buffer.as_mut_ptr(), buflen)
+        }
+    }
+
+    /// C documentation for FPDFCatalog_IsTagged:
+    ///
+    /// ```text
+    /// Experimental API.
+    ///
+    /// Determine if |document| represents a tagged PDF.
+    ///
+    /// For the definition of tagged PDF, See (see 10.7 "Tagged PDF" in PDF
+    /// Reference 1.7).
+    ///
+    ///   document - handle to a document.
+    ///
+    /// Returns |true| iff |document| is a tagged PDF.
+    /// ```
+    pub fn FPDFCatalog_IsTagged(&self, document: &PdfiumDocument) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFCatalog_IsTagged)(document.into()) })
+    }
+
+    /// C documentation for FPDFCatalog_SetLanguage:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Sets the language of |document| to |language|.
+    ///
+    /// document - handle to a document.
+    /// language - the language to set to.
+    ///
+    /// Returns TRUE on success.
+    /// ```
+    pub fn FPDFCatalog_SetLanguage(
+        &self,
+        document: &PdfiumDocument,
+        language: &CString,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFCatalog_SetLanguage)(document.into(), language.as_ptr()) })
+    }
+
+    /// C documentation for FPDFAvail_Create:
+    ///
+    /// ```text
+    /// Create a document availability provider.
+    ///
+    ///   file_avail - pointer to file availability interface.
+    ///   file       - pointer to a file access interface.
+    ///
+    /// Returns a handle to the document availability provider, or NULL on error.
+    ///
+    /// FPDFAvail_Destroy() must be called when done with the availability provider.
+    /// ```
+    pub fn FPDFAvail_Create(
+        &self,
+        file_avail: &mut FX_FILEAVAIL,
+        file: &mut Box<crate::PdfiumReader>,
+    ) -> PdfiumResult<PdfiumAvailability> {
+        PdfiumAvailability::new_from_handle(unsafe {
+            (self.fn_FPDFAvail_Create)(file_avail, file.as_mut().into())
+        })
+    }
+
+    /// C documentation for FPDFAvail_Destroy:
+    ///
+    /// ```text
+    /// Destroy the |avail| document availability provider.
+    ///
+    ///   avail - handle to document availability provider to be destroyed.
+    /// ```
+    pub fn FPDFAvail_Destroy(&self, avail: &PdfiumAvailability) {
+        unsafe { (self.fn_FPDFAvail_Destroy)(avail.into()) }
+    }
+
+    /// C documentation for FPDFAvail_IsDocAvail:
+    ///
+    /// ```text
+    /// Checks if the document is ready for loading, if not, gets download hints.
+    ///
+    ///   avail - handle to document availability provider.
+    ///   hints - pointer to a download hints interface.
+    ///
+    /// Returns one of:
+    ///   PDF_DATA_ERROR: A common error is returned. Data availability unknown.
+    ///   PDF_DATA_NOTAVAIL: Data not yet available.
+    ///   PDF_DATA_AVAIL: Data available.
+    ///
+    /// Applications should call this function whenever new data arrives, and process
+    /// all the generated download hints, if any, until the function returns
+    /// |PDF_DATA_ERROR| or |PDF_DATA_AVAIL|.
+    /// if hints is nullptr, the function just check current document availability.
+    ///
+    /// Once all data is available, call FPDFAvail_GetDocument() to get a document
+    /// handle.
+    /// ```
+    pub fn FPDFAvail_IsDocAvail(
+        &self,
+        avail: &PdfiumAvailability,
+        hints: &mut FX_DOWNLOADHINTS,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAvail_IsDocAvail)(avail.into(), hints) }
+    }
+
+    /// C documentation for FPDFAvail_GetDocument:
+    ///
+    /// ```text
+    /// Get document from the availability provider.
+    ///
+    ///   avail    - handle to document availability provider.
+    ///   password - password for decrypting the PDF file. Optional.
+    ///
+    /// Returns a handle to the document.
+    ///
+    /// When FPDFAvail_IsDocAvail() returns TRUE, call FPDFAvail_GetDocument() to
+    /// retrieve the document handle.
+    /// See the comments for FPDF_LoadDocument() regarding the encoding for
+    /// |password|.
+    /// ```
+    pub fn FPDFAvail_GetDocument(
+        &self,
+        avail: &PdfiumAvailability,
+        password: &CString,
+    ) -> FPDF_DOCUMENT {
+        unsafe { (self.fn_FPDFAvail_GetDocument)(avail.into(), password.as_ptr()) }
+    }
+
+    /// C documentation for FPDFAvail_GetFirstPageNum:
+    ///
+    /// ```text
+    /// Get the page number for the first available page in a linearized PDF.
+    ///
+    ///   doc - document handle.
+    ///
+    /// Returns the zero-based index for the first available page.
+    ///
+    /// For most linearized PDFs, the first available page will be the first page,
+    /// however, some PDFs might make another page the first available page.
+    /// For non-linearized PDFs, this function will always return zero.
+    /// ```
+    pub fn FPDFAvail_GetFirstPageNum(&self, doc: &PdfiumDocument) -> i32 {
+        unsafe { (self.fn_FPDFAvail_GetFirstPageNum)(doc.into()) }
+    }
+
+    /// C documentation for FPDFAvail_IsPageAvail:
+    ///
+    /// ```text
+    /// Check if |page_index| is ready for loading, if not, get the
+    /// |FX_DOWNLOADHINTS|.
+    ///
+    ///   avail      - handle to document availability provider.
+    ///   page_index - index number of the page. Zero for the first page.
+    ///   hints      - pointer to a download hints interface. Populated if
+    ///                |page_index| is not available.
+    ///
+    /// Returns one of:
+    ///   PDF_DATA_ERROR: A common error is returned. Data availability unknown.
+    ///   PDF_DATA_NOTAVAIL: Data not yet available.
+    ///   PDF_DATA_AVAIL: Data available.
+    ///
+    /// This function can be called only after FPDFAvail_GetDocument() is called.
+    /// Applications should call this function whenever new data arrives and process
+    /// all the generated download |hints|, if any, until this function returns
+    /// |PDF_DATA_ERROR| or |PDF_DATA_AVAIL|. Applications can then perform page
+    /// loading.
+    /// if hints is nullptr, the function just check current availability of
+    /// specified page.
+    /// ```
+    pub fn FPDFAvail_IsPageAvail(
+        &self,
+        avail: &PdfiumAvailability,
+        page_index: i32,
+        hints: &mut FX_DOWNLOADHINTS,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAvail_IsPageAvail)(avail.into(), page_index, hints) }
+    }
+
+    /// C documentation for FPDFAvail_IsFormAvail:
+    ///
+    /// ```text
+    /// Check if form data is ready for initialization, if not, get the
+    /// |FX_DOWNLOADHINTS|.
+    ///
+    ///   avail - handle to document availability provider.
+    ///   hints - pointer to a download hints interface. Populated if form is not
+    ///           ready for initialization.
+    ///
+    /// Returns one of:
+    ///   PDF_FORM_ERROR: A common eror, in general incorrect parameters.
+    ///   PDF_FORM_NOTAVAIL: Data not available.
+    ///   PDF_FORM_AVAIL: Data available.
+    ///   PDF_FORM_NOTEXIST: No form data.
+    ///
+    /// This function can be called only after FPDFAvail_GetDocument() is called.
+    /// The application should call this function whenever new data arrives and
+    /// process all the generated download |hints|, if any, until the function
+    /// |PDF_FORM_ERROR|, |PDF_FORM_AVAIL| or |PDF_FORM_NOTEXIST|.
+    /// if hints is nullptr, the function just check current form availability.
+    ///
+    /// Applications can then perform page loading. It is recommend to call
+    /// FPDFDOC_InitFormFillEnvironment() when |PDF_FORM_AVAIL| is returned.
+    /// ```
+    pub fn FPDFAvail_IsFormAvail(
+        &self,
+        avail: &PdfiumAvailability,
+        hints: &mut FX_DOWNLOADHINTS,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFAvail_IsFormAvail)(avail.into(), hints) }
+    }
+
+    /// C documentation for FPDFAvail_IsLinearized:
+    ///
+    /// ```text
+    /// Check whether a document is a linearized PDF.
+    ///
+    ///   avail - handle to document availability provider.
+    ///
+    /// Returns one of:
+    ///   PDF_LINEARIZED
+    ///   PDF_NOT_LINEARIZED
+    ///   PDF_LINEARIZATION_UNKNOWN
+    ///
+    /// FPDFAvail_IsLinearized() will return |PDF_LINEARIZED| or |PDF_NOT_LINEARIZED|
+    /// when we have 1k  of data. If the files size less than 1k, it returns
+    /// |PDF_LINEARIZATION_UNKNOWN| as there is insufficient information to determine
+    /// if the PDF is linearlized.
+    /// ```
+    pub fn FPDFAvail_IsLinearized(&self, avail: &PdfiumAvailability) -> i32 {
+        unsafe { (self.fn_FPDFAvail_IsLinearized)(avail.into()) }
+    }
+
+    /// C documentation for FPDFBookmark_GetFirstChild:
+    ///
+    /// ```text
+    /// Get the first child of |bookmark|, or the first top-level bookmark item.
+    ///
+    ///   document - handle to the document.
+    ///   bookmark - handle to the current bookmark. Pass NULL for the first top
+    ///              level item.
+    ///
+    /// Returns a handle to the first child of |bookmark| or the first top-level
+    /// bookmark item. NULL if no child or top-level bookmark found.
+    /// Note that another name for the bookmarks is the document outline, as
+    /// described in ISO 32000-1:2008, section 12.3.3.
+    /// ```
+    pub fn FPDFBookmark_GetFirstChild(
+        &self,
+        document: &PdfiumDocument,
+        bookmark: &PdfiumBookmark,
+    ) -> PdfiumResult<PdfiumBookmark> {
+        PdfiumBookmark::new_from_handle(unsafe {
+            (self.fn_FPDFBookmark_GetFirstChild)(document.into(), bookmark.into())
+        })
+    }
+
+    /// C documentation for FPDFBookmark_GetNextSibling:
+    ///
+    /// ```text
+    /// Get the next sibling of |bookmark|.
+    ///
+    ///   document - handle to the document.
+    ///   bookmark - handle to the current bookmark.
+    ///
+    /// Returns a handle to the next sibling of |bookmark|, or NULL if this is the
+    /// last bookmark at this level.
+    ///
+    /// Note that the caller is responsible for handling circular bookmark
+    /// references, as may arise from malformed documents.
+    /// ```
+    pub fn FPDFBookmark_GetNextSibling(
+        &self,
+        document: &PdfiumDocument,
+        bookmark: &PdfiumBookmark,
+    ) -> PdfiumResult<PdfiumBookmark> {
+        PdfiumBookmark::new_from_handle(unsafe {
+            (self.fn_FPDFBookmark_GetNextSibling)(document.into(), bookmark.into())
+        })
+    }
+
+    /// C documentation for FPDFBookmark_GetTitle:
+    ///
+    /// ```text
+    /// Get the title of |bookmark|.
+    ///
+    ///   bookmark - handle to the bookmark.
+    ///   buffer   - buffer for the title. May be NULL.
+    ///   buflen   - the length of the buffer in bytes. May be 0.
+    ///
+    /// Returns the number of bytes in the title, including the terminating NUL
+    /// character. The number of bytes is returned regardless of the |buffer| and
+    /// |buflen| parameters.
+    ///
+    /// Regardless of the platform, the |buffer| is always in UTF-16LE encoding. The
+    /// string is terminated by a UTF16 NUL character. If |buflen| is less than the
+    /// required length, or |buffer| is NULL, |buffer| will not be modified.
+    /// ```
+    pub fn FPDFBookmark_GetTitle(
+        &self,
+        bookmark: &PdfiumBookmark,
+        buffer: Option<&mut [u8]>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe { (self.fn_FPDFBookmark_GetTitle)(bookmark.into(), to_void_ptr_mut(buffer), buflen) }
+    }
+
+    /// C documentation for FPDFBookmark_GetCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of chlidren of |bookmark|.
+    ///
+    ///   bookmark - handle to the bookmark.
+    ///
+    /// Returns a signed integer that represents the number of sub-items the given
+    /// bookmark has. If the value is positive, child items shall be shown by default
+    /// (open state). If the value is negative, child items shall be hidden by
+    /// default (closed state). Please refer to PDF 32000-1:2008, Table 153.
+    /// Returns 0 if the bookmark has no children or is invalid.
+    /// ```
+    pub fn FPDFBookmark_GetCount(&self, bookmark: &PdfiumBookmark) -> i32 {
+        unsafe { (self.fn_FPDFBookmark_GetCount)(bookmark.into()) }
+    }
+
+    /// C documentation for FPDFBookmark_Find:
+    ///
+    /// ```text
+    /// Find the bookmark with |title| in |document|.
+    ///
+    ///   document - handle to the document.
+    ///   title    - the UTF-16LE encoded Unicode title for which to search.
+    ///
+    /// Returns the handle to the bookmark, or NULL if |title| can't be found.
+    ///
+    /// FPDFBookmark_Find() will always return the first bookmark found even if
+    /// multiple bookmarks have the same |title|.
+    /// ```
+    pub fn FPDFBookmark_Find(
+        &self,
+        document: &PdfiumDocument,
+        title: &str,
+    ) -> PdfiumResult<PdfiumBookmark> {
+        let title = str_to_utf16le_vec(title);
+        PdfiumBookmark::new_from_handle(unsafe {
+            (self.fn_FPDFBookmark_Find)(document.into(), title.as_ptr())
+        })
+    }
+
+    /// C documentation for FPDFBookmark_GetDest:
+    ///
+    /// ```text
+    /// Get the destination associated with |bookmark|.
+    ///
+    ///   document - handle to the document.
+    ///   bookmark - handle to the bookmark.
+    ///
+    /// Returns the handle to the destination data, or NULL if no destination is
+    /// associated with |bookmark|.
+    /// ```
+    pub fn FPDFBookmark_GetDest(
+        &self,
+        document: &PdfiumDocument,
+        bookmark: &PdfiumBookmark,
+    ) -> PdfiumResult<PdfiumDestination> {
+        PdfiumDestination::new_from_handle(unsafe {
+            (self.fn_FPDFBookmark_GetDest)(document.into(), bookmark.into())
+        })
+    }
+
+    /// C documentation for FPDFBookmark_GetAction:
+    ///
+    /// ```text
+    /// Get the action associated with |bookmark|.
+    ///
+    ///   bookmark - handle to the bookmark.
+    ///
+    /// Returns the handle to the action data, or NULL if no action is associated
+    /// with |bookmark|.
+    /// If this function returns a valid handle, it is valid as long as |bookmark| is
+    /// valid.
+    /// If this function returns NULL, FPDFBookmark_GetDest() should be called to get
+    /// the |bookmark| destination data.
+    /// ```
+    pub fn FPDFBookmark_GetAction(&self, bookmark: &PdfiumBookmark) -> PdfiumResult<PdfiumAction> {
+        PdfiumAction::new_from_handle(unsafe { (self.fn_FPDFBookmark_GetAction)(bookmark.into()) })
+    }
+
+    /// C documentation for FPDFAction_GetType:
+    ///
+    /// ```text
+    /// Get the type of |action|.
+    ///
+    ///   action - handle to the action.
+    ///
+    /// Returns one of:
+    ///   PDFACTION_UNSUPPORTED
+    ///   PDFACTION_GOTO
+    ///   PDFACTION_REMOTEGOTO
+    ///   PDFACTION_URI
+    ///   PDFACTION_LAUNCH
+    /// ```
+    pub fn FPDFAction_GetType(&self, action: &PdfiumAction) -> c_ulong {
+        unsafe { (self.fn_FPDFAction_GetType)(action.into()) }
+    }
+
+    /// C documentation for FPDFAction_GetDest:
+    ///
+    /// ```text
+    /// Get the destination of |action|.
+    ///
+    ///   document - handle to the document.
+    ///   action   - handle to the action. |action| must be a |PDFACTION_GOTO| or
+    ///              |PDFACTION_REMOTEGOTO|.
+    ///
+    /// Returns a handle to the destination data, or NULL on error, typically
+    /// because the arguments were bad or the action was of the wrong type.
+    ///
+    /// In the case of |PDFACTION_REMOTEGOTO|, you must first call
+    /// FPDFAction_GetFilePath(), then load the document at that path, then pass
+    /// the document handle from that document as |document| to FPDFAction_GetDest().
+    /// ```
+    pub fn FPDFAction_GetDest(
+        &self,
+        document: &PdfiumDocument,
+        action: &PdfiumAction,
+    ) -> PdfiumResult<PdfiumDestination> {
+        PdfiumDestination::new_from_handle(unsafe {
+            (self.fn_FPDFAction_GetDest)(document.into(), action.into())
+        })
+    }
+
+    /// C documentation for FPDFAction_GetFilePath:
+    ///
+    /// ```text
+    /// Get the file path of |action|.
+    ///
+    ///   action - handle to the action. |action| must be a |PDFACTION_LAUNCH| or
+    ///            |PDFACTION_REMOTEGOTO|.
+    ///   buffer - a buffer for output the path string. May be NULL.
+    ///   buflen - the length of the buffer, in bytes. May be 0.
+    ///
+    /// Returns the number of bytes in the file path, including the trailing NUL
+    /// character, or 0 on error, typically because the arguments were bad or the
+    /// action was of the wrong type.
+    ///
+    /// Regardless of the platform, the |buffer| is always in UTF-8 encoding.
+    /// If |buflen| is less than the returned length, or |buffer| is NULL, |buffer|
+    /// will not be modified.
+    /// ```
+    pub fn FPDFAction_GetFilePath(
+        &self,
+        action: &PdfiumAction,
+        buffer: Option<&mut [u8]>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe { (self.fn_FPDFAction_GetFilePath)(action.into(), to_void_ptr_mut(buffer), buflen) }
+    }
+
+    /// C documentation for FPDFAction_GetURIPath:
+    ///
+    /// ```text
+    /// Get the URI path of |action|.
+    ///
+    ///   document - handle to the document.
+    ///   action   - handle to the action. Must be a |PDFACTION_URI|.
+    ///   buffer   - a buffer for the path string. May be NULL.
+    ///   buflen   - the length of the buffer, in bytes. May be 0.
+    ///
+    /// Returns the number of bytes in the URI path, including the trailing NUL
+    /// character, or 0 on error, typically because the arguments were bad or the
+    /// action was of the wrong type.
+    ///
+    /// The |buffer| may contain badly encoded data. The caller should validate the
+    /// output. e.g. Check to see if it is UTF-8.
+    ///
+    /// If |buflen| is less than the returned length, or |buffer| is NULL, |buffer|
+    /// will not be modified.
+    ///
+    /// Historically, the documentation for this API claimed |buffer| is always
+    /// encoded in 7-bit ASCII, but did not actually enforce it.
+    /// https://pdfium.googlesource.com/pdfium.git/+/d609e84cee2e14a18333247485af91df48a40592
+    /// added that enforcement, but that did not work well for real world PDFs that
+    /// used UTF-8. As of this writing, this API reverted back to its original
+    /// behavior prior to commit d609e84cee.
+    /// ```
+    pub fn FPDFAction_GetURIPath(
+        &self,
+        document: &PdfiumDocument,
+        action: &PdfiumAction,
+        buffer: Option<&mut [u8]>,
+        buflen: c_ulong,
+    ) -> c_ulong {
+        unsafe {
+            (self.fn_FPDFAction_GetURIPath)(
+                document.into(),
+                action.into(),
+                to_void_ptr_mut(buffer),
+                buflen,
+            )
+        }
+    }
+
+    /// C documentation for FPDFDest_GetDestPageIndex:
+    ///
+    /// ```text
+    /// Get the page index of |dest|.
+    ///
+    ///   document - handle to the document.
+    ///   dest     - handle to the destination.
+    ///
+    /// Returns the 0-based page index containing |dest|. Returns -1 on error.
+    /// ```
+    pub fn FPDFDest_GetDestPageIndex(
+        &self,
+        document: &PdfiumDocument,
+        dest: &PdfiumDestination,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFDest_GetDestPageIndex)(document.into(), dest.into()) }
+    }
+
+    /// C documentation for FPDFDest_GetView:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the view (fit type) specified by |dest|.
+    ///
+    ///   dest         - handle to the destination.
+    ///   pNumParams   - receives the number of view parameters, which is at most 4.
+    ///   pParams      - buffer to write the view parameters. Must be at least 4
+    ///                  FS_FLOATs long.
+    /// Returns one of the PDFDEST_VIEW_* constants, PDFDEST_VIEW_UNKNOWN_MODE if
+    /// |dest| does not specify a view.
+    /// ```
+    pub fn FPDFDest_GetView(
+        &self,
+        dest: &PdfiumDestination,
+        pNumParams: &mut c_ulong,
+        pParams: &mut f32,
+    ) -> c_ulong {
+        unsafe { (self.fn_FPDFDest_GetView)(dest.into(), pNumParams, pParams) }
+    }
+
+    /// C documentation for FPDFDest_GetLocationInPage:
+    ///
+    /// ```text
+    /// Get the (x, y, zoom) location of |dest| in the destination page, if the
+    /// destination is in [page /XYZ x y zoom] syntax.
+    ///
+    ///   dest       - handle to the destination.
+    ///   hasXVal    - out parameter; true if the x value is not null
+    ///   hasYVal    - out parameter; true if the y value is not null
+    ///   hasZoomVal - out parameter; true if the zoom value is not null
+    ///   x          - out parameter; the x coordinate, in page coordinates.
+    ///   y          - out parameter; the y coordinate, in page coordinates.
+    ///   zoom       - out parameter; the zoom value.
+    /// Returns TRUE on successfully reading the /XYZ value.
+    ///
+    /// Note the [x, y, zoom] values are only set if the corresponding hasXVal,
+    /// hasYVal or hasZoomVal flags are true.
+    /// ```
+    pub fn FPDFDest_GetLocationInPage(
+        &self,
+        dest: &PdfiumDestination,
+        hasXVal: &mut FPDF_BOOL,
+        hasYVal: &mut FPDF_BOOL,
+        hasZoomVal: &mut FPDF_BOOL,
+        x: &mut f32,
+        y: &mut f32,
+        zoom: &mut f32,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFDest_GetLocationInPage)(
+                dest.into(),
+                hasXVal,
+                hasYVal,
+                hasZoomVal,
+                x,
+                y,
+                zoom,
+            )
+        })
+    }
+
     /// C documentation for FPDF_GetPageAAction:
     ///
     /// ```text
@@ -2409,8 +5202,14 @@ impl Pdfium {
     ///   If this function returns a valid handle, it is valid as long as |page| is
     ///   valid.
     /// ```
-    pub fn FPDF_GetPageAAction(&self, page: &PdfiumPage, aa_type: i32) -> FPDF_ACTION {
-        unsafe { (self.fn_FPDF_GetPageAAction)(page.into(), aa_type) }
+    pub fn FPDF_GetPageAAction(
+        &self,
+        page: &PdfiumPage,
+        aa_type: i32,
+    ) -> PdfiumResult<PdfiumAction> {
+        PdfiumAction::new_from_handle(unsafe {
+            (self.fn_FPDF_GetPageAAction)(page.into(), aa_type)
+        })
     }
 
     /// C documentation for FPDF_GetFileIdentifier:
@@ -2812,6 +5611,21 @@ impl Pdfium {
         unsafe { (self.fn_FPDFPage_TransformAnnots)(page.into(), a, b, c, d, e, f) }
     }
 
+    /// C documentation for FPDFDoc_GetPageMode:
+    ///
+    /// ```text
+    /// Get the document's PageMode.
+    ///
+    ///   doc - Handle to document.
+    ///
+    /// Returns one of the |PAGEMODE_*| flags defined above.
+    ///
+    /// The page mode defines how the document should be initially displayed.
+    /// ```
+    pub fn FPDFDoc_GetPageMode(&self, document: &PdfiumDocument) -> i32 {
+        unsafe { (self.fn_FPDFDoc_GetPageMode)(document.into()) }
+    }
+
     /// C documentation for FPDFPage_Flatten:
     ///
     /// ```text
@@ -2827,6 +5641,52 @@ impl Pdfium {
     /// ```
     pub fn FPDFPage_Flatten(&self, page: &PdfiumPage, nFlag: i32) -> i32 {
         unsafe { (self.fn_FPDFPage_Flatten)(page.into(), nFlag) }
+    }
+
+    /// C documentation for FPDFDoc_GetJavaScriptActionCount:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the number of JavaScript actions in |document|.
+    ///
+    ///   document - handle to a document.
+    ///
+    /// Returns the number of JavaScript actions in |document| or -1 on error.
+    /// ```
+    pub fn FPDFDoc_GetJavaScriptActionCount(&self, document: &PdfiumDocument) -> i32 {
+        unsafe { (self.fn_FPDFDoc_GetJavaScriptActionCount)(document.into()) }
+    }
+
+    /// C documentation for FPDFDoc_GetJavaScriptAction:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get the JavaScript action at |index| in |document|.
+    ///
+    ///   document - handle to a document.
+    ///   index    - the index of the requested JavaScript action.
+    ///
+    /// Returns the handle to the JavaScript action, or NULL on failure.
+    /// Caller owns the returned handle and must close it with
+    /// FPDFDoc_CloseJavaScriptAction().
+    /// ```
+    pub fn FPDFDoc_GetJavaScriptAction(
+        &self,
+        document: &PdfiumDocument,
+        index: i32,
+    ) -> PdfiumResult<PdfiumJavascriptAction> {
+        PdfiumJavascriptAction::new_from_handle(unsafe {
+            (self.fn_FPDFDoc_GetJavaScriptAction)(document.into(), index)
+        })
+    }
+
+    /// C documentation for FPDFDoc_CloseJavaScriptAction:
+    ///
+    /// ```text
+    ///   javascript - Handle to a JavaScript action.
+    /// ```
+    pub fn FPDFDoc_CloseJavaScriptAction(&self, javascript: &PdfiumJavascriptAction) {
+        unsafe { (self.fn_FPDFDoc_CloseJavaScriptAction)(javascript.into()) }
     }
 
     /// C documentation for FPDF_ImportPagesByIndex:
@@ -4540,6 +7400,64 @@ impl Pdfium {
         to_result(unsafe { (self.fn_FPDFPage_TransFormWithClip)(page.into(), matrix, clipRect) })
     }
 
+    /// C documentation for FPDFClipPath_CountPaths:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get number of paths inside |clip_path|.
+    ///
+    ///   clip_path - handle to a clip_path.
+    ///
+    /// Returns the number of objects in |clip_path| or -1 on failure.
+    /// ```
+    pub fn FPDFClipPath_CountPaths(&self, clip_path: &PdfiumClipPath) -> i32 {
+        unsafe { (self.fn_FPDFClipPath_CountPaths)(clip_path.into()) }
+    }
+
+    /// C documentation for FPDFClipPath_CountPathSegments:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get number of segments inside one path of |clip_path|.
+    ///
+    ///   clip_path  - handle to a clip_path.
+    ///   path_index - index into the array of paths of the clip path.
+    ///
+    /// Returns the number of segments or -1 on failure.
+    /// ```
+    pub fn FPDFClipPath_CountPathSegments(
+        &self,
+        clip_path: &PdfiumClipPath,
+        path_index: i32,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFClipPath_CountPathSegments)(clip_path.into(), path_index) }
+    }
+
+    /// C documentation for FPDFClipPath_GetPathSegment:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Get segment in one specific path of |clip_path| at index.
+    ///
+    ///   clip_path     - handle to a clip_path.
+    ///   path_index    - the index of a path.
+    ///   segment_index - the index of a segment.
+    ///
+    /// Returns the handle to the segment, or NULL on failure. The caller does not
+    /// take ownership of the returned FPDF_PATHSEGMENT. Instead, it remains valid
+    /// until FPDF_ClosePage() is called for the page containing |clip_path|.
+    /// ```
+    pub fn FPDFClipPath_GetPathSegment(
+        &self,
+        clip_path: &PdfiumClipPath,
+        path_index: i32,
+        segment_index: i32,
+    ) -> FPDF_PATHSEGMENT {
+        unsafe {
+            (self.fn_FPDFClipPath_GetPathSegment)(clip_path.into(), path_index, segment_index)
+        }
+    }
+
     /// C documentation for FPDF_CreateClipPath:
     ///
     /// ```text
@@ -4627,4 +7545,8 @@ fn to_result(b: FPDF_BOOL) -> PdfiumResult<()> {
     } else {
         Ok(())
     }
+}
+
+fn str_to_utf16le_vec(s: &str) -> Vec<u16> {
+    s.encode_utf16().chain(std::iter::once(0)).collect()
 }

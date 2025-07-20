@@ -21,7 +21,7 @@
 
 mod annotation;
 mod bitmap;
-mod clippath;
+mod clip_path;
 mod color;
 mod document;
 mod error;
@@ -39,7 +39,7 @@ mod struct_element_attr;
 mod struct_element_attr_value;
 mod struct_tree;
 mod system_font_info;
-mod x_object;
+mod xobject;
 
 pub use pdfium_sys::pdfium::Pdfium;
 pub use pdfium_sys::pdfium_constants;
@@ -48,7 +48,7 @@ pub use pdfium_sys::pdfium_types;
 pub use annotation::PdfiumAnnotation;
 pub use bitmap::PdfiumBitmap;
 pub use bitmap::PdfiumBitmapFormat;
-pub use clippath::PdfiumClipPath;
+pub use clip_path::PdfiumClipPath;
 pub use color::PdfiumColor;
 pub use document::PdfiumDocument;
 pub use document::reader::PdfiumReader;
@@ -72,4 +72,18 @@ pub use struct_element_attr::PdfiumStructElementAttr;
 pub use struct_element_attr_value::PdfiumStructElementAttrValue;
 pub use struct_tree::PdfiumStructTree;
 pub use system_font_info::PdfiumSystemFontInfo;
-pub use x_object::PdfiumXObject;
+pub use xobject::PdfiumXObject;
+
+mod attachment;
+pub use attachment::PdfiumAttachment;
+mod action;
+pub use action::PdfiumAction;
+mod availability;
+pub use availability::PdfiumAvailability;
+mod bookmark;
+pub use bookmark::PdfiumBookmark;
+
+mod destination;
+pub use destination::PdfiumDestination;
+mod javascript_action;
+pub use javascript_action::PdfiumJavascriptAction;

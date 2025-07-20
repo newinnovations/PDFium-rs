@@ -45,7 +45,7 @@ impl From<&PdfiumStructElementAttrValue> for FPDF_STRUCTELEMENT_ATTR_VALUE {
     }
 }
 
-// FIXME: check lifecycle FPDF_STRUCTELEMENT_ATTR_VALUE
+// TODO: check lifecycle FPDF_STRUCTELEMENT_ATTR_VALUE
 
 impl Drop for PdfiumStructElementAttrValue {
     /// # Closes this [`PdfiumStructElementAttrValue`], releasing held memory.

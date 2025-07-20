@@ -19,38 +19,38 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_STRUCTELEMENT_ATTR,
+    pdfium_types::FPDF_ACTION,
 };
 
-/// # Rust interface to FPDF_STRUCTELEMENT_ATTR
-pub struct PdfiumStructElementAttr {
-    handle: FPDF_STRUCTELEMENT_ATTR,
+/// # Rust interface to FPDF_ACTION
+pub struct PdfiumAction {
+    handle: FPDF_ACTION,
 }
 
-impl PdfiumStructElementAttr {
-    pub(crate) fn new_from_handle(handle: FPDF_STRUCTELEMENT_ATTR) -> PdfiumResult<Self> {
+impl PdfiumAction {
+    pub(crate) fn new_from_handle(handle: FPDF_ACTION) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New struct_element_attr {handle:?}");
+            println!("New action {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumStructElementAttr> for FPDF_STRUCTELEMENT_ATTR {
-    fn from(value: &PdfiumStructElementAttr) -> Self {
+impl From<&PdfiumAction> for FPDF_ACTION {
+    fn from(value: &PdfiumAction) -> Self {
         value.handle
     }
 }
 
-// TODO: check lifecycle FPDF_STRUCTELEMENT_ATTR
+// TODO: check lifecycle FPDF_ACTION
 
-impl Drop for PdfiumStructElementAttr {
-    /// # Closes this [`PdfiumStructElementAttr`], releasing held memory.
+impl Drop for PdfiumAction {
+    /// Closes this [`PdfiumAction`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing struct_element_attr {:?}", self.handle);
+        println!("Closing action {:?}", self.handle);
     }
 }

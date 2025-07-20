@@ -45,7 +45,7 @@ impl From<&PdfiumPageRange> for FPDF_PAGERANGE {
     }
 }
 
-// FIXME: check lifecycle FPDF_PAGERANGE
+// TODO: check lifecycle FPDF_PAGERANGE
 
 impl Drop for PdfiumPageRange {
     /// # Closes this [`PdfiumPageRange`], releasing held memory.

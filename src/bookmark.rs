@@ -19,38 +19,38 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_STRUCTELEMENT_ATTR,
+    pdfium_types::FPDF_BOOKMARK,
 };
 
-/// # Rust interface to FPDF_STRUCTELEMENT_ATTR
-pub struct PdfiumStructElementAttr {
-    handle: FPDF_STRUCTELEMENT_ATTR,
+/// # Rust interface to FPDF_BOOKMARK
+pub struct PdfiumBookmark {
+    handle: FPDF_BOOKMARK,
 }
 
-impl PdfiumStructElementAttr {
-    pub(crate) fn new_from_handle(handle: FPDF_STRUCTELEMENT_ATTR) -> PdfiumResult<Self> {
+impl PdfiumBookmark {
+    pub(crate) fn new_from_handle(handle: FPDF_BOOKMARK) -> PdfiumResult<Self> {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
             #[cfg(feature = "debug_print")]
-            println!("New struct_element_attr {handle:?}");
+            println!("New bookmark {handle:?}");
             Ok(Self { handle })
         }
     }
 }
 
-impl From<&PdfiumStructElementAttr> for FPDF_STRUCTELEMENT_ATTR {
-    fn from(value: &PdfiumStructElementAttr) -> Self {
+impl From<&PdfiumBookmark> for FPDF_BOOKMARK {
+    fn from(value: &PdfiumBookmark) -> Self {
         value.handle
     }
 }
 
-// TODO: check lifecycle FPDF_STRUCTELEMENT_ATTR
+// TODO: check lifecycle FPDF_BOOKMARK
 
-impl Drop for PdfiumStructElementAttr {
-    /// # Closes this [`PdfiumStructElementAttr`], releasing held memory.
+impl Drop for PdfiumBookmark {
+    /// Closes this [`PdfiumBookmark`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
-        println!("Closing struct_element_attr {:?}", self.handle);
+        println!("Closing bookmark {:?}", self.handle);
     }
 }

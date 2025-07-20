@@ -45,7 +45,7 @@ impl From<&PdfiumStructElement> for FPDF_STRUCTELEMENT {
     }
 }
 
-// FIXME: check lifecycle FPDF_STRUCTELEMENT
+// TODO: check lifecycle FPDF_STRUCTELEMENT
 
 impl Drop for PdfiumStructElement {
     /// # Closes this [`PdfiumStructElement`], releasing held memory.

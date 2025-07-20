@@ -45,7 +45,7 @@ impl From<&PdfiumPageObject> for FPDF_PAGEOBJECT {
     }
 }
 
-// FIXME: check lifecycle FPDF_PAGEOBJECT
+// TODO: check lifecycle FPDF_PAGEOBJECT
 
 // impl Drop for PdfiumPageObject {
 //     /// # Closes this [`PdfiumPageObject`], releasing held memory.
