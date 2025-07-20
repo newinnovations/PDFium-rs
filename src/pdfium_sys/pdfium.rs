@@ -18,12 +18,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #![allow(non_snake_case)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
 #![allow(clippy::too_many_arguments)]
 
 use std::ffi::CString;
-use std::os::raw::{c_char, c_int, c_long, c_short, c_uchar, c_uint, c_ulong, c_ushort, c_void};
+use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_ushort, c_void};
 
 use super::lib_get;
 use crate::{
@@ -1545,14 +1543,9 @@ pub struct Pdfium {
     fn_FPDF_VIEWERREF_GetPrintPageRangeElement:
         unsafe extern "C" fn(pagerange: FPDF_PAGERANGE, index: usize) -> c_int,
     fn_FPDF_VIEWERREF_GetPrintScaling: unsafe extern "C" fn(document: FPDF_DOCUMENT) -> FPDF_BOOL,
-    fn_FSDK_SetLocaltimeFunction: unsafe extern "C" fn(
-        func: ::std::option::Option<unsafe extern "C" fn(arg1: *const time_t) -> *mut tm>,
-    ),
-    fn_FSDK_SetTimeFunction:
-        unsafe extern "C" fn(func: ::std::option::Option<unsafe extern "C" fn() -> time_t>),
     fn_FSDK_SetUnSpObjProcessHandler:
         unsafe extern "C" fn(unsp_info: *mut UNSUPPORT_INFO) -> FPDF_BOOL,
-    lib: Library,
+    _lib: Library,
 }
 
 impl Pdfium {
@@ -2168,10 +2161,8 @@ impl Pdfium {
                 "FPDF_VIEWERREF_GetPrintPageRangeElement",
             )?),
             fn_FPDF_VIEWERREF_GetPrintScaling: *(lib_get(&lib, "FPDF_VIEWERREF_GetPrintScaling")?),
-            fn_FSDK_SetLocaltimeFunction: *(lib_get(&lib, "FSDK_SetLocaltimeFunction")?),
-            fn_FSDK_SetTimeFunction: *(lib_get(&lib, "FSDK_SetTimeFunction")?),
             fn_FSDK_SetUnSpObjProcessHandler: *(lib_get(&lib, "FSDK_SetUnSpObjProcessHandler")?),
-            lib,
+            _lib: lib,
         })
     }
 }
@@ -2190,6 +2181,7 @@ impl Pdfium {
     /// Return Value:
     ///       True if it is possible to redo.
     /// ```
+    #[inline]
     pub fn FORM_CanRedo(&self, hHandle: &PdfiumForm, page: &PdfiumPage) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_CanRedo)(hHandle.into(), page.into()) })
     }
@@ -2207,6 +2199,7 @@ impl Pdfium {
     /// Return Value:
     ///       True if it is possible to undo.
     /// ```
+    #[inline]
     pub fn FORM_CanUndo(&self, hHandle: &PdfiumForm, page: &PdfiumPage) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_CanUndo)(hHandle.into(), page.into()) })
     }
@@ -2228,6 +2221,7 @@ impl Pdfium {
     ///       This method will do nothing if there is no document
     ///       additional-action corresponding to the specified |aaType|.
     /// ```
+    #[inline]
     pub fn FORM_DoDocumentAAction(&self, hHandle: &PdfiumForm, aaType: i32) {
         unsafe { (self.fn_FORM_DoDocumentAAction)(hHandle.into(), aaType) }
     }
@@ -2248,6 +2242,7 @@ impl Pdfium {
     ///       document, this method will execute the JavaScript action. Otherwise,
     ///       the method will do nothing.
     /// ```
+    #[inline]
     pub fn FORM_DoDocumentJSAction(&self, hHandle: &PdfiumForm) {
         unsafe { (self.fn_FORM_DoDocumentJSAction)(hHandle.into()) }
     }
@@ -2267,6 +2262,7 @@ impl Pdfium {
     ///       This method will do nothing if there are no open-actions embedded
     ///       in the document.
     /// ```
+    #[inline]
     pub fn FORM_DoDocumentOpenAction(&self, hHandle: &PdfiumForm) {
         unsafe { (self.fn_FORM_DoDocumentOpenAction)(hHandle.into()) }
     }
@@ -2289,6 +2285,7 @@ impl Pdfium {
     ///       This method will do nothing if no additional-action corresponding
     ///       to the specified |aaType| exists.
     /// ```
+    #[inline]
     pub fn FORM_DoPageAAction(&self, page: &PdfiumPage, hHandle: &PdfiumForm, aaType: i32) {
         unsafe { (self.fn_FORM_DoPageAAction)(page.into(), hHandle.into(), aaType) }
     }
@@ -2306,6 +2303,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_ForceToKillFocus(&self, hHandle: &PdfiumForm) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_ForceToKillFocus)(hHandle.into()) })
     }
@@ -2334,6 +2332,7 @@ impl Pdfium {
     ///       This will return true and set |page_index| to -1 and |annot| to NULL,
     ///       if there is no focused annotation.
     /// ```
+    #[inline]
     pub fn FORM_GetFocusedAnnot(
         &self,
         handle: &PdfiumForm,
@@ -2364,6 +2363,7 @@ impl Pdfium {
     /// Return Value:
     ///       Length in bytes for the text in the focused field.
     /// ```
+    #[inline]
     pub fn FORM_GetFocusedText(
         &self,
         hHandle: &PdfiumForm,
@@ -2400,6 +2400,7 @@ impl Pdfium {
     ///       Length in bytes of selected text in form text field or form combobox
     ///       text field.
     /// ```
+    #[inline]
     pub fn FORM_GetSelectedText(
         &self,
         hHandle: &PdfiumForm,
@@ -2438,6 +2439,7 @@ impl Pdfium {
     ///           implementation is a no-op that will return false for other types.
     ///           Not currently supported for XFA forms - will return false.
     /// ```
+    #[inline]
     pub fn FORM_IsIndexSelected(
         &self,
         hHandle: &PdfiumForm,
@@ -2460,6 +2462,7 @@ impl Pdfium {
     /// Return Value:
     ///       None.
     /// ```
+    #[inline]
     pub fn FORM_OnAfterLoadPage(&self, page: &PdfiumPage, hHandle: &PdfiumForm) {
         unsafe { (self.fn_FORM_OnAfterLoadPage)(page.into(), hHandle.into()) }
     }
@@ -2477,6 +2480,7 @@ impl Pdfium {
     /// Return Value:
     ///        None.
     /// ```
+    #[inline]
     pub fn FORM_OnBeforeClosePage(&self, page: &PdfiumPage, hHandle: &PdfiumForm) {
         unsafe { (self.fn_FORM_OnBeforeClosePage)(page.into(), hHandle.into()) }
     }
@@ -2497,6 +2501,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_OnChar(
         &self,
         hHandle: &PdfiumForm,
@@ -2526,6 +2531,7 @@ impl Pdfium {
     /// Return Value:
     ///       True if there is an annotation at the given point and it has focus.
     /// ```
+    #[inline]
     pub fn FORM_OnFocus(
         &self,
         hHandle: &PdfiumForm,
@@ -2555,6 +2561,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_OnKeyDown(
         &self,
         hHandle: &PdfiumForm,
@@ -2586,6 +2593,7 @@ impl Pdfium {
     ///       Currently unimplemented and always returns false. PDFium reserves this
     ///       API and may implement it in the future on an as-needed basis.
     /// ```
+    #[inline]
     pub fn FORM_OnKeyUp(
         &self,
         hHandle: &PdfiumForm,
@@ -2616,6 +2624,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_OnLButtonDoubleClick(
         &self,
         hHandle: &PdfiumForm,
@@ -2653,6 +2662,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_OnLButtonDown(
         &self,
         hHandle: &PdfiumForm,
@@ -2682,6 +2692,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_OnLButtonUp(
         &self,
         hHandle: &PdfiumForm,
@@ -2712,6 +2723,7 @@ impl Pdfium {
     /// Return Value:
     ///       True indicates success; otherwise false.
     /// ```
+    #[inline]
     pub fn FORM_OnMouseMove(
         &self,
         hHandle: &PdfiumForm,
@@ -2752,6 +2764,7 @@ impl Pdfium {
     ///       for a WM_MOUSEWHEEL event normalizes to 2, since Windows defines
     ///       WHEEL_DELTA as 120.
     /// ```
+    #[inline]
     pub fn FORM_OnMouseWheel(
         &self,
         hHandle: &PdfiumForm,
@@ -2782,6 +2795,7 @@ impl Pdfium {
     ///       At the present time, has no effect except in XFA builds, but is
     ///       included for the sake of symmetry.
     /// ```
+    #[inline]
     pub fn FORM_OnRButtonDown(
         &self,
         hHandle: &PdfiumForm,
@@ -2804,6 +2818,7 @@ impl Pdfium {
     ///       At the present time, has no effect except in XFA builds, but is
     ///       included for the sake of symmetry.
     /// ```
+    #[inline]
     pub fn FORM_OnRButtonUp(
         &self,
         hHandle: &PdfiumForm,
@@ -2829,6 +2844,7 @@ impl Pdfium {
     /// Return Value:
     ///       True if the redo operation succeeded.
     /// ```
+    #[inline]
     pub fn FORM_Redo(&self, hHandle: &PdfiumForm, page: &PdfiumPage) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_Redo)(hHandle.into(), page.into()) })
     }
@@ -2852,6 +2868,7 @@ impl Pdfium {
     /// Return Value:
     ///       None.
     /// ```
+    #[inline]
     pub fn FORM_ReplaceAndKeepSelection(
         &self,
         hHandle: &PdfiumForm,
@@ -2882,6 +2899,7 @@ impl Pdfium {
     /// Return Value:
     ///       None.
     /// ```
+    #[inline]
     pub fn FORM_ReplaceSelection(&self, hHandle: &PdfiumForm, page: &PdfiumPage, wsText: &str) {
         let wsText = str_to_utf16le_vec(wsText);
         unsafe { (self.fn_FORM_ReplaceSelection)(hHandle.into(), page.into(), wsText.as_ptr()) }
@@ -2901,6 +2919,7 @@ impl Pdfium {
     /// Return Value:
     ///       Whether the operation succeeded or not.
     /// ```
+    #[inline]
     pub fn FORM_SelectAllText(&self, hHandle: &PdfiumForm, page: &PdfiumPage) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_SelectAllText)(hHandle.into(), page.into()) })
     }
@@ -2921,6 +2940,7 @@ impl Pdfium {
     ///       |annot| can't be NULL. To kill focus, use FORM_ForceToKillFocus()
     ///       instead.
     /// ```
+    #[inline]
     pub fn FORM_SetFocusedAnnot(
         &self,
         handle: &PdfiumForm,
@@ -2954,6 +2974,7 @@ impl Pdfium {
     ///           other types.
     ///           Not currently supported for XFA forms - will return false.
     /// ```
+    #[inline]
     pub fn FORM_SetIndexSelected(
         &self,
         hHandle: &PdfiumForm,
@@ -2978,6 +2999,7 @@ impl Pdfium {
     /// Return Value:
     ///       True if the undo operation succeeded.
     /// ```
+    #[inline]
     pub fn FORM_Undo(&self, hHandle: &PdfiumForm, page: &PdfiumPage) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_Undo)(hHandle.into(), page.into()) })
     }
@@ -2998,6 +3020,7 @@ impl Pdfium {
     /// FPDFAction_GetFilePath(), then load the document at that path, then pass
     /// the document handle from that document as |document| to FPDFAction_GetDest().
     /// ```
+    #[inline]
     pub fn FPDFAction_GetDest(
         &self,
         document: &PdfiumDocument,
@@ -3026,6 +3049,7 @@ impl Pdfium {
     /// If |buflen| is less than the returned length, or |buffer| is NULL, |buffer|
     /// will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFAction_GetFilePath(
         &self,
         action: &PdfiumAction,
@@ -3049,6 +3073,7 @@ impl Pdfium {
     ///   PDFACTION_URI
     ///   PDFACTION_LAUNCH
     /// ```
+    #[inline]
     pub fn FPDFAction_GetType(&self, action: &PdfiumAction) -> c_ulong {
         unsafe { (self.fn_FPDFAction_GetType)(action.into()) }
     }
@@ -3080,6 +3105,7 @@ impl Pdfium {
     /// used UTF-8. As of this writing, this API reverted back to its original
     /// behavior prior to commit d609e84cee.
     /// ```
+    #[inline]
     pub fn FPDFAction_GetURIPath(
         &self,
         document: &PdfiumDocument,
@@ -3108,6 +3134,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the new attachment object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_AddFileAttachment(
         &self,
         annot: &PdfiumAnnotation,
@@ -3136,6 +3163,7 @@ impl Pdfium {
     /// Returns the 0-based index at which the new InkStroke is added in the InkList
     /// of the |annot|. Returns -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_AddInkStroke(
         &self,
         annot: &PdfiumAnnotation,
@@ -3159,6 +3187,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_AppendAttachmentPoints(
         &self,
         annot: &PdfiumAnnotation,
@@ -3182,6 +3211,7 @@ impl Pdfium {
     ///
     /// Return true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_AppendObject(
         &self,
         annot: &PdfiumAnnotation,
@@ -3200,6 +3230,7 @@ impl Pdfium {
     ///
     /// Returns the number of sets of quadpoints, or 0 on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_CountAttachmentPoints(&self, annot: &PdfiumAnnotation) -> usize {
         unsafe { (self.fn_FPDFAnnot_CountAttachmentPoints)(annot.into()) }
     }
@@ -3225,6 +3256,7 @@ impl Pdfium {
     ///
     /// Returns the length of the string value in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetAP(
         &self,
         annot: &PdfiumAnnotation,
@@ -3249,6 +3281,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetAttachmentPoints(
         &self,
         annot: &PdfiumAnnotation,
@@ -3274,6 +3307,7 @@ impl Pdfium {
     /// Returns true if |horizontal_radius|, |vertical_radius| and |border_width| are
     /// not NULL, false otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetBorder(
         &self,
         annot: &PdfiumAnnotation,
@@ -3307,6 +3341,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetColor(
         &self,
         annot: &PdfiumAnnotation,
@@ -3329,6 +3364,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the attachment object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFileAttachment(
         &self,
         annot: &PdfiumAnnotation,
@@ -3348,6 +3384,7 @@ impl Pdfium {
     ///
     /// Returns the annotation flags.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFlags(&self, annot: &PdfiumAnnotation) -> i32 {
         unsafe { (self.fn_FPDFAnnot_GetFlags)(annot.into()) }
     }
@@ -3369,6 +3406,7 @@ impl Pdfium {
     /// false otherwise.
     /// Note : Annotations of type FPDF_ANNOT_WIDGET are by default focusable.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFocusableSubtypes(
         &self,
         hHandle: &PdfiumForm,
@@ -3392,6 +3430,7 @@ impl Pdfium {
     /// Returns the count of focusable annotation subtypes or -1 on error.
     /// Note : Annotations of type FPDF_ANNOT_WIDGET are by default focusable.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFocusableSubtypesCount(&self, hHandle: &PdfiumForm) -> i32 {
         unsafe { (self.fn_FPDFAnnot_GetFocusableSubtypesCount)(hHandle.into()) }
     }
@@ -3410,6 +3449,7 @@ impl Pdfium {
     /// Returns true if the font color was set, false on error or if the font
     /// color was not provided.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFontColor(
         &self,
         hHandle: &PdfiumForm,
@@ -3439,6 +3479,7 @@ impl Pdfium {
     /// Returns true if the font size was set in |value|, false on error or if
     /// |value| not provided.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFontSize(
         &self,
         hHandle: &PdfiumForm,
@@ -3470,6 +3511,7 @@ impl Pdfium {
     /// Returns the length of the string value in bytes, including the 2-byte
     /// null terminator.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormAdditionalActionJavaScript(
         &self,
         hHandle: &PdfiumForm,
@@ -3504,6 +3546,7 @@ impl Pdfium {
     ///
     /// Returns number of controls in its control group or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormControlCount(
         &self,
         hHandle: &PdfiumForm,
@@ -3527,6 +3570,7 @@ impl Pdfium {
     ///
     /// Returns index of a given |annot| in its control group or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormControlIndex(
         &self,
         hHandle: &PdfiumForm,
@@ -3553,6 +3597,7 @@ impl Pdfium {
     ///
     /// Returns the length of the string value in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldAlternateName(
         &self,
         hHandle: &PdfiumForm,
@@ -3587,6 +3632,7 @@ impl Pdfium {
     /// Returns the interactive form annotation whose rectangle contains the given
     /// coordinates on the page. If there is no such annotation, return NULL.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldAtPoint(
         &self,
         hHandle: &PdfiumForm,
@@ -3616,6 +3662,7 @@ impl Pdfium {
     ///
     /// Returns the length of the string value in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldExportValue(
         &self,
         hHandle: &PdfiumForm,
@@ -3645,6 +3692,7 @@ impl Pdfium {
     ///
     /// Returns the annotation flags specific to interactive forms.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldFlags(
         &self,
         handle: &PdfiumForm,
@@ -3670,6 +3718,7 @@ impl Pdfium {
     ///
     /// Returns the length of the string value in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldName(
         &self,
         hHandle: &PdfiumForm,
@@ -3701,6 +3750,7 @@ impl Pdfium {
     /// success. Returns -1 on error.
     /// See field types in fpdf_formfill.h.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldType(
         &self,
         hHandle: &PdfiumForm,
@@ -3726,6 +3776,7 @@ impl Pdfium {
     ///
     /// Returns the length of the string value in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetFormFieldValue(
         &self,
         hHandle: &PdfiumForm,
@@ -3754,6 +3805,7 @@ impl Pdfium {
     /// Returns the number of paths in the ink list if the annotation is of type ink,
     /// 0 otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetInkListCount(&self, annot: &PdfiumAnnotation) -> c_ulong {
         unsafe { (self.fn_FPDFAnnot_GetInkListCount)(annot.into()) }
     }
@@ -3774,6 +3826,7 @@ impl Pdfium {
     /// Returns the number of points of the path if the annotation is of type ink, 0
     /// otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetInkListPath(
         &self,
         annot: &PdfiumAnnotation,
@@ -3797,6 +3850,7 @@ impl Pdfium {
     /// Returns true if the annotation is of type line, |start| and |end| are not
     /// NULL, false otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetLine(
         &self,
         annot: &PdfiumAnnotation,
@@ -3817,6 +3871,7 @@ impl Pdfium {
     /// Returns FPDF_LINK from the FPDF_ANNOTATION and NULL on failure,
     /// if the input annot is NULL or input annot's subtype is not link.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetLink(&self, annot: &PdfiumAnnotation) -> PdfiumResult<PdfiumLink> {
         PdfiumLink::new_from_handle(unsafe { (self.fn_FPDFAnnot_GetLink)(annot.into()) })
     }
@@ -3835,6 +3890,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the linked annotation object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetLinkedAnnot(
         &self,
         annot: &PdfiumAnnotation,
@@ -3860,6 +3916,7 @@ impl Pdfium {
     ///
     /// Returns True if value found, False otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetNumberValue(
         &self,
         annot: &PdfiumAnnotation,
@@ -3880,6 +3937,7 @@ impl Pdfium {
     ///
     /// Return a handle to the object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetObject(
         &self,
         annot: &PdfiumAnnotation,
@@ -3901,6 +3959,7 @@ impl Pdfium {
     ///
     /// Returns the number of objects in |annot|.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetObjectCount(&self, annot: &PdfiumAnnotation) -> i32 {
         unsafe { (self.fn_FPDFAnnot_GetObjectCount)(annot.into()) }
     }
@@ -3919,6 +3978,7 @@ impl Pdfium {
     /// Returns the number of options in "Opt" dictionary on success. Return value
     /// will be -1 if annotation does not have an "Opt" dictionary or other error.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetOptionCount(&self, hHandle: &PdfiumForm, annot: &PdfiumAnnotation) -> i32 {
         unsafe { (self.fn_FPDFAnnot_GetOptionCount)(hHandle.into(), annot.into()) }
     }
@@ -3945,6 +4005,7 @@ impl Pdfium {
     /// If |annot| does not have an "Opt" array, |index| is out of range or if any
     /// other error occurs, returns 0.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetOptionLabel(
         &self,
         hHandle: &PdfiumForm,
@@ -3975,6 +4036,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetRect(
         &self,
         annot: &PdfiumAnnotation,
@@ -4002,6 +4064,7 @@ impl Pdfium {
     ///
     /// Returns the length of the string value in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetStringValue(
         &self,
         annot: &PdfiumAnnotation,
@@ -4029,6 +4092,7 @@ impl Pdfium {
     ///
     /// Returns the annotation subtype.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetSubtype(&self, annot: &PdfiumAnnotation) -> FPDF_ANNOTATION_SUBTYPE {
         unsafe { (self.fn_FPDFAnnot_GetSubtype)(annot.into()) }
     }
@@ -4044,6 +4108,7 @@ impl Pdfium {
     ///
     /// Returns the type of the dictionary value.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetValueType(
         &self,
         annot: &PdfiumAnnotation,
@@ -4067,6 +4132,7 @@ impl Pdfium {
     /// Returns the number of points if the annotation is of type polygon or
     /// polyline, 0 otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_GetVertices(
         &self,
         annot: &PdfiumAnnotation,
@@ -4092,6 +4158,7 @@ impl Pdfium {
     /// Returns true if the annotation is of a type that has quadpoints, false
     /// otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_HasAttachmentPoints(&self, annot: &PdfiumAnnotation) -> i32 {
         unsafe { (self.fn_FPDFAnnot_HasAttachmentPoints)(annot.into()) }
     }
@@ -4107,6 +4174,7 @@ impl Pdfium {
     ///
     /// Returns true if |key| exists.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_HasKey(&self, annot: &PdfiumAnnotation, key: &CString) -> i32 {
         unsafe { (self.fn_FPDFAnnot_HasKey)(annot.into(), key.as_ptr()) }
     }
@@ -4124,6 +4192,7 @@ impl Pdfium {
     ///
     /// Returns true if |annot| is a form widget and is checked, false otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_IsChecked(
         &self,
         hHandle: &PdfiumForm,
@@ -4144,6 +4213,7 @@ impl Pdfium {
     ///
     /// Returns true if this subtype supported.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_IsObjectSupportedSubtype(
         &self,
         subtype: FPDF_ANNOTATION_SUBTYPE,
@@ -4166,6 +4236,7 @@ impl Pdfium {
     /// Returns true if the option at |index| in |annot|'s "Opt" dictionary is
     /// selected, false otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_IsOptionSelected(
         &self,
         handle: &PdfiumForm,
@@ -4201,6 +4272,7 @@ impl Pdfium {
     ///
     /// Returns true if this subtype supported.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_IsSupportedSubtype(
         &self,
         subtype: FPDF_ANNOTATION_SUBTYPE,
@@ -4220,6 +4292,7 @@ impl Pdfium {
     /// Return true on successful removal of /InkList entry from context of the
     /// non-null ink |annot|. Returns false on failure.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_RemoveInkList(&self, annot: &PdfiumAnnotation) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFAnnot_RemoveInkList)(annot.into()) })
     }
@@ -4235,6 +4308,7 @@ impl Pdfium {
     ///
     /// Return true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_RemoveObject(&self, annot: &PdfiumAnnotation, index: i32) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFAnnot_RemoveObject)(annot.into(), index) })
     }
@@ -4255,6 +4329,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetAP(
         &self,
         annot: &PdfiumAnnotation,
@@ -4284,6 +4359,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetAttachmentPoints(
         &self,
         annot: &PdfiumAnnotation,
@@ -4311,6 +4387,7 @@ impl Pdfium {
     /// If |annot| contains an appearance stream that overrides the border values,
     /// then the appearance stream will be removed on success.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetBorder(
         &self,
         annot: &PdfiumAnnotation,
@@ -4343,6 +4420,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetColor(
         &self,
         annot: &PdfiumAnnotation,
@@ -4366,6 +4444,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetFlags(&self, annot: &PdfiumAnnotation, flags: i32) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFAnnot_SetFlags)(annot.into(), flags) })
     }
@@ -4385,6 +4464,7 @@ impl Pdfium {
     /// Returns true if list of annotation subtype is set successfully, false
     /// otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetFocusableSubtypes(
         &self,
         hHandle: &PdfiumForm,
@@ -4414,6 +4494,7 @@ impl Pdfium {
     /// Currently supported subtypes: freetext.
     /// The range for the color components is 0 to 255.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetFontColor(
         &self,
         handle: &PdfiumForm,
@@ -4438,6 +4519,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetFormFieldFlags(
         &self,
         handle: &PdfiumForm,
@@ -4463,6 +4545,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetRect(&self, annot: &PdfiumAnnotation, rect: &FS_RECTF) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFAnnot_SetRect)(annot.into(), rect) })
     }
@@ -4481,6 +4564,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetStringValue(
         &self,
         annot: &PdfiumAnnotation,
@@ -4504,6 +4588,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_SetURI(
         &self,
         annot: &PdfiumAnnotation,
@@ -4527,6 +4612,7 @@ impl Pdfium {
     ///
     /// Return true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAnnot_UpdateObject(
         &self,
         annot: &PdfiumAnnotation,
@@ -4557,6 +4643,7 @@ impl Pdfium {
     ///
     /// Returns true on success, false otherwise.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_GetFile(
         &self,
         attachment: &PdfiumAttachment,
@@ -4588,6 +4675,7 @@ impl Pdfium {
     ///
     /// Returns the length of the file name in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_GetName(
         &self,
         attachment: &PdfiumAttachment,
@@ -4617,6 +4705,7 @@ impl Pdfium {
     ///
     /// Returns the length of the dictionary value string in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_GetStringValue(
         &self,
         attachment: &PdfiumAttachment,
@@ -4650,6 +4739,7 @@ impl Pdfium {
     ///
     /// Returns the length of the MIME type string in bytes.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_GetSubtype(
         &self,
         attachment: &PdfiumAttachment,
@@ -4673,6 +4763,7 @@ impl Pdfium {
     ///
     /// Returns the type of the dictionary value.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_GetValueType(
         &self,
         attachment: &PdfiumAttachment,
@@ -4692,6 +4783,7 @@ impl Pdfium {
     ///
     /// Returns true if |key| exists.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_HasKey(&self, attachment: &PdfiumAttachment, key: &CString) -> i32 {
         unsafe { (self.fn_FPDFAttachment_HasKey)(attachment.into(), key.as_ptr()) }
     }
@@ -4711,6 +4803,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_SetFile(
         &self,
         attachment: &PdfiumAttachment,
@@ -4742,6 +4835,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFAttachment_SetStringValue(
         &self,
         attachment: &PdfiumAttachment,
@@ -4766,6 +4860,7 @@ impl Pdfium {
     ///
     /// FPDFAvail_Destroy() must be called when done with the availability provider.
     /// ```
+    #[inline]
     pub fn FPDFAvail_Create(
         &self,
         file_avail: &mut FX_FILEAVAIL,
@@ -4783,6 +4878,7 @@ impl Pdfium {
     ///
     ///   avail - handle to document availability provider to be destroyed.
     /// ```
+    #[inline]
     pub fn FPDFAvail_Destroy(&self, avail: &PdfiumAvailability) {
         unsafe { (self.fn_FPDFAvail_Destroy)(avail.into()) }
     }
@@ -4802,6 +4898,7 @@ impl Pdfium {
     /// See the comments for FPDF_LoadDocument() regarding the encoding for
     /// |password|.
     /// ```
+    #[inline]
     pub fn FPDFAvail_GetDocument(
         &self,
         avail: &PdfiumAvailability,
@@ -4823,6 +4920,7 @@ impl Pdfium {
     /// however, some PDFs might make another page the first available page.
     /// For non-linearized PDFs, this function will always return zero.
     /// ```
+    #[inline]
     pub fn FPDFAvail_GetFirstPageNum(&self, doc: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDFAvail_GetFirstPageNum)(doc.into()) }
     }
@@ -4848,6 +4946,7 @@ impl Pdfium {
     /// Once all data is available, call FPDFAvail_GetDocument() to get a document
     /// handle.
     /// ```
+    #[inline]
     pub fn FPDFAvail_IsDocAvail(
         &self,
         avail: &PdfiumAvailability,
@@ -4881,6 +4980,7 @@ impl Pdfium {
     /// Applications can then perform page loading. It is recommend to call
     /// FPDFDOC_InitFormFillEnvironment() when |PDF_FORM_AVAIL| is returned.
     /// ```
+    #[inline]
     pub fn FPDFAvail_IsFormAvail(
         &self,
         avail: &PdfiumAvailability,
@@ -4906,6 +5006,7 @@ impl Pdfium {
     /// |PDF_LINEARIZATION_UNKNOWN| as there is insufficient information to determine
     /// if the PDF is linearlized.
     /// ```
+    #[inline]
     pub fn FPDFAvail_IsLinearized(&self, avail: &PdfiumAvailability) -> i32 {
         unsafe { (self.fn_FPDFAvail_IsLinearized)(avail.into()) }
     }
@@ -4934,6 +5035,7 @@ impl Pdfium {
     /// if hints is nullptr, the function just check current availability of
     /// specified page.
     /// ```
+    #[inline]
     pub fn FPDFAvail_IsPageAvail(
         &self,
         avail: &PdfiumAvailability,
@@ -4977,6 +5079,7 @@ impl Pdfium {
     ///          FPDFBitmap_FillRect() to fill the bitmap using any color. If the OS
     ///          allows it, this function can allocate up to 4 GB of memory.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_Create(
         &self,
         width: i32,
@@ -5023,6 +5126,7 @@ impl Pdfium {
     ///          It is recommended to use FPDFBitmap_GetStride() to get the stride
     ///          value.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_CreateEx(
         &self,
         width: i32,
@@ -5056,6 +5160,7 @@ impl Pdfium {
     ///          This function will not destroy any external buffers provided when
     ///          the bitmap was created.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_Destroy(&self, bitmap: &PdfiumBitmap) {
         unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
     }
@@ -5088,6 +5193,7 @@ impl Pdfium {
     ///
     ///          If the alpha channel is not used, the alpha parameter is ignored.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_FillRect(
         &self,
         bitmap: &PdfiumBitmap,
@@ -5121,6 +5227,7 @@ impl Pdfium {
     ///
     ///          Use FPDFBitmap_GetFormat() to find out the format of the data.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_GetBuffer(&self, bitmap: &PdfiumBitmap) -> *mut ::std::os::raw::c_void {
         unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap.into()) }
     }
@@ -5139,6 +5246,7 @@ impl Pdfium {
     ///          Only formats supported by FPDFBitmap_CreateEx are supported by this
     ///          function; see the list of such formats above.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_GetFormat(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetFormat)(bitmap.into()) }
     }
@@ -5154,6 +5262,7 @@ impl Pdfium {
     /// Return value:
     ///          The height of the bitmap in pixels.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_GetHeight(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetHeight)(bitmap.into()) }
     }
@@ -5171,6 +5280,7 @@ impl Pdfium {
     /// Comments:
     ///          The stride may be more than width * number of bytes per pixel.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_GetStride(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetStride)(bitmap.into()) }
     }
@@ -5186,6 +5296,7 @@ impl Pdfium {
     /// Return value:
     ///          The width of the bitmap in pixels.
     /// ```
+    #[inline]
     pub fn FPDFBitmap_GetWidth(&self, bitmap: &PdfiumBitmap) -> i32 {
         unsafe { (self.fn_FPDFBitmap_GetWidth)(bitmap.into()) }
     }
@@ -5203,6 +5314,7 @@ impl Pdfium {
     /// FPDFBookmark_Find() will always return the first bookmark found even if
     /// multiple bookmarks have the same |title|.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_Find(
         &self,
         document: &PdfiumDocument,
@@ -5228,6 +5340,7 @@ impl Pdfium {
     /// If this function returns NULL, FPDFBookmark_GetDest() should be called to get
     /// the |bookmark| destination data.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_GetAction(&self, bookmark: &PdfiumBookmark) -> PdfiumResult<PdfiumAction> {
         PdfiumAction::new_from_handle(unsafe { (self.fn_FPDFBookmark_GetAction)(bookmark.into()) })
     }
@@ -5246,6 +5359,7 @@ impl Pdfium {
     /// default (closed state). Please refer to PDF 32000-1:2008, Table 153.
     /// Returns 0 if the bookmark has no children or is invalid.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_GetCount(&self, bookmark: &PdfiumBookmark) -> i32 {
         unsafe { (self.fn_FPDFBookmark_GetCount)(bookmark.into()) }
     }
@@ -5261,6 +5375,7 @@ impl Pdfium {
     /// Returns the handle to the destination data, or NULL if no destination is
     /// associated with |bookmark|.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_GetDest(
         &self,
         document: &PdfiumDocument,
@@ -5285,6 +5400,7 @@ impl Pdfium {
     /// Note that another name for the bookmarks is the document outline, as
     /// described in ISO 32000-1:2008, section 12.3.3.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_GetFirstChild(
         &self,
         document: &PdfiumDocument,
@@ -5309,6 +5425,7 @@ impl Pdfium {
     /// Note that the caller is responsible for handling circular bookmark
     /// references, as may arise from malformed documents.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_GetNextSibling(
         &self,
         document: &PdfiumDocument,
@@ -5336,6 +5453,7 @@ impl Pdfium {
     /// string is terminated by a UTF16 NUL character. If |buflen| is less than the
     /// required length, or |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFBookmark_GetTitle(
         &self,
         bookmark: &PdfiumBookmark,
@@ -5359,6 +5477,7 @@ impl Pdfium {
     ///
     /// Returns |true| iff |document| is a tagged PDF.
     /// ```
+    #[inline]
     pub fn FPDFCatalog_IsTagged(&self, document: &PdfiumDocument) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFCatalog_IsTagged)(document.into()) })
     }
@@ -5374,6 +5493,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFCatalog_SetLanguage(
         &self,
         document: &PdfiumDocument,
@@ -5393,6 +5513,7 @@ impl Pdfium {
     ///
     /// Returns the number of segments or -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFClipPath_CountPathSegments(
         &self,
         clip_path: &PdfiumClipPath,
@@ -5411,6 +5532,7 @@ impl Pdfium {
     ///
     /// Returns the number of objects in |clip_path| or -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFClipPath_CountPaths(&self, clip_path: &PdfiumClipPath) -> i32 {
         unsafe { (self.fn_FPDFClipPath_CountPaths)(clip_path.into()) }
     }
@@ -5429,6 +5551,7 @@ impl Pdfium {
     /// take ownership of the returned FPDF_PATHSEGMENT. Instead, it remains valid
     /// until FPDF_ClosePage() is called for the page containing |clip_path|.
     /// ```
+    #[inline]
     pub fn FPDFClipPath_GetPathSegment(
         &self,
         clip_path: &PdfiumClipPath,
@@ -5453,6 +5576,7 @@ impl Pdfium {
     /// Comments:
     ///       This function is a no-op when |hHandle| is null.
     /// ```
+    #[inline]
     pub fn FPDFDOC_ExitFormFillEnvironment(&self, hHandle: &PdfiumForm) {
         unsafe { (self.fn_FPDFDOC_ExitFormFillEnvironment)(hHandle.into()) }
     }
@@ -5472,6 +5596,7 @@ impl Pdfium {
     ///       The FPDF_FORMFILLINFO passed in via |formInfo| must remain valid until
     ///       the returned FPDF_FORMHANDLE is closed.
     /// ```
+    #[inline]
     pub fn FPDFDOC_InitFormFillEnvironment(
         &self,
         document: &PdfiumDocument,
@@ -5492,6 +5617,7 @@ impl Pdfium {
     ///
     /// Returns the 0-based page index containing |dest|. Returns -1 on error.
     /// ```
+    #[inline]
     pub fn FPDFDest_GetDestPageIndex(
         &self,
         document: &PdfiumDocument,
@@ -5518,6 +5644,7 @@ impl Pdfium {
     /// Note the [x, y, zoom] values are only set if the corresponding hasXVal,
     /// hasYVal or hasZoomVal flags are true.
     /// ```
+    #[inline]
     pub fn FPDFDest_GetLocationInPage(
         &self,
         dest: &PdfiumDestination,
@@ -5554,6 +5681,7 @@ impl Pdfium {
     /// Returns one of the PDFDEST_VIEW_* constants, PDFDEST_VIEW_UNKNOWN_MODE if
     /// |dest| does not specify a view.
     /// ```
+    #[inline]
     pub fn FPDFDest_GetView(
         &self,
         dest: &PdfiumDestination,
@@ -5577,6 +5705,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the new attachment object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFDoc_AddAttachment(
         &self,
         document: &PdfiumDocument,
@@ -5593,6 +5722,7 @@ impl Pdfium {
     /// ```text
     ///   javascript - Handle to a JavaScript action.
     /// ```
+    #[inline]
     pub fn FPDFDoc_CloseJavaScriptAction(&self, javascript: &PdfiumJavascriptAction) {
         unsafe { (self.fn_FPDFDoc_CloseJavaScriptAction)(javascript.into()) }
     }
@@ -5611,6 +5741,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFDoc_DeleteAttachment(
         &self,
         document: &PdfiumDocument,
@@ -5631,6 +5762,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the attachment object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFDoc_GetAttachment(
         &self,
         document: &PdfiumDocument,
@@ -5651,6 +5783,7 @@ impl Pdfium {
     ///
     /// Returns the number of embedded files in |document|.
     /// ```
+    #[inline]
     pub fn FPDFDoc_GetAttachmentCount(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDFDoc_GetAttachmentCount)(document.into()) }
     }
@@ -5668,6 +5801,7 @@ impl Pdfium {
     /// Caller owns the returned handle and must close it with
     /// FPDFDoc_CloseJavaScriptAction().
     /// ```
+    #[inline]
     pub fn FPDFDoc_GetJavaScriptAction(
         &self,
         document: &PdfiumDocument,
@@ -5688,6 +5822,7 @@ impl Pdfium {
     ///
     /// Returns the number of JavaScript actions in |document| or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDFDoc_GetJavaScriptActionCount(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDFDoc_GetJavaScriptActionCount)(document.into()) }
     }
@@ -5703,6 +5838,7 @@ impl Pdfium {
     ///
     /// The page mode defines how the document should be initially displayed.
     /// ```
+    #[inline]
     pub fn FPDFDoc_GetPageMode(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDFDoc_GetPageMode)(document.into()) }
     }
@@ -5714,6 +5850,7 @@ impl Pdfium {
     ///
     /// font   - Handle to the loaded font.
     /// ```
+    #[inline]
     pub fn FPDFFont_Close(&self, font: &PdfiumFont) {
         unsafe { (self.fn_FPDFFont_Close)(font.into()) }
     }
@@ -5733,6 +5870,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success; |ascent| unmodified on failure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetAscent(
         &self,
         font: &PdfiumFont,
@@ -5760,6 +5898,7 @@ impl Pdfium {
     /// If |length| is less than the returned length, or |buffer| is NULL, |buffer|
     /// will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetBaseFontName(
         &self,
         font: &PdfiumFont,
@@ -5784,6 +5923,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success; |descent| unmodified on failure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetDescent(
         &self,
         font: &PdfiumFont,
@@ -5810,6 +5950,7 @@ impl Pdfium {
     /// If |length| is less than the returned length, or |buffer| is NULL, |buffer|
     /// will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetFamilyName(
         &self,
         font: &PdfiumFont,
@@ -5830,6 +5971,7 @@ impl Pdfium {
     /// Returns the bit flags specifying various characteristics of the font as
     /// defined in ISO 32000-1:2008, table 123, -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetFlags(&self, font: &PdfiumFont) -> i32 {
         unsafe { (self.fn_FPDFFont_GetFlags)(font.into()) }
     }
@@ -5857,6 +5999,7 @@ impl Pdfium {
     /// If the font is not embedded, then this API will instead return the data for
     /// the substitution font it is using.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetFontData(
         &self,
         font: &PdfiumFont,
@@ -5881,6 +6024,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the segment, or NULL on faiure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetGlyphPath(
         &self,
         font: &PdfiumFont,
@@ -5908,6 +6052,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success; |width| unmodified on failure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetGlyphWidth(
         &self,
         font: &PdfiumFont,
@@ -5928,6 +6073,7 @@ impl Pdfium {
     ///
     /// Returns 1 if the font is embedded, 0 if it not, and -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetIsEmbedded(&self, font: &PdfiumFont) -> i32 {
         unsafe { (self.fn_FPDFFont_GetIsEmbedded)(font.into()) }
     }
@@ -5946,6 +6092,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success; |angle| unmodified on failure.
     /// ```
+    #[inline]
     pub fn FPDFFont_GetItalicAngle(&self, font: &PdfiumFont, angle: &mut i32) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFFont_GetItalicAngle)(font.into(), angle) })
     }
@@ -5961,6 +6108,7 @@ impl Pdfium {
     /// Returns the font weight, -1 on failure.
     /// Typical values are 400 (normal) and 700 (bold).
     /// ```
+    #[inline]
     pub fn FPDFFont_GetWeight(&self, font: &PdfiumFont) -> i32 {
         unsafe { (self.fn_FPDFFont_GetWeight)(font.into()) }
     }
@@ -5974,6 +6122,7 @@ impl Pdfium {
     ///
     /// Returns the number of objects in |form_object| on success, -1 on error.
     /// ```
+    #[inline]
     pub fn FPDFFormObj_CountObjects(&self, form_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFFormObj_CountObjects)(form_object.into()) }
     }
@@ -5988,6 +6137,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the page object, or NULL on error.
     /// ```
+    #[inline]
     pub fn FPDFFormObj_GetObject(
         &self,
         form_object: &PdfiumPageObject,
@@ -6013,6 +6163,7 @@ impl Pdfium {
     /// Ownership of the removed |page_object| is transferred to the caller.
     /// Call FPDFPageObj_Destroy() on the removed page_object to free it.
     /// ```
+    #[inline]
     pub fn FPDFFormObj_RemoveObject(
         &self,
         form_object: &PdfiumPageObject,
@@ -6033,6 +6184,7 @@ impl Pdfium {
     ///
     /// Returns the number of objects in |glyphpath| or -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFGlyphPath_CountGlyphSegments(&self, glyphpath: &PdfiumGlyphPath) -> i32 {
         unsafe { (self.fn_FPDFGlyphPath_CountGlyphSegments)(glyphpath.into()) }
     }
@@ -6048,6 +6200,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the segment, or NULL on faiure.
     /// ```
+    #[inline]
     pub fn FPDFGlyphPath_GetGlyphPathSegment(
         &self,
         glyphpath: &PdfiumGlyphPath,
@@ -6071,6 +6224,7 @@ impl Pdfium {
     ///
     /// Returns the bitmap.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetBitmap(
         &self,
         image_object: &PdfiumPageObject,
@@ -6102,6 +6256,7 @@ impl Pdfium {
     /// Returns true if |out_buflen| is not null and an ICC profile exists for the
     /// given |image_object|.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetIccProfileDataDecoded(
         &self,
         image_object: &PdfiumPageObject,
@@ -6135,6 +6290,7 @@ impl Pdfium {
     ///
     /// Returns the length of the decoded image data.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetImageDataDecoded(
         &self,
         image_object: &PdfiumPageObject,
@@ -6163,6 +6319,7 @@ impl Pdfium {
     ///
     /// Returns the length of the raw image data.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetImageDataRaw(
         &self,
         image_object: &PdfiumPageObject,
@@ -6193,6 +6350,7 @@ impl Pdfium {
     ///
     /// Returns the length of the filter string.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetImageFilter(
         &self,
         image_object: &PdfiumPageObject,
@@ -6219,6 +6377,7 @@ impl Pdfium {
     ///
     /// Returns the number of |image_object|'s filters.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetImageFilterCount(&self, image_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFImageObj_GetImageFilterCount)(image_object.into()) }
     }
@@ -6238,6 +6397,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetImageMetadata(
         &self,
         image_object: &PdfiumPageObject,
@@ -6261,6 +6421,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetImagePixelSize(
         &self,
         image_object: &PdfiumPageObject,
@@ -6289,6 +6450,7 @@ impl Pdfium {
     ///
     /// Returns the bitmap or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_GetRenderedBitmap(
         &self,
         document: &PdfiumDocument,
@@ -6322,6 +6484,7 @@ impl Pdfium {
     /// to clear the image cache. If the image is not previously shared, or NULL is a
     /// valid |pages| value.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_LoadJpegFile(
         &self,
         pages: &mut PdfiumPage,
@@ -6359,6 +6522,7 @@ impl Pdfium {
     /// content is copied to the file. This allows |file_access| and its associated
     /// data to be deleted after this function returns.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_LoadJpegFileInline(
         &self,
         pages: &mut PdfiumPage,
@@ -6388,6 +6552,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_SetBitmap(
         &self,
         pages: &mut PdfiumPage,
@@ -6427,6 +6592,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFImageObj_SetMatrix(
         &self,
         image_object: &PdfiumPageObject,
@@ -6456,6 +6622,7 @@ impl Pdfium {
     ///
     /// Returns the length of the JavaScript action name in bytes.
     /// ```
+    #[inline]
     pub fn FPDFJavaScriptAction_GetName(
         &self,
         javascript: &PdfiumJavascriptAction,
@@ -6481,6 +6648,7 @@ impl Pdfium {
     ///
     /// Returns the length of the JavaScript action name in bytes.
     /// ```
+    #[inline]
     pub fn FPDFJavaScriptAction_GetScript(
         &self,
         javascript: &PdfiumJavascriptAction,
@@ -6502,6 +6670,7 @@ impl Pdfium {
     /// Return Value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDFLink_CloseWebLinks(&self, link_page: &PdfiumPageLink) {
         unsafe { (self.fn_FPDFLink_CloseWebLinks)(link_page.into()) }
     }
@@ -6515,6 +6684,7 @@ impl Pdfium {
     ///
     /// Returns the count of quadrilateral points.
     /// ```
+    #[inline]
     pub fn FPDFLink_CountQuadPoints(&self, link_annot: &PdfiumLink) -> i32 {
         unsafe { (self.fn_FPDFLink_CountQuadPoints)(link_annot.into()) }
     }
@@ -6531,6 +6701,7 @@ impl Pdfium {
     ///          Number of rectangular areas for the link.  If |link_index| does
     ///          not correspond to a valid link, then 0 is returned.
     /// ```
+    #[inline]
     pub fn FPDFLink_CountRects(&self, link_page: &PdfiumPageLink, link_index: i32) -> i32 {
         unsafe { (self.fn_FPDFLink_CountRects)(link_page.into(), link_index) }
     }
@@ -6545,6 +6716,7 @@ impl Pdfium {
     /// Return Value:
     ///          Number of detected web links.
     /// ```
+    #[inline]
     pub fn FPDFLink_CountWebLinks(&self, link_page: &PdfiumPageLink) -> i32 {
         unsafe { (self.fn_FPDFLink_CountWebLinks)(link_page.into()) }
     }
@@ -6561,6 +6733,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFLink_Enumerate(
         &self,
         page: &PdfiumPage,
@@ -6583,6 +6756,7 @@ impl Pdfium {
     /// If this function returns a valid handle, it is valid as long as |link| is
     /// valid.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetAction(&self, link: &PdfiumLink) -> PdfiumResult<PdfiumAction> {
         PdfiumAction::new_from_handle(unsafe { (self.fn_FPDFLink_GetAction)(link.into()) })
     }
@@ -6599,6 +6773,7 @@ impl Pdfium {
     /// Returns FPDF_ANNOTATION from the FPDF_LINK and NULL on failure,
     /// if the input link annot or page is NULL.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetAnnot(
         &self,
         page: &PdfiumPage,
@@ -6619,6 +6794,7 @@ impl Pdfium {
     ///
     /// Returns true on success.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetAnnotRect(
         &self,
         link_annot: &PdfiumLink,
@@ -6639,6 +6815,7 @@ impl Pdfium {
     /// associated with the link. In this case, you should call FPDFLink_GetAction()
     /// to retrieve the action associated with |link|.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetDest(
         &self,
         document: &PdfiumDocument,
@@ -6663,6 +6840,7 @@ impl Pdfium {
     /// You can convert coordinates from screen coordinates to page coordinates using
     /// FPDF_DeviceToPage().
     /// ```
+    #[inline]
     pub fn FPDFLink_GetLinkAtPoint(
         &self,
         page: &PdfiumPage,
@@ -6687,6 +6865,7 @@ impl Pdfium {
     /// You can convert coordinates from screen coordinates to page coordinates using
     /// FPDF_DeviceToPage().
     /// ```
+    #[inline]
     pub fn FPDFLink_GetLinkZOrderAtPoint(&self, page: &PdfiumPage, x: f64, y: f64) -> i32 {
         unsafe { (self.fn_FPDFLink_GetLinkZOrderAtPoint)(page.into(), x, y) }
     }
@@ -6702,6 +6881,7 @@ impl Pdfium {
     ///
     /// Returns true on success.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetQuadPoints(
         &self,
         link_annot: &PdfiumLink,
@@ -6736,6 +6916,7 @@ impl Pdfium {
     ///          correspond to a valid link, then return FALSE, and the out
     ///          parameters remain unmodified.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetRect(
         &self,
         link_page: &PdfiumPageLink,
@@ -6776,6 +6957,7 @@ impl Pdfium {
     ///          not correspond to a valid link, then return FALSE and the out
     ///          parameters remain unmodified.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetTextRange(
         &self,
         link_page: &PdfiumPageLink,
@@ -6815,6 +6997,7 @@ impl Pdfium {
     ///          If |link_index| does not correspond to a valid link, then the result
     ///          is an empty string.
     /// ```
+    #[inline]
     pub fn FPDFLink_GetURL(
         &self,
         link_page: &PdfiumPageLink,
@@ -6847,6 +7030,7 @@ impl Pdfium {
     ///
     ///          FPDFLink_CloseWebLinks must be called to release resources.
     /// ```
+    #[inline]
     pub fn FPDFLink_LoadWebLinks(
         &self,
         text_page: &PdfiumTextPage,
@@ -6867,6 +7051,7 @@ impl Pdfium {
     /// Returns the number of key/value pair parameters |mark|, or -1 in case of
     /// failure.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_CountParams(&self, mark: &PdfiumPageObjectMark) -> i32 {
         unsafe { (self.fn_FPDFPageObjMark_CountParams)(mark.into()) }
     }
@@ -6889,6 +7074,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE if it failed.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_GetName(
         &self,
         mark: &PdfiumPageObjectMark,
@@ -6920,6 +7106,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the key maps to a string/blob value, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_GetParamBlobValue(
         &self,
         mark: &PdfiumPageObjectMark,
@@ -6954,6 +7141,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the key maps to a number value, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_GetParamIntValue(
         &self,
         mark: &PdfiumPageObjectMark,
@@ -6984,6 +7172,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation was successful, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_GetParamKey(
         &self,
         mark: &PdfiumPageObjectMark,
@@ -7022,6 +7211,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the key maps to a string/blob value, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_GetParamStringValue(
         &self,
         mark: &PdfiumPageObjectMark,
@@ -7052,6 +7242,7 @@ impl Pdfium {
     ///
     /// Returns the type of the value, or FPDF_OBJECT_UNKNOWN in case of failure.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_GetParamValueType(
         &self,
         mark: &PdfiumPageObjectMark,
@@ -7072,6 +7263,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_RemoveParam(
         &self,
         page_object: &PdfiumPageObject,
@@ -7100,6 +7292,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_SetBlobParam(
         &self,
         document: &PdfiumDocument,
@@ -7137,6 +7330,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_SetIntParam(
         &self,
         document: &PdfiumDocument,
@@ -7172,6 +7366,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPageObjMark_SetStringParam(
         &self,
         document: &PdfiumDocument,
@@ -7205,6 +7400,7 @@ impl Pdfium {
     /// invalid if the page object is destroyed, either directly or indirectly by
     /// unloading the page.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_AddMark(
         &self,
         page_object: &PdfiumPageObject,
@@ -7226,6 +7422,7 @@ impl Pdfium {
     /// Returns the number of content marks in |page_object|, or -1 in case of
     /// failure.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_CountMarks(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_CountMarks)(page_object.into()) }
     }
@@ -7240,6 +7437,7 @@ impl Pdfium {
     ///
     /// Returns a handle to a new path object.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_CreateNewPath(&self, x: f32, y: f32) -> PdfiumResult<PdfiumPageObject> {
         PdfiumPageObject::new_from_handle(unsafe { (self.fn_FPDFPageObj_CreateNewPath)(x, y) })
     }
@@ -7256,6 +7454,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the new path object.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_CreateNewRect(
         &self,
         x: f32,
@@ -7279,6 +7478,7 @@ impl Pdfium {
     ///
     /// Returns a handle to a new text object, or NULL on failure
     /// ```
+    #[inline]
     pub fn FPDFPageObj_CreateTextObj(
         &self,
         document: &PdfiumDocument,
@@ -7301,6 +7501,7 @@ impl Pdfium {
     ///
     ///   page_object - handle to a page object.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_Destroy(&self, page_object: &PdfiumPageObject) {
         unsafe { (self.fn_FPDFPageObj_Destroy)(page_object.into()) }
     }
@@ -7318,6 +7519,7 @@ impl Pdfium {
     ///
     /// On success, returns TRUE and fills in the 4 coordinates.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetBounds(
         &self,
         page_object: &PdfiumPageObject,
@@ -7344,6 +7546,7 @@ impl Pdfium {
     /// take ownership of the returned FPDF_CLIPPATH. Instead, it remains valid until
     /// FPDF_ClosePage() is called for the page containing |page_object|.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetClipPath(
         &self,
         page_object: &PdfiumPageObject,
@@ -7365,6 +7568,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetDashArray(
         &self,
         page_object: &PdfiumPageObject,
@@ -7386,6 +7590,7 @@ impl Pdfium {
     ///
     /// Returns the line dash array size or -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetDashCount(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_GetDashCount)(page_object.into()) }
     }
@@ -7401,6 +7606,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetDashPhase(
         &self,
         page_object: &PdfiumPageObject,
@@ -7422,6 +7628,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetFillColor(
         &self,
         page_object: &PdfiumPageObject,
@@ -7450,6 +7657,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE if it failed.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetIsActive(
         &self,
         page_object: &PdfiumPageObject,
@@ -7469,6 +7677,7 @@ impl Pdfium {
     /// Line cap can be one of following: FPDF_LINECAP_BUTT, FPDF_LINECAP_ROUND,
     /// FPDF_LINECAP_PROJECTING_SQUARE
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetLineCap(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_GetLineCap)(page_object.into()) }
     }
@@ -7484,6 +7693,7 @@ impl Pdfium {
     /// Line join can be one of following: FPDF_LINEJOIN_MITER, FPDF_LINEJOIN_ROUND,
     /// FPDF_LINEJOIN_BEVEL
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetLineJoin(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_GetLineJoin)(page_object.into()) }
     }
@@ -7502,6 +7712,7 @@ impl Pdfium {
     /// invalid if the page object is destroyed, either directly or indirectly by
     /// unloading the page.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetMark(
         &self,
         page_object: &PdfiumPageObject,
@@ -7522,6 +7733,7 @@ impl Pdfium {
     ///
     /// Returns the page object's marked content ID, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetMarkedContentID(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_GetMarkedContentID)(page_object.into()) }
     }
@@ -7547,6 +7759,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetMatrix(
         &self,
         page_object: &PdfiumPageObject,
@@ -7574,6 +7787,7 @@ impl Pdfium {
     /// Currently only works the following |page_object| types: FPDF_PAGEOBJ_TEXT and
     /// FPDF_PAGEOBJ_IMAGE.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetRotatedBounds(
         &self,
         page_object: &PdfiumPageObject,
@@ -7597,6 +7811,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetStrokeColor(
         &self,
         page_object: &PdfiumPageObject,
@@ -7618,6 +7833,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetStrokeWidth(
         &self,
         page_object: &PdfiumPageObject,
@@ -7636,6 +7852,7 @@ impl Pdfium {
     /// Returns one of the FPDF_PAGEOBJ_* values on success, FPDF_PAGEOBJ_UNKNOWN on
     /// error.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_GetType(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_GetType)(page_object.into()) }
     }
@@ -7649,6 +7866,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if |page_object| contains transparency.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_HasTransparency(&self, page_object: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPageObj_HasTransparency)(page_object.into()) }
     }
@@ -7662,6 +7880,7 @@ impl Pdfium {
     ///
     /// Returns a handle to a new image object.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_NewImageObj(
         &self,
         document: &PdfiumDocument,
@@ -7682,6 +7901,7 @@ impl Pdfium {
     ///
     /// Returns a handle to a new text object, or NULL on failure
     /// ```
+    #[inline]
     pub fn FPDFPageObj_NewTextObj(
         &self,
         document: &PdfiumDocument,
@@ -7705,6 +7925,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if the operation succeeded, FALSE if it failed.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_RemoveMark(
         &self,
         page_object: &PdfiumPageObject,
@@ -7725,6 +7946,7 @@ impl Pdfium {
     /// Difference, Exclusion, HardLight, Hue, Lighten, Luminosity, Multiply, Normal,
     /// Overlay, Saturation, Screen, SoftLight
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetBlendMode(&self, page_object: &PdfiumPageObject, blend_mode: &CString) {
         unsafe { (self.fn_FPDFPageObj_SetBlendMode)(page_object.into(), blend_mode.as_ptr()) }
     }
@@ -7742,6 +7964,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetDashArray(
         &self,
         page_object: &PdfiumPageObject,
@@ -7770,6 +7993,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetDashPhase(
         &self,
         page_object: &PdfiumPageObject,
@@ -7791,6 +8015,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetFillColor(
         &self,
         page_object: &PdfiumPageObject,
@@ -7819,6 +8044,7 @@ impl Pdfium {
     /// When |active| is false, this makes the |page_object| be treated as if it
     /// wasn't in the document even though it is still held internally.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetIsActive(
         &self,
         page_object: &PdfiumPageObject,
@@ -7838,6 +8064,7 @@ impl Pdfium {
     /// Line cap can be one of following: FPDF_LINECAP_BUTT, FPDF_LINECAP_ROUND,
     /// FPDF_LINECAP_PROJECTING_SQUARE
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetLineCap(
         &self,
         page_object: &PdfiumPageObject,
@@ -7857,6 +8084,7 @@ impl Pdfium {
     /// Line join can be one of following: FPDF_LINEJOIN_MITER, FPDF_LINEJOIN_ROUND,
     /// FPDF_LINEJOIN_BEVEL
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetLineJoin(
         &self,
         page_object: &PdfiumPageObject,
@@ -7881,6 +8109,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetMatrix(
         &self,
         page_object: &PdfiumPageObject,
@@ -7902,6 +8131,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetStrokeColor(
         &self,
         page_object: &PdfiumPageObject,
@@ -7923,6 +8153,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPageObj_SetStrokeWidth(
         &self,
         page_object: &PdfiumPageObject,
@@ -7949,6 +8180,7 @@ impl Pdfium {
     ///   |b d f|
     /// and can be used to scale, rotate, shear and translate the |page_object|.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_Transform(
         &self,
         page_object: &PdfiumPageObject,
@@ -7976,6 +8208,7 @@ impl Pdfium {
     /// e  - The coefficient "e" of the matrix.
     /// f  - The coefficient "f" of the matrix.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_TransformClipPath(
         &self,
         page_object: &PdfiumPageObject,
@@ -8005,6 +8238,7 @@ impl Pdfium {
     /// unnecessary double to float conversions, and only uses 1 parameter for the
     /// matrix. It also returns whether the operation succeeded or not.
     /// ```
+    #[inline]
     pub fn FPDFPageObj_TransformF(
         &self,
         page_object: &PdfiumPageObject,
@@ -8023,6 +8257,7 @@ impl Pdfium {
     ///
     ///   annot  - handle to an annotation.
     /// ```
+    #[inline]
     pub fn FPDFPage_CloseAnnot(&self, annot: &PdfiumAnnotation) {
         unsafe { (self.fn_FPDFPage_CloseAnnot)(annot.into()) }
     }
@@ -8036,6 +8271,7 @@ impl Pdfium {
     ///
     /// Returns the number of objects in |page|.
     /// ```
+    #[inline]
     pub fn FPDFPage_CountObjects(&self, page: &PdfiumPage) -> i32 {
         unsafe { (self.fn_FPDFPage_CountObjects)(page.into()) }
     }
@@ -8054,6 +8290,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the new annotation object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFPage_CreateAnnot(
         &self,
         page: &PdfiumPage,
@@ -8072,6 +8309,7 @@ impl Pdfium {
     ///   document   - handle to document.
     ///   page_index - the index of the page to delete.
     /// ```
+    #[inline]
     pub fn FPDFPage_Delete(&self, document: &PdfiumDocument, page_index: i32) {
         unsafe { (self.fn_FPDFPage_Delete)(document.into(), page_index) }
     }
@@ -8089,6 +8327,7 @@ impl Pdfium {
     /// Currently, all failures return |FLATTEN_FAIL| with no indication of the
     /// cause.
     /// ```
+    #[inline]
     pub fn FPDFPage_Flatten(&self, page: &PdfiumPage, nFlag: i32) -> i32 {
         unsafe { (self.fn_FPDFPage_Flatten)(page.into(), nFlag) }
     }
@@ -8108,6 +8347,7 @@ impl Pdfium {
     ///     Return the z-order of the form field; -1 indicates no field.
     ///     Higher numbers are closer to the front.
     /// ```
+    #[inline]
     pub fn FPDFPage_FormFieldZOrderAtPoint(
         &self,
         hHandle: &PdfiumForm,
@@ -8132,6 +8372,7 @@ impl Pdfium {
     /// Before you save the page to a file, or reload the page, you must call
     /// |FPDFPage_GenerateContent| or any changes to |page| will be lost.
     /// ```
+    #[inline]
     pub fn FPDFPage_GenerateContent(&self, page: &PdfiumPage) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPage_GenerateContent)(page.into()) })
     }
@@ -8148,6 +8389,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the annotation object, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetAnnot(
         &self,
         page: &PdfiumPage,
@@ -8168,6 +8410,7 @@ impl Pdfium {
     ///
     /// Returns the number of annotations in |page|.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetAnnotCount(&self, page: &PdfiumPage) -> i32 {
         unsafe { (self.fn_FPDFPage_GetAnnotCount)(page.into()) }
     }
@@ -8184,6 +8427,7 @@ impl Pdfium {
     ///
     /// Returns the index of |annot|, or -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetAnnotIndex(&self, page: &PdfiumPage, annot: &PdfiumAnnotation) -> i32 {
         unsafe { (self.fn_FPDFPage_GetAnnotIndex)(page.into(), annot.into()) }
     }
@@ -8202,6 +8446,7 @@ impl Pdfium {
     /// On success, return true and write to the out parameters. Otherwise return
     /// false and leave the out parameters unmodified.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetArtBox(
         &self,
         page: &PdfiumPage,
@@ -8227,6 +8472,7 @@ impl Pdfium {
     /// On success, return true and write to the out parameters. Otherwise return
     /// false and leave the out parameters unmodified.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetBleedBox(
         &self,
         page: &PdfiumPage,
@@ -8252,6 +8498,7 @@ impl Pdfium {
     /// On success, return true and write to the out parameters. Otherwise return
     /// false and leave the out parameters unmodified.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetCropBox(
         &self,
         page: &PdfiumPage,
@@ -8277,6 +8524,7 @@ impl Pdfium {
     ///   buffer  - buffer for holding the decoded image data.
     ///   buflen  - length of the buffer in bytes.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetDecodedThumbnailData(
         &self,
         page: &PdfiumPage,
@@ -8302,6 +8550,7 @@ impl Pdfium {
     /// On success, return true and write to the out parameters. Otherwise return
     /// false and leave the out parameters unmodified.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetMediaBox(
         &self,
         page: &PdfiumPage,
@@ -8323,6 +8572,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the page object, or NULL on failed.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetObject(
         &self,
         page: &PdfiumPage,
@@ -8347,6 +8597,7 @@ impl Pdfium {
     ///   buffer  - buffer for holding the raw image data.
     ///   buflen  - length of the buffer in bytes.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetRawThumbnailData(
         &self,
         page: &PdfiumPage,
@@ -8371,6 +8622,7 @@ impl Pdfium {
     ///   2 - Rotated 180 degrees clockwise.
     ///   3 - Rotated 270 degrees clockwise.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetRotation(&self, page: &PdfiumPage) -> i32 {
         unsafe { (self.fn_FPDFPage_GetRotation)(page.into()) }
     }
@@ -8384,6 +8636,7 @@ impl Pdfium {
     ///
     ///   page - handle to a page.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetThumbnailAsBitmap(&self, page: &PdfiumPage) -> PdfiumResult<PdfiumBitmap> {
         PdfiumBitmap::new_from_handle(unsafe {
             (self.fn_FPDFPage_GetThumbnailAsBitmap)(page.into())
@@ -8404,6 +8657,7 @@ impl Pdfium {
     /// On success, return true and write to the out parameters. Otherwise return
     /// false and leave the out parameters unmodified.
     /// ```
+    #[inline]
     pub fn FPDFPage_GetTrimBox(
         &self,
         page: &PdfiumPage,
@@ -8430,6 +8684,7 @@ impl Pdfium {
     ///     Return the type of the form field; -1 indicates no field.
     ///     See field types above.
     /// ```
+    #[inline]
     pub fn FPDFPage_HasFormFieldAtPoint(
         &self,
         hHandle: &PdfiumForm,
@@ -8451,6 +8706,7 @@ impl Pdfium {
     ///
     /// Returns TRUE if |page| contains transparency.
     /// ```
+    #[inline]
     pub fn FPDFPage_HasTransparency(&self, page: &PdfiumPage) -> i32 {
         unsafe { (self.fn_FPDFPage_HasTransparency)(page.into()) }
     }
@@ -8467,6 +8723,7 @@ impl Pdfium {
     /// page        - A page handle.
     /// clipPath    - A handle to the clip path. (Does not take ownership.)
     /// ```
+    #[inline]
     pub fn FPDFPage_InsertClipPath(&self, page: &PdfiumPage, clipPath: &PdfiumClipPath) {
         unsafe { (self.fn_FPDFPage_InsertClipPath)(page.into(), clipPath.into()) }
     }
@@ -8480,6 +8737,7 @@ impl Pdfium {
     ///   page_object - handle to a page object. The |page_object| will be
     ///                 automatically freed.
     /// ```
+    #[inline]
     pub fn FPDFPage_InsertObject(&self, page: &PdfiumPage, page_object: &PdfiumPageObject) {
         unsafe { (self.fn_FPDFPage_InsertObject)(page.into(), page_object.into()) }
     }
@@ -8501,6 +8759,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFPage_InsertObjectAtIndex(
         &self,
         page: &PdfiumPage,
@@ -8529,6 +8788,7 @@ impl Pdfium {
     /// The page should be closed with FPDF_ClosePage() when finished as
     /// with any other page in the document.
     /// ```
+    #[inline]
     pub fn FPDFPage_New(
         &self,
         document: &PdfiumDocument,
@@ -8552,6 +8812,7 @@ impl Pdfium {
     ///
     /// Returns true if successful.
     /// ```
+    #[inline]
     pub fn FPDFPage_RemoveAnnot(&self, page: &PdfiumPage, index: i32) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPage_RemoveAnnot)(page.into(), index) })
     }
@@ -8572,6 +8833,7 @@ impl Pdfium {
     /// Note that when removing a |page_object| of type FPDF_PAGEOBJ_TEXT, all
     /// FPDF_TEXTPAGE handles for |page| are no longer valid.
     /// ```
+    #[inline]
     pub fn FPDFPage_RemoveObject(
         &self,
         page: &PdfiumPage,
@@ -8591,6 +8853,7 @@ impl Pdfium {
     /// right  - The right of the rectangle.
     /// top    - The top of the rectangle.
     /// ```
+    #[inline]
     pub fn FPDFPage_SetArtBox(
         &self,
         page: &PdfiumPage,
@@ -8613,6 +8876,7 @@ impl Pdfium {
     /// right  - The right of the rectangle.
     /// top    - The top of the rectangle.
     /// ```
+    #[inline]
     pub fn FPDFPage_SetBleedBox(
         &self,
         page: &PdfiumPage,
@@ -8635,6 +8899,7 @@ impl Pdfium {
     /// right  - The right of the rectangle.
     /// top    - The top of the rectangle.
     /// ```
+    #[inline]
     pub fn FPDFPage_SetCropBox(
         &self,
         page: &PdfiumPage,
@@ -8657,6 +8922,7 @@ impl Pdfium {
     /// right  - The right of the rectangle.
     /// top    - The top of the rectangle.
     /// ```
+    #[inline]
     pub fn FPDFPage_SetMediaBox(
         &self,
         page: &PdfiumPage,
@@ -8680,6 +8946,7 @@ impl Pdfium {
     ///              2 - Rotated 180 degrees clockwise.
     ///              3 - Rotated 270 degrees clockwise.
     /// ```
+    #[inline]
     pub fn FPDFPage_SetRotation(&self, page: &PdfiumPage, rotate: i32) {
         unsafe { (self.fn_FPDFPage_SetRotation)(page.into(), rotate) }
     }
@@ -8695,6 +8962,7 @@ impl Pdfium {
     /// right  - The right of the rectangle.
     /// top    - The top of the rectangle.
     /// ```
+    #[inline]
     pub fn FPDFPage_SetTrimBox(
         &self,
         page: &PdfiumPage,
@@ -8723,6 +8991,7 @@ impl Pdfium {
     /// matrix      - Transform matrix.
     /// clipRect    - Clipping rectangle.
     /// ```
+    #[inline]
     pub fn FPDFPage_TransFormWithClip(
         &self,
         page: &PdfiumPage,
@@ -8750,6 +9019,7 @@ impl Pdfium {
     ///   |b d f|
     /// and can be used to scale, rotate, shear and translate the |page| annotations.
     /// ```
+    #[inline]
     pub fn FPDFPage_TransformAnnots(
         &self,
         page: &PdfiumPage,
@@ -8772,6 +9042,7 @@ impl Pdfium {
     ///
     /// Returns close flag for non-NULL segment, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDFPathSegment_GetClose(&self, segment: &PdfiumPathSegment) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPathSegment_GetClose)(segment.into()) })
     }
@@ -8787,6 +9058,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success, otherwise |x| and |y| is not set.
     /// ```
+    #[inline]
     pub fn FPDFPathSegment_GetPoint(
         &self,
         segment: &PdfiumPathSegment,
@@ -8806,6 +9078,7 @@ impl Pdfium {
     /// Returns one of the FPDF_SEGMENT_* values on success,
     /// FPDF_SEGMENT_UNKNOWN on error.
     /// ```
+    #[inline]
     pub fn FPDFPathSegment_GetType(&self, segment: &PdfiumPathSegment) -> i32 {
         unsafe { (self.fn_FPDFPathSegment_GetType)(segment.into()) }
     }
@@ -8825,6 +9098,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPath_BezierTo(
         &self,
         path: &PdfiumPageObject,
@@ -8850,6 +9124,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPath_Close(&self, path: &PdfiumPageObject) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPath_Close)(path.into()) })
     }
@@ -8866,6 +9141,7 @@ impl Pdfium {
     ///
     /// Returns the number of objects in |path| or -1 on failure.
     /// ```
+    #[inline]
     pub fn FPDFPath_CountSegments(&self, path: &PdfiumPageObject) -> i32 {
         unsafe { (self.fn_FPDFPath_CountSegments)(path.into()) }
     }
@@ -8881,6 +9157,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPath_GetDrawMode(
         &self,
         path: &PdfiumPageObject,
@@ -8900,6 +9177,7 @@ impl Pdfium {
     ///
     /// Returns the handle to the segment, or NULL on faiure.
     /// ```
+    #[inline]
     pub fn FPDFPath_GetPathSegment(
         &self,
         path: &PdfiumPageObject,
@@ -8923,6 +9201,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPath_LineTo(&self, path: &PdfiumPageObject, x: f32, y: f32) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPath_LineTo)(path.into(), x, y) })
     }
@@ -8941,6 +9220,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPath_MoveTo(&self, path: &PdfiumPageObject, x: f32, y: f32) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFPath_MoveTo)(path.into(), x, y) })
     }
@@ -8956,6 +9236,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFPath_SetDrawMode(
         &self,
         path: &PdfiumPageObject,
@@ -8986,6 +9267,7 @@ impl Pdfium {
     /// calculation. If |length| is less than the returned length, or
     /// |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFSignatureObj_GetByteRange(
         &self,
         signature: &PdfiumSignature,
@@ -9013,6 +9295,7 @@ impl Pdfium {
     /// a DER-encoded PKCS#7 binary. If |length| is less than the returned length, or
     /// |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFSignatureObj_GetContents(
         &self,
         signature: &PdfiumSignature,
@@ -9040,6 +9323,7 @@ impl Pdfium {
     /// Return value:
     ///          Returns the permission (1, 2 or 3) on success, 0 on error.
     /// ```
+    #[inline]
     pub fn FPDFSignatureObj_GetDocMDPPermission(&self, signature: &PdfiumSignature) -> u32 {
         unsafe { (self.fn_FPDFSignatureObj_GetDocMDPPermission)(signature.into()) }
     }
@@ -9062,6 +9346,7 @@ impl Pdfium {
     /// string is terminated by a UTF16 NUL character. If |length| is less than the
     /// returned length, or |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFSignatureObj_GetReason(
         &self,
         signature: &PdfiumSignature,
@@ -9091,6 +9376,7 @@ impl Pdfium {
     /// The |buffer| is always encoded in 7-bit ASCII. If |length| is less than the
     /// returned length, or |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFSignatureObj_GetSubFilter(
         &self,
         signature: &PdfiumSignature,
@@ -9129,6 +9415,7 @@ impl Pdfium {
     /// only when the time of signing is not available in the (PKCS#7 binary)
     /// signature.
     /// ```
+    #[inline]
     pub fn FPDFSignatureObj_GetTime(
         &self,
         signature: &PdfiumSignature,
@@ -9150,6 +9437,7 @@ impl Pdfium {
     ///
     /// Returns a handle to the font object held by |text| which retains ownership.
     /// ```
+    #[inline]
     pub fn FPDFTextObj_GetFont(&self, text: &PdfiumPageObject) -> PdfiumResult<PdfiumFont> {
         PdfiumFont::new_from_handle(unsafe { (self.fn_FPDFTextObj_GetFont)(text.into()) })
     }
@@ -9165,6 +9453,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFTextObj_GetFontSize(
         &self,
         text: &PdfiumPageObject,
@@ -9190,6 +9479,7 @@ impl Pdfium {
     ///
     /// Returns the bitmap or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFTextObj_GetRenderedBitmap(
         &self,
         document: &PdfiumDocument,
@@ -9224,6 +9514,7 @@ impl Pdfium {
     /// If |length| is less than the returned length, or |buffer| is NULL, |buffer|
     /// will not be modified.
     /// ```
+    #[inline]
     pub fn FPDFTextObj_GetText(
         &self,
         text_object: &PdfiumPageObject,
@@ -9251,6 +9542,7 @@ impl Pdfium {
     /// Returns one of the known FPDF_TEXT_RENDERMODE enum values on success,
     /// FPDF_TEXTRENDERMODE_UNKNOWN on error.
     /// ```
+    #[inline]
     pub fn FPDFTextObj_GetTextRenderMode(&self, text: &PdfiumPageObject) -> FPDF_TEXT_RENDERMODE {
         unsafe { (self.fn_FPDFTextObj_GetTextRenderMode)(text.into()) }
     }
@@ -9267,6 +9559,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDFTextObj_SetTextRenderMode(
         &self,
         text: &PdfiumPageObject,
@@ -9287,6 +9580,7 @@ impl Pdfium {
     /// Return Value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDFText_ClosePage(&self, text_page: &PdfiumTextPage) {
         unsafe { (self.fn_FPDFText_ClosePage)(text_page.into()) }
     }
@@ -9310,6 +9604,7 @@ impl Pdfium {
     ///          first character in the page
     ///          has an index value of zero.
     /// ```
+    #[inline]
     pub fn FPDFText_CountChars(&self, text_page: &PdfiumTextPage) -> i32 {
         unsafe { (self.fn_FPDFText_CountChars)(text_page.into()) }
     }
@@ -9335,6 +9630,7 @@ impl Pdfium {
     ///          automatically merge small character boxes into bigger one if those
     ///          characters are on the same line and use same font settings.
     /// ```
+    #[inline]
     pub fn FPDFText_CountRects(
         &self,
         text_page: &PdfiumTextPage,
@@ -9355,6 +9651,7 @@ impl Pdfium {
     /// Return Value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDFText_FindClose(&self, handle: &PdfiumSearch) {
         unsafe { (self.fn_FPDFText_FindClose)(handle.into()) }
     }
@@ -9370,6 +9667,7 @@ impl Pdfium {
     /// Return Value:
     ///          Whether a match is found.
     /// ```
+    #[inline]
     pub fn FPDFText_FindNext(&self, handle: &PdfiumSearch) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFText_FindNext)(handle.into()) })
     }
@@ -9385,6 +9683,7 @@ impl Pdfium {
     /// Return Value:
     ///          Whether a match is found.
     /// ```
+    #[inline]
     pub fn FPDFText_FindPrev(&self, handle: &PdfiumSearch) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDFText_FindPrev)(handle.into()) })
     }
@@ -9404,6 +9703,7 @@ impl Pdfium {
     ///          A handle for the search context. FPDFText_FindClose must be called
     ///          to release this handle.
     /// ```
+    #[inline]
     pub fn FPDFText_FindStart(
         &self,
         text_page: &PdfiumTextPage,
@@ -9444,6 +9744,7 @@ impl Pdfium {
     ///          If the buffer is too small, as much text as will fit is copied into
     ///          it. May return a split surrogate in that case.
     /// ```
+    #[inline]
     pub fn FPDFText_GetBoundedText(
         &self,
         text_page: &PdfiumTextPage,
@@ -9482,6 +9783,7 @@ impl Pdfium {
     ///          greater or equal to 0. If |text_page| is invalid, or if |index| is
     ///          out of bounds, then return -1.
     /// ```
+    #[inline]
     pub fn FPDFText_GetCharAngle(&self, text_page: &PdfiumTextPage, index: i32) -> f32 {
         unsafe { (self.fn_FPDFText_GetCharAngle)(text_page.into(), index) }
     }
@@ -9510,6 +9812,7 @@ impl Pdfium {
     /// Comments:
     ///          All positions are measured in PDF "user space".
     /// ```
+    #[inline]
     pub fn FPDFText_GetCharBox(
         &self,
         text_page: &PdfiumTextPage,
@@ -9544,6 +9847,7 @@ impl Pdfium {
     ///          If there is no character at or nearby the point, return value will
     ///          be -1. If an error occurs, -3 will be returned.
     /// ```
+    #[inline]
     pub fn FPDFText_GetCharIndexAtPos(
         &self,
         text_page: &PdfiumTextPage,
@@ -9567,6 +9871,7 @@ impl Pdfium {
     ///
     /// Returns the index of the character in internal character list. -1 for error.
     /// ```
+    #[inline]
     pub fn FPDFText_GetCharIndexFromTextIndex(
         &self,
         text_page: &PdfiumTextPage,
@@ -9593,6 +9898,7 @@ impl Pdfium {
     /// Comments:
     ///          All positions are measured in PDF "user space".
     /// ```
+    #[inline]
     pub fn FPDFText_GetCharOrigin(
         &self,
         text_page: &PdfiumTextPage,
@@ -9625,6 +9931,7 @@ impl Pdfium {
     ///          Whether the call succeeded. If false, |R|, |G|, |B| and |A| are
     ///          unchanged.
     /// ```
+    #[inline]
     pub fn FPDFText_GetFillColor(
         &self,
         text_page: &PdfiumTextPage,
@@ -9659,6 +9966,7 @@ impl Pdfium {
     ///          set to the font flags. |buffer| is in UTF-8 encoding. Return 0 on
     ///          failure.
     /// ```
+    #[inline]
     pub fn FPDFText_GetFontInfo(
         &self,
         text_page: &PdfiumTextPage,
@@ -9692,6 +10000,7 @@ impl Pdfium {
     ///          1/72 inch). This is the typographic size of the font (so called
     ///          "em size").
     /// ```
+    #[inline]
     pub fn FPDFText_GetFontSize(&self, text_page: &PdfiumTextPage, index: i32) -> f64 {
         unsafe { (self.fn_FPDFText_GetFontSize)(text_page.into(), index) }
     }
@@ -9711,6 +10020,7 @@ impl Pdfium {
     ///          |text_page| is invalid, if |index| is out of bounds, or if the
     ///          character's text object is undefined, return -1.
     /// ```
+    #[inline]
     pub fn FPDFText_GetFontWeight(&self, text_page: &PdfiumTextPage, index: i32) -> i32 {
         unsafe { (self.fn_FPDFText_GetFontWeight)(text_page.into(), index) }
     }
@@ -9735,6 +10045,7 @@ impl Pdfium {
     /// Comments:
     ///          All positions are measured in PDF "user space".
     /// ```
+    #[inline]
     pub fn FPDFText_GetLooseCharBox(
         &self,
         text_page: &PdfiumTextPage,
@@ -9761,6 +10072,7 @@ impl Pdfium {
     ///          invalid, or if |index| is out of bounds, or if |matrix| is NULL,
     ///          then return FALSE, and |matrix| remains unmodified.
     /// ```
+    #[inline]
     pub fn FPDFText_GetMatrix(
         &self,
         text_page: &PdfiumTextPage,
@@ -9795,6 +10107,7 @@ impl Pdfium {
     ///          |rect_index| is out of bounds, then return FALSE and set the out
     ///          parameters to 0.
     /// ```
+    #[inline]
     pub fn FPDFText_GetRect(
         &self,
         text_page: &PdfiumTextPage,
@@ -9820,6 +10133,7 @@ impl Pdfium {
     /// Return Value:
     ///          Number of matched characters.
     /// ```
+    #[inline]
     pub fn FPDFText_GetSchCount(&self, handle: &PdfiumSearch) -> i32 {
         unsafe { (self.fn_FPDFText_GetSchCount)(handle.into()) }
     }
@@ -9835,6 +10149,7 @@ impl Pdfium {
     /// Return Value:
     ///          Index for the starting character.
     /// ```
+    #[inline]
     pub fn FPDFText_GetSchResultIndex(&self, handle: &PdfiumSearch) -> i32 {
         unsafe { (self.fn_FPDFText_GetSchResultIndex)(handle.into()) }
     }
@@ -9861,6 +10176,7 @@ impl Pdfium {
     ///          Whether the call succeeded. If false, |R|, |G|, |B| and |A| are
     ///          unchanged.
     /// ```
+    #[inline]
     pub fn FPDFText_GetStrokeColor(
         &self,
         text_page: &PdfiumTextPage,
@@ -9896,6 +10212,7 @@ impl Pdfium {
     ///          outside of the cropbox, use FPDF_GetPageBoundingBox() and
     ///          FPDFText_GetCharBox().
     /// ```
+    #[inline]
     pub fn FPDFText_GetText(
         &self,
         text_page: &PdfiumTextPage,
@@ -9916,6 +10233,7 @@ impl Pdfium {
     ///
     /// Returns the index of the text returned from FPDFText_GetText(). -1 for error.
     /// ```
+    #[inline]
     pub fn FPDFText_GetTextIndexFromCharIndex(
         &self,
         text_page: &PdfiumTextPage,
@@ -9939,6 +10257,7 @@ impl Pdfium {
     ///          error. The returned text object, if non-null, is of type
     ///          |FPDF_PAGEOBJ_TEXT|. The caller does not own the returned object.
     /// ```
+    #[inline]
     pub fn FPDFText_GetTextObject(
         &self,
         text_page: &PdfiumTextPage,
@@ -9964,6 +10283,7 @@ impl Pdfium {
     ///          convert to Unicode,
     ///          the return value will be zero.
     /// ```
+    #[inline]
     pub fn FPDFText_GetUnicode(&self, text_page: &PdfiumTextPage, index: i32) -> u32 {
         unsafe { (self.fn_FPDFText_GetUnicode)(text_page.into(), index) }
     }
@@ -9983,6 +10303,7 @@ impl Pdfium {
     ///          0 if the character has no known unicode mapping issues.
     ///          -1 if there was an error.
     /// ```
+    #[inline]
     pub fn FPDFText_HasUnicodeMapError(&self, text_page: &PdfiumTextPage, index: i32) -> i32 {
         unsafe { (self.fn_FPDFText_HasUnicodeMapError)(text_page.into(), index) }
     }
@@ -10002,6 +10323,7 @@ impl Pdfium {
     ///          0 if the character is not generated by PDFium.
     ///          -1 if there was an error.
     /// ```
+    #[inline]
     pub fn FPDFText_IsGenerated(&self, text_page: &PdfiumTextPage, index: i32) -> i32 {
         unsafe { (self.fn_FPDFText_IsGenerated)(text_page.into(), index) }
     }
@@ -10021,6 +10343,7 @@ impl Pdfium {
     ///          0 if the character is not a hyphen.
     ///          -1 if there was an error.
     /// ```
+    #[inline]
     pub fn FPDFText_IsHyphen(&self, text_page: &PdfiumTextPage, index: i32) -> i32 {
         unsafe { (self.fn_FPDFText_IsHyphen)(text_page.into(), index) }
     }
@@ -10045,6 +10368,7 @@ impl Pdfium {
     ///
     /// Returns NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFText_LoadCidType2Font(
         &self,
         document: &PdfiumDocument,
@@ -10083,6 +10407,7 @@ impl Pdfium {
     ///
     /// Returns NULL on failure
     /// ```
+    #[inline]
     pub fn FPDFText_LoadFont(
         &self,
         document: &PdfiumDocument,
@@ -10111,6 +10436,7 @@ impl Pdfium {
     ///          Application must call FPDFText_ClosePage to release the text page
     ///          information.
     /// ```
+    #[inline]
     pub fn FPDFText_LoadPage(&self, page: &PdfiumPage) -> PdfiumResult<PdfiumTextPage> {
         PdfiumTextPage::new_from_handle(unsafe { (self.fn_FPDFText_LoadPage)(page.into()) })
     }
@@ -10130,6 +10456,7 @@ impl Pdfium {
     ///
     /// Returns NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDFText_LoadStandardFont(
         &self,
         document: &PdfiumDocument,
@@ -10153,6 +10480,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFText_SetCharcodes(
         &self,
         text_object: &PdfiumPageObject,
@@ -10174,6 +10502,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success
     /// ```
+    #[inline]
     pub fn FPDFText_SetText(&self, text_object: &PdfiumPageObject, text: &str) -> PdfiumResult<()> {
         let text = str_to_utf16le_vec(text);
         to_result(unsafe { (self.fn_FPDFText_SetText)(text_object.into(), text.as_ptr()) })
@@ -10194,6 +10523,7 @@ impl Pdfium {
     /// Return Value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_AddInstalledFont(
         &self,
         mapper: Option<&mut [u8]>,
@@ -10215,6 +10545,7 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_CloseDocument(&self, document: &PdfiumDocument) {
         unsafe { (self.fn_FPDF_CloseDocument)(document.into()) }
     }
@@ -10229,6 +10560,7 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_ClosePage(&self, page: &PdfiumPage) {
         unsafe { (self.fn_FPDF_ClosePage)(page.into()) }
     }
@@ -10240,6 +10572,7 @@ impl Pdfium {
     /// Close an FPDF_XOBJECT handle created by FPDF_NewXObjectFromPage().
     /// FPDF_PAGEOBJECTs created from the FPDF_XOBJECT handle are not affected.
     /// ```
+    #[inline]
     pub fn FPDF_CloseXObject(&self, xobject: &PdfiumXObject) {
         unsafe { (self.fn_FPDF_CloseXObject)(xobject.into()) }
     }
@@ -10254,6 +10587,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FPDF_CopyViewerPreferences(
         &self,
         dest_doc: &PdfiumDocument,
@@ -10272,6 +10606,7 @@ impl Pdfium {
     /// Return value:
     ///          The count of named destinations.
     /// ```
+    #[inline]
     pub fn FPDF_CountNamedDests(&self, document: &PdfiumDocument) -> FPDF_DWORD {
         unsafe { (self.fn_FPDF_CountNamedDests)(document.into()) }
     }
@@ -10289,6 +10624,7 @@ impl Pdfium {
     /// right  - The right of the clip box.
     /// top    - The top of the clip box.
     /// ```
+    #[inline]
     pub fn FPDF_CreateClipPath(
         &self,
         left: f32,
@@ -10308,6 +10644,7 @@ impl Pdfium {
     ///
     /// Returns a handle to a new document, or NULL on failure.
     /// ```
+    #[inline]
     pub fn FPDF_CreateNewDocument(&self) -> FPDF_DOCUMENT {
         unsafe { (self.fn_FPDF_CreateNewDocument)() }
     }
@@ -10319,6 +10656,7 @@ impl Pdfium {
     ///
     /// clipPath - A handle to the clip path. It will be invalid after this call.
     /// ```
+    #[inline]
     pub fn FPDF_DestroyClipPath(&self, clipPath: &PdfiumClipPath) {
         unsafe { (self.fn_FPDF_DestroyClipPath)(clipPath.into()) }
     }
@@ -10341,6 +10679,7 @@ impl Pdfium {
     ///          objects. It is recommended to close other objects before
     ///          closing the library with this function.
     /// ```
+    #[inline]
     pub fn FPDF_DestroyLibrary(&self) {
         unsafe { (self.fn_FPDF_DestroyLibrary)() }
     }
@@ -10390,6 +10729,7 @@ impl Pdfium {
     ///          and rotate parameters have exactly same values as you used in
     ///          the FPDF_RenderPage() function call.
     /// ```
+    #[inline]
     pub fn FPDF_DeviceToPage(
         &self,
         page: &PdfiumPage,
@@ -10435,6 +10775,7 @@ impl Pdfium {
     /// Comments:
     ///          The return value can change over time as the PDF parser evolves.
     /// ```
+    #[inline]
     pub fn FPDF_DocumentHasValidCrossReferenceTable(
         &self,
         document: &PdfiumDocument,
@@ -10481,6 +10822,7 @@ impl Pdfium {
     ///       FPDF_RenderPageBitmap() or FPDF_RenderPageBitmap_Start(), have
     ///       finished rendering the page contents.
     /// ```
+    #[inline]
     pub fn FPDF_FFLDraw(
         &self,
         hHandle: &PdfiumForm,
@@ -10521,6 +10863,7 @@ impl Pdfium {
     ///           This function should be called on the output from
     ///           FPDF_GetDefaultSystemFontInfo() once it is no longer needed.
     /// ```
+    #[inline]
     pub fn FPDF_FreeDefaultSystemFontInfo(&self, font_info: &mut PdfiumSystemFontInfo) {
         unsafe { (self.fn_FPDF_FreeDefaultSystemFontInfo)(font_info.into()) }
     }
@@ -10542,6 +10885,7 @@ impl Pdfium {
     ///          font info interface. The default implementation can be passed to
     ///          FPDF_SetSystemFontInfo().
     /// ```
+    #[inline]
     pub fn FPDF_GetDefaultSystemFontInfo(&self) -> PdfiumResult<PdfiumSystemFontInfo> {
         PdfiumSystemFontInfo::new_from_handle(unsafe { (self.fn_FPDF_GetDefaultSystemFontInfo)() })
     }
@@ -10562,6 +10906,7 @@ impl Pdfium {
     ///     longer experimental, this API will be marked as deprecated.
     ///     See https://crbug.com/348468114
     /// ```
+    #[inline]
     pub fn FPDF_GetDefaultTTFMap(&self) -> *const FPDF_CharsetFontMap {
         unsafe { (self.fn_FPDF_GetDefaultTTFMap)() }
     }
@@ -10579,6 +10924,7 @@ impl Pdfium {
     /// Return Value:
     ///    The number of entries in the map.
     /// ```
+    #[inline]
     pub fn FPDF_GetDefaultTTFMapCount(&self) -> usize {
         unsafe { (self.fn_FPDF_GetDefaultTTFMapCount)() }
     }
@@ -10596,6 +10942,7 @@ impl Pdfium {
     ///     A pointer to the entry, if it is in the map, or NULL if the index is out
     ///     of bounds.
     /// ```
+    #[inline]
     pub fn FPDF_GetDefaultTTFMapEntry(&self, index: usize) -> *const FPDF_CharsetFontMap {
         unsafe { (self.fn_FPDF_GetDefaultTTFMapEntry)(index) }
     }
@@ -10612,6 +10959,7 @@ impl Pdfium {
     ///          PDF Reference for detailed descriptions. If the document is not
     ///          protected or was unlocked by the owner, 0xffffffff will be returned.
     /// ```
+    #[inline]
     pub fn FPDF_GetDocPermissions(&self, document: &PdfiumDocument) -> c_ulong {
         unsafe { (self.fn_FPDF_GetDocPermissions)(document.into()) }
     }
@@ -10629,6 +10977,7 @@ impl Pdfium {
     ///          protected, 0xffffffff will be returned. Always returns user
     ///          permissions, even if the document was unlocked by the owner.
     /// ```
+    #[inline]
     pub fn FPDF_GetDocUserPermissions(&self, document: &PdfiumDocument) -> c_ulong {
         unsafe { (self.fn_FPDF_GetDocUserPermissions)(document.into()) }
     }
@@ -10651,6 +11000,7 @@ impl Pdfium {
     /// terminator.  If |buflen| is less than the returned length, or |buffer| is
     /// NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_GetFileIdentifier(
         &self,
         document: &PdfiumDocument,
@@ -10683,6 +11033,7 @@ impl Pdfium {
     ///          If the document was created by FPDF_CreateNewDocument,
     ///          then this function will always fail.
     /// ```
+    #[inline]
     pub fn FPDF_GetFileVersion(
         &self,
         doc: &PdfiumDocument,
@@ -10704,6 +11055,7 @@ impl Pdfium {
     /// Comments:
     ///           If |document| is NULL, then the return value is FORMTYPE_NONE.
     /// ```
+    #[inline]
     pub fn FPDF_GetFormType(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_GetFormType)(document.into()) }
     }
@@ -10722,6 +11074,7 @@ impl Pdfium {
     ///          function is not defined. This function only works in conjunction
     ///          with APIs that mention FPDF_GetLastError() in their documentation.
     /// ```
+    #[inline]
     pub fn FPDF_GetLastError(&self) -> c_ulong {
         unsafe { (self.fn_FPDF_GetLastError)() }
     }
@@ -10751,6 +11104,7 @@ impl Pdfium {
     /// it must have returned PDF_FORM_AVAIL or PDF_FORM_NOTEXIST. Before that, there
     /// is no guarantee the metadata has been loaded.
     /// ```
+    #[inline]
     pub fn FPDF_GetMetaText(
         &self,
         document: &PdfiumDocument,
@@ -10793,6 +11147,7 @@ impl Pdfium {
     ///         If buflen is not sufficiently large, it will be set to -1 upon
     ///         return.
     /// ```
+    #[inline]
     pub fn FPDF_GetNamedDest(
         &self,
         document: &PdfiumDocument,
@@ -10816,6 +11171,7 @@ impl Pdfium {
     /// Return value:
     ///          The handle to the destination.
     /// ```
+    #[inline]
     pub fn FPDF_GetNamedDestByName(
         &self,
         document: &PdfiumDocument,
@@ -10841,6 +11197,7 @@ impl Pdfium {
     ///   If this function returns a valid handle, it is valid as long as |page| is
     ///   valid.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageAAction(
         &self,
         page: &PdfiumPage,
@@ -10865,6 +11222,7 @@ impl Pdfium {
     /// Return value:
     ///          True for success.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageBoundingBox(
         &self,
         page: &PdfiumPage,
@@ -10883,6 +11241,7 @@ impl Pdfium {
     /// Return value:
     ///          Total number of pages in the document.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageCount(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_GetPageCount)(document.into()) }
     }
@@ -10903,6 +11262,7 @@ impl Pdfium {
     /// Comments:
     ///          Changing the rotation of |page| affects the return value.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageHeight(&self, page: &PdfiumPage) -> f64 {
         unsafe { (self.fn_FPDF_GetPageHeight)(page.into()) }
     }
@@ -10921,6 +11281,7 @@ impl Pdfium {
     /// Comments:
     ///          Changing the rotation of |page| affects the return value.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageHeightF(&self, page: &PdfiumPage) -> f32 {
         unsafe { (self.fn_FPDF_GetPageHeightF)(page.into()) }
     }
@@ -10941,6 +11302,7 @@ impl Pdfium {
     /// bytes of zeros indicating the end of the string.  If |buflen| is less than
     /// the returned length, or |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageLabel(
         &self,
         document: &PdfiumDocument,
@@ -10976,6 +11338,7 @@ impl Pdfium {
     ///          Prefer FPDF_GetPageSizeByIndexF() above. This will be deprecated in
     ///          the future.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageSizeByIndex(
         &self,
         document: &PdfiumDocument,
@@ -11000,6 +11363,7 @@ impl Pdfium {
     /// Return value:
     ///          Non-zero for success. 0 for error (document or page not found).
     /// ```
+    #[inline]
     pub fn FPDF_GetPageSizeByIndexF(
         &self,
         document: &PdfiumDocument,
@@ -11025,6 +11389,7 @@ impl Pdfium {
     /// Comments:
     ///          Changing the rotation of |page| affects the return value.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageWidth(&self, page: &PdfiumPage) -> f64 {
         unsafe { (self.fn_FPDF_GetPageWidth)(page.into()) }
     }
@@ -11043,6 +11408,7 @@ impl Pdfium {
     /// Comments:
     ///          Changing the rotation of |page| affects the return value.
     /// ```
+    #[inline]
     pub fn FPDF_GetPageWidthF(&self, page: &PdfiumPage) -> f32 {
         unsafe { (self.fn_FPDF_GetPageWidthF)(page.into()) }
     }
@@ -11059,6 +11425,7 @@ impl Pdfium {
     ///          Reference for a detailed description. If the document is not
     ///          protected, -1 will be returned.
     /// ```
+    #[inline]
     pub fn FPDF_GetSecurityHandlerRevision(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_GetSecurityHandlerRevision)(document.into()) }
     }
@@ -11074,6 +11441,7 @@ impl Pdfium {
     /// Return value:
     ///          Total number of signatures in the document on success, -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_GetSignatureCount(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_GetSignatureCount)(document.into()) }
     }
@@ -11092,6 +11460,7 @@ impl Pdfium {
     ///          does not take ownership of the returned FPDF_SIGNATURE. Instead, it
     ///          remains valid until FPDF_CloseDocument() is called for the document.
     /// ```
+    #[inline]
     pub fn FPDF_GetSignatureObject(
         &self,
         document: &PdfiumDocument,
@@ -11120,6 +11489,7 @@ impl Pdfium {
     /// trailer ends in the document. If |length| is less than the returned length,
     /// or |document| or |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_GetTrailerEnds(
         &self,
         document: &PdfiumDocument,
@@ -11154,6 +11524,7 @@ impl Pdfium {
     /// check both the return value and the input |buflen| is no less than the
     /// returned |out_buflen| before using the data in |buffer|.
     /// ```
+    #[inline]
     pub fn FPDF_GetXFAPacketContent(
         &self,
         document: &PdfiumDocument,
@@ -11184,6 +11555,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of valid packets, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_GetXFAPacketCount(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_GetXFAPacketCount)(document.into()) }
     }
@@ -11208,6 +11580,7 @@ impl Pdfium {
     /// equal to the length of the packet name. The packet name includes a
     /// terminating NUL character. |buffer| is unmodified on error.
     /// ```
+    #[inline]
     pub fn FPDF_GetXFAPacketName(
         &self,
         document: &PdfiumDocument,
@@ -11240,6 +11613,7 @@ impl Pdfium {
     /// Comments:
     ///   number of pages per page = num_pages_on_x_axis * num_pages_on_y_axis
     /// ```
+    #[inline]
     pub fn FPDF_ImportNPagesToOne(
         &self,
         src_doc: &PdfiumDocument,
@@ -11274,6 +11648,7 @@ impl Pdfium {
     /// Returns TRUE on success. Returns FALSE if any pages in |pagerange| is
     /// invalid or if |pagerange| cannot be read.
     /// ```
+    #[inline]
     pub fn FPDF_ImportPages(
         &self,
         dest_doc: &PdfiumDocument,
@@ -11304,6 +11679,7 @@ impl Pdfium {
     /// Returns TRUE on success. Returns FALSE if any pages in |page_indices| is
     /// invalid.
     /// ```
+    #[inline]
     pub fn FPDF_ImportPagesByIndex(
         &self,
         dest_doc: &PdfiumDocument,
@@ -11338,6 +11714,7 @@ impl Pdfium {
     ///          code should call FPDF_InitLibraryWithConfig() instead. This will
     ///          be deprecated in the future.
     /// ```
+    #[inline]
     pub fn FPDF_InitLibrary(&self) {
         unsafe { (self.fn_FPDF_InitLibrary)() }
     }
@@ -11355,6 +11732,7 @@ impl Pdfium {
     ///          You have to call this function before you can call any PDF
     ///          processing functions.
     /// ```
+    #[inline]
     pub fn FPDF_InitLibraryWithConfig(&self, config: &FPDF_LIBRARY_CONFIG) {
         unsafe { (self.fn_FPDF_InitLibraryWithConfig)(config) }
     }
@@ -11383,6 +11761,7 @@ impl Pdfium {
     ///          FPDF_LoadXFA() function after the PDF document loaded to support XFA
     ///          fields defined in the fpdfformfill.h file.
     /// ```
+    #[inline]
     pub fn FPDF_LoadCustomDocument(
         &self,
         pFileAccess: &mut Box<crate::PdfiumReader>,
@@ -11405,6 +11784,7 @@ impl Pdfium {
     ///          The loaded page can be rendered to devices using FPDF_RenderPage.
     ///          The loaded page can be closed using FPDF_ClosePage.
     /// ```
+    #[inline]
     pub fn FPDF_LoadPage(
         &self,
         document: &PdfiumDocument,
@@ -11425,6 +11805,7 @@ impl Pdfium {
     ///          TRUE upon success, otherwise FALSE. If XFA support is not built
     ///          into PDFium, performs no action and always returns FALSE.
     /// ```
+    #[inline]
     pub fn FPDF_LoadXFA(&self, document: &PdfiumDocument) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDF_LoadXFA)(document.into()) })
     }
@@ -11458,6 +11839,7 @@ impl Pdfium {
     /// >  Move(doc, [2, 2], 2, 0); // returns false
     /// >  // Returned false because [2, 2] contains duplicates.
     /// ```
+    #[inline]
     pub fn FPDF_MovePages(
         &self,
         document: &PdfiumDocument,
@@ -11484,6 +11866,7 @@ impl Pdfium {
     /// Returns a new form object on success, or NULL on failure. Caller owns the
     /// newly created object.
     /// ```
+    #[inline]
     pub fn FPDF_NewFormObjectFromXObject(
         &self,
         xobject: &PdfiumXObject,
@@ -11503,6 +11886,7 @@ impl Pdfium {
     /// Returns a handle on success, or NULL on failure. Caller owns the newly
     /// created object.
     /// ```
+    #[inline]
     pub fn FPDF_NewXObjectFromPage(
         &self,
         dest_doc: &PdfiumDocument,
@@ -11544,6 +11928,7 @@ impl Pdfium {
     /// Comments:
     ///          See comments for FPDF_DeviceToPage().
     /// ```
+    #[inline]
     pub fn FPDF_PageToDevice(
         &self,
         page: &PdfiumPage,
@@ -11587,6 +11972,7 @@ impl Pdfium {
     ///       Please refresh the client window to remove the highlight immediately
     ///       if necessary.
     /// ```
+    #[inline]
     pub fn FPDF_RemoveFormFieldHighlight(&self, hHandle: &PdfiumForm) {
         unsafe { (self.fn_FPDF_RemoveFormFieldHighlight)(hHandle.into()) }
     }
@@ -11621,6 +12007,7 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_RenderPageBitmap(
         &self,
         bitmap: &PdfiumBitmap,
@@ -11683,6 +12070,7 @@ impl Pdfium {
     ///          Rendering Status. See flags for progressive process status for the
     ///          details.
     /// ```
+    #[inline]
     pub fn FPDF_RenderPageBitmapWithColorScheme_Start(
         &self,
         bitmap: &PdfiumBitmap,
@@ -11734,6 +12122,7 @@ impl Pdfium {
     /// Return value:
     ///          None. Note that behavior is undefined if det of |matrix| is 0.
     /// ```
+    #[inline]
     pub fn FPDF_RenderPageBitmapWithMatrix(
         &self,
         bitmap: &PdfiumBitmap,
@@ -11784,6 +12173,7 @@ impl Pdfium {
     ///          Rendering Status. See flags for progressive process status for the
     ///          details.
     /// ```
+    #[inline]
     pub fn FPDF_RenderPageBitmap_Start(
         &self,
         bitmap: &PdfiumBitmap,
@@ -11823,6 +12213,7 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_RenderPage_Close(&self, page: &PdfiumPage) {
         unsafe { (self.fn_FPDF_RenderPage_Close)(page.into()) }
     }
@@ -11842,6 +12233,7 @@ impl Pdfium {
     ///          The rendering status. See flags for progressive process status for
     ///          the details.
     /// ```
+    #[inline]
     pub fn FPDF_RenderPage_Continue(&self, page: &PdfiumPage, pause: &mut IFSDK_PAUSE) -> i32 {
         unsafe { (self.fn_FPDF_RenderPage_Continue)(page.into(), pause) }
     }
@@ -11860,6 +12252,7 @@ impl Pdfium {
     /// Return value:
     ///          TRUE for succeed, FALSE for failed.
     /// ```
+    #[inline]
     pub fn FPDF_SaveAsCopy(
         &self,
         document: &PdfiumDocument,
@@ -11884,6 +12277,7 @@ impl Pdfium {
     /// Return value:
     ///          TRUE if succeed, FALSE if failed.
     /// ```
+    #[inline]
     pub fn FPDF_SaveWithVersion(
         &self,
         document: &PdfiumDocument,
@@ -11912,6 +12306,7 @@ impl Pdfium {
     /// Return Value:
     ///       None.
     /// ```
+    #[inline]
     pub fn FPDF_SetFormFieldHighlightAlpha(
         &self,
         hHandle: &PdfiumForm,
@@ -11944,6 +12339,7 @@ impl Pdfium {
     ///       Please refresh the client window to show the highlight immediately
     ///       if necessary.
     /// ```
+    #[inline]
     pub fn FPDF_SetFormFieldHighlightColor(
         &self,
         hHandle: &PdfiumForm,
@@ -11965,6 +12361,7 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_SetSandBoxPolicy(&self, policy: FPDF_DWORD, enable: i32) {
         unsafe { (self.fn_FPDF_SetSandBoxPolicy)(policy, enable) }
     }
@@ -11986,6 +12383,7 @@ impl Pdfium {
     ///          Call this with NULL to tell PDFium to stop using a previously set
     ///          |FPDF_SYSFONTINFO|.
     /// ```
+    #[inline]
     pub fn FPDF_SetSystemFontInfo(&self, font_info: &mut PdfiumSystemFontInfo) {
         unsafe { (self.fn_FPDF_SetSystemFontInfo)(font_info.into()) }
     }
@@ -12001,6 +12399,7 @@ impl Pdfium {
     /// Return value:
     ///           The number of children, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_CountChildren(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12028,6 +12427,7 @@ impl Pdfium {
     ///           Returns TRUE if the attribute maps to a string value, FALSE
     ///           otherwise.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetBlobValue(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12061,6 +12461,7 @@ impl Pdfium {
     ///           Returns TRUE if the attribute maps to a boolean value, FALSE
     ///           otherwise.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetBooleanValue(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12086,6 +12487,7 @@ impl Pdfium {
     ///           The |index| must be less than the
     ///           FPDF_StructElement_Attr_CountChildren() return value.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetChildAtIndex(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12107,6 +12509,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of attributes, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetCount(
         &self,
         struct_attribute: &PdfiumStructElementAttr,
@@ -12134,6 +12537,7 @@ impl Pdfium {
     /// Return value:
     ///          TRUE if the operation was successful, FALSE otherwise.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetName(
         &self,
         struct_attribute: &PdfiumStructElementAttr,
@@ -12169,6 +12573,7 @@ impl Pdfium {
     ///           Returns TRUE if the attribute maps to a number value, FALSE
     ///           otherwise.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetNumberValue(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12201,6 +12606,7 @@ impl Pdfium {
     ///           Returns TRUE if the attribute maps to a string value, FALSE
     ///           otherwise.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetStringValue(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12231,6 +12637,7 @@ impl Pdfium {
     ///           failure. Note that this will never return FPDF_OBJECT_REFERENCE, as
     ///           references are always dereferenced.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetType(
         &self,
         value: &PdfiumStructElementAttrValue,
@@ -12254,6 +12661,7 @@ impl Pdfium {
     ///           The handle remains valid as long as |struct_attribute| remains
     ///           valid.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_Attr_GetValue(
         &self,
         struct_attribute: &PdfiumStructElementAttr,
@@ -12274,6 +12682,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of children, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_CountChildren(&self, struct_element: &PdfiumStructElement) -> i32 {
         unsafe { (self.fn_FPDF_StructElement_CountChildren)(struct_element.into()) }
     }
@@ -12298,6 +12707,7 @@ impl Pdfium {
     ///          |buflen| is less than the required length, or |buffer| is NULL,
     ///          |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetActualText(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12332,6 +12742,7 @@ impl Pdfium {
     ///          |buflen| is less than the required length, or |buffer| is NULL,
     ///          |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetAltText(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12366,6 +12777,7 @@ impl Pdfium {
     ///          The |index| must be less than the
     ///          FPDF_StructElement_GetAttributeCount() return value.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetAttributeAtIndex(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12386,6 +12798,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of attributes, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetAttributeCount(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12409,6 +12822,7 @@ impl Pdfium {
     ///          The |index| must be less than the FPDF_StructElement_CountChildren()
     ///          return value.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetChildAtIndex(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12438,6 +12852,7 @@ impl Pdfium {
     ///          The |index| must be less than the FPDF_StructElement_CountChildren()
     ///          return value.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetChildMarkedContentID(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12467,6 +12882,7 @@ impl Pdfium {
     ///          |buflen| is less than the required length, or |buffer| is NULL,
     ///          |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetID(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12502,6 +12918,7 @@ impl Pdfium {
     ///          |buflen| is less than the required length, or |buffer| is NULL,
     ///          |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetLang(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12532,6 +12949,7 @@ impl Pdfium {
     ///          extract more marked content IDs out of |struct_element|. This API
     ///          may be deprecated in the future.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetMarkedContentID(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12556,6 +12974,7 @@ impl Pdfium {
     ///          FPDF_StructElement_GetMarkedContentIdCount() return value.
     ///          This will likely supersede FPDF_StructElement_GetMarkedContentID().
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetMarkedContentIdAtIndex(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12577,6 +12996,7 @@ impl Pdfium {
     /// Return value:
     ///          The count of marked content ids or -1 if none exists.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetMarkedContentIdCount(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12604,6 +13024,7 @@ impl Pdfium {
     ///           |buflen| is less than the required length, or |buffer| is NULL,
     ///           |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetObjType(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12633,6 +13054,7 @@ impl Pdfium {
     ///          If structure element is StructTreeRoot, then this function will
     ///          return NULL.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetParent(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12663,6 +13085,7 @@ impl Pdfium {
     ///          |buflen| is less than the required length, or |buffer| is NULL,
     ///          |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetStringAttribute(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12699,6 +13122,7 @@ impl Pdfium {
     ///           |buflen| is less than the required length, or |buffer| is NULL,
     ///           |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetTitle(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12733,6 +13157,7 @@ impl Pdfium {
     ///           |buflen| is less than the required length, or |buffer| is NULL,
     ///           |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_StructElement_GetType(
         &self,
         struct_element: &PdfiumStructElement,
@@ -12759,6 +13184,7 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_StructTree_Close(&self, struct_tree: &PdfiumStructTree) {
         unsafe { (self.fn_FPDF_StructTree_Close)(struct_tree.into()) }
     }
@@ -12774,6 +13200,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of children, or -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_StructTree_CountChildren(&self, struct_tree: &PdfiumStructTree) -> i32 {
         unsafe { (self.fn_FPDF_StructTree_CountChildren)(struct_tree.into()) }
     }
@@ -12795,6 +13222,7 @@ impl Pdfium {
     ///          The |index| must be less than the FPDF_StructTree_CountChildren()
     ///          return value.
     /// ```
+    #[inline]
     pub fn FPDF_StructTree_GetChildAtIndex(
         &self,
         struct_tree: &PdfiumStructTree,
@@ -12817,6 +13245,7 @@ impl Pdfium {
     ///          returned handle and must use FPDF_StructTree_Close() to release it.
     ///          The handle should be released before |page| gets released.
     /// ```
+    #[inline]
     pub fn FPDF_StructTree_GetForPage(&self, page: &PdfiumPage) -> PdfiumResult<PdfiumStructTree> {
         PdfiumStructTree::new_from_handle(unsafe {
             (self.fn_FPDF_StructTree_GetForPage)(page.into())
@@ -12834,6 +13263,7 @@ impl Pdfium {
     /// Return value:
     ///          The paper handling option to be used when printing.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetDuplex(&self, document: &PdfiumDocument) -> FPDF_DUPLEXTYPE {
         unsafe { (self.fn_FPDF_VIEWERREF_GetDuplex)(document.into()) }
     }
@@ -12857,6 +13287,7 @@ impl Pdfium {
     ///          as when |document| is invalid. If |length| is less than the required
     ///          length, or |buffer| is NULL, |buffer| will not be modified.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetName(
         &self,
         document: &PdfiumDocument,
@@ -12884,6 +13315,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of copies to be printed.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetNumCopies(&self, document: &PdfiumDocument) -> i32 {
         unsafe { (self.fn_FPDF_VIEWERREF_GetNumCopies)(document.into()) }
     }
@@ -12898,6 +13330,7 @@ impl Pdfium {
     /// Return value:
     ///          The print page range to be used for printing.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetPrintPageRange(
         &self,
         document: &PdfiumDocument,
@@ -12918,6 +13351,7 @@ impl Pdfium {
     /// Return value:
     ///          The number of elements in the page range. Returns 0 on error.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetPrintPageRangeCount(&self, pagerange: &PdfiumPageRange) -> usize {
         unsafe { (self.fn_FPDF_VIEWERREF_GetPrintPageRangeCount)(pagerange.into()) }
     }
@@ -12935,6 +13369,7 @@ impl Pdfium {
     ///          The value of the element in the page range at a given index.
     ///          Returns -1 on error.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetPrintPageRangeElement(
         &self,
         pagerange: &PdfiumPageRange,
@@ -12953,44 +13388,9 @@ impl Pdfium {
     /// Return value:
     ///          None.
     /// ```
+    #[inline]
     pub fn FPDF_VIEWERREF_GetPrintScaling(&self, document: &PdfiumDocument) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FPDF_VIEWERREF_GetPrintScaling)(document.into()) })
-    }
-
-    /// C documentation for FSDK_SetLocaltimeFunction:
-    ///
-    /// ```text
-    /// Set replacement function for calls to localtime().
-    ///
-    /// This API is intended to be used only for testing, thus may cause PDFium to
-    /// behave poorly in production environments.
-    ///
-    ///   func - Function pointer to alternate implementation of localtime(), or
-    ///          NULL to restore to actual localtime() call itself.
-    /// ```
-    pub fn FSDK_SetLocaltimeFunction(
-        &self,
-        func: ::std::option::Option<unsafe extern "C" fn(arg1: *const time_t) -> *mut tm>,
-    ) {
-        unsafe { (self.fn_FSDK_SetLocaltimeFunction)(func) }
-    }
-
-    /// C documentation for FSDK_SetTimeFunction:
-    ///
-    /// ```text
-    /// Set replacement function for calls to time().
-    ///
-    /// This API is intended to be used only for testing, thus may cause PDFium to
-    /// behave poorly in production environments.
-    ///
-    ///   func - Function pointer to alternate implementation of time(), or
-    ///          NULL to restore to actual time() call itself.
-    /// ```
-    pub fn FSDK_SetTimeFunction(
-        &self,
-        func: ::std::option::Option<unsafe extern "C" fn() -> time_t>,
-    ) {
-        unsafe { (self.fn_FSDK_SetTimeFunction)(func) }
     }
 
     /// C documentation for FSDK_SetUnSpObjProcessHandler:
@@ -13002,6 +13402,7 @@ impl Pdfium {
     ///
     /// Returns TRUE on success.
     /// ```
+    #[inline]
     pub fn FSDK_SetUnSpObjProcessHandler(
         &self,
         unsp_info: &mut UNSUPPORT_INFO,
