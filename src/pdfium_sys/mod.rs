@@ -106,7 +106,10 @@ impl Pdfium {
 }
 
 /// Retrieves function entries from the PDFium dynamic library
-pub fn lib_get<'a, T>(library: &'a Library, function: &str) -> Result<Symbol<'a, T>, PdfiumError> {
+pub(crate) fn dl<'a, T>(
+    library: &'a Library,
+    function: &str,
+) -> Result<Symbol<'a, T>, PdfiumError> {
     let function_c = CString::new(function).unwrap();
     let symbol = unsafe { library.get(function_c.as_bytes_with_nul()) };
     match symbol {
