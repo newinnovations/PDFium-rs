@@ -205,13 +205,6 @@ impl From<&PdfiumPage> for FPDF_PAGE {
     }
 }
 
-impl From<&mut PdfiumPage> for *mut FPDF_PAGE {
-    #[inline]
-    fn from(value: &mut PdfiumPage) -> Self {
-        value.handle as *mut FPDF_PAGE
-    }
-}
-
 impl Drop for PdfiumPage {
     /// # Closes this [`PdfiumPage`], releasing held memory.
     #[inline]

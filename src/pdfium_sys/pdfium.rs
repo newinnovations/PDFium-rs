@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #![allow(non_snake_case)]
+#![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
 use std::ffi::CString;
@@ -29,8 +30,7 @@ use crate::{
     PdfiumForm, PdfiumGlyphPath, PdfiumJavascriptAction, PdfiumLink, PdfiumPage, PdfiumPageLink,
     PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment, PdfiumResult,
     PdfiumSearch, PdfiumSignature, PdfiumStructElement, PdfiumStructElementAttr,
-    PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumSystemFontInfo, PdfiumTextPage,
-    PdfiumXObject, pdfium_types::*,
+    PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumTextPage, PdfiumXObject, pdfium_types::*,
 };
 
 /// This is the memory-safe wrapper around PDFium's C API. All raw C pointers and manual
@@ -177,42 +177,6 @@ impl Pdfium {
     #[inline]
     pub fn FORM_ForceToKillFocus(&self, hHandle: &PdfiumForm) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_ForceToKillFocus)(hHandle.into()) })
-    }
-
-    /// C documentation for FORM_GetFocusedAnnot:
-    ///
-    /// ```text
-    /// Experimental API.
-    /// Function: FORM_GetFocusedAnnot.
-    ///       Call this member function to get the currently focused annotation.
-    /// Parameters:
-    ///       handle      -   Handle to the form fill module, as returned by
-    ///                       FPDFDOC_InitFormFillEnvironment().
-    ///       page_index  -   Buffer to hold the index number of the page which
-    ///                       contains the focused annotation. 0 for the first page.
-    ///                       Can't be NULL.
-    ///       annot       -   Buffer to hold the focused annotation. Can't be NULL.
-    /// Return Value:
-    ///       On success, return true and write to the out parameters. Otherwise
-    ///       return false and leave the out parameters unmodified.
-    /// Comments:
-    ///       Not currently supported for XFA forms - will report no focused
-    ///       annotation.
-    ///       Must call FPDFPage_CloseAnnot() when the annotation returned in |annot|
-    ///       by this function is no longer needed.
-    ///       This will return true and set |page_index| to -1 and |annot| to NULL,
-    ///       if there is no focused annotation.
-    /// ```
-    #[inline]
-    pub fn FORM_GetFocusedAnnot(
-        &self,
-        handle: &PdfiumForm,
-        page_index: &mut i32,
-        annot: &mut PdfiumAnnotation,
-    ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FORM_GetFocusedAnnot)(handle.into(), page_index, annot.into())
-        })
     }
 
     /// C documentation for FORM_GetFocusedText:
@@ -3099,7 +3063,10 @@ impl Pdfium {
     ///          Use FPDFBitmap_GetFormat() to find out the format of the data.
     /// ```
     #[inline]
-    pub fn FPDFBitmap_GetBuffer(&self, bitmap: &PdfiumBitmap) -> *mut ::std::os::raw::c_void {
+    pub(crate) fn FPDFBitmap_GetBuffer(
+        &self,
+        bitmap: &PdfiumBitmap,
+    ) -> *mut ::std::os::raw::c_void {
         unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap.into()) }
     }
 
@@ -4337,110 +4304,6 @@ impl Pdfium {
         })
     }
 
-    /// C documentation for FPDFImageObj_LoadJpegFile:
-    ///
-    /// ```text
-    /// Load an image from a JPEG image file and then set it into |image_object|.
-    ///
-    ///   pages        - pointer to the start of all loaded pages, may be NULL.
-    ///   count        - number of |pages|, may be 0.
-    ///   image_object - handle to an image object.
-    ///   file_access  - file access handler which specifies the JPEG image file.
-    ///
-    /// Returns TRUE on success.
-    ///
-    /// The image object might already have an associated image, which is shared and
-    /// cached by the loaded pages. In that case, we need to clear the cached image
-    /// for all the loaded pages. Pass |pages| and page count (|count|) to this API
-    /// to clear the image cache. If the image is not previously shared, or NULL is a
-    /// valid |pages| value.
-    /// ```
-    #[inline]
-    pub fn FPDFImageObj_LoadJpegFile(
-        &self,
-        pages: &mut PdfiumPage,
-        count: i32,
-        image_object: &PdfiumPageObject,
-        file_access: &mut Box<crate::PdfiumReader>,
-    ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FPDFImageObj_LoadJpegFile)(
-                pages.into(),
-                count,
-                image_object.into(),
-                file_access.as_mut().into(),
-            )
-        })
-    }
-
-    /// C documentation for FPDFImageObj_LoadJpegFileInline:
-    ///
-    /// ```text
-    /// Load an image from a JPEG image file and then set it into |image_object|.
-    ///
-    ///   pages        - pointer to the start of all loaded pages, may be NULL.
-    ///   count        - number of |pages|, may be 0.
-    ///   image_object - handle to an image object.
-    ///   file_access  - file access handler which specifies the JPEG image file.
-    ///
-    /// Returns TRUE on success.
-    ///
-    /// The image object might already have an associated image, which is shared and
-    /// cached by the loaded pages. In that case, we need to clear the cached image
-    /// for all the loaded pages. Pass |pages| and page count (|count|) to this API
-    /// to clear the image cache. If the image is not previously shared, or NULL is a
-    /// valid |pages| value. This function loads the JPEG image inline, so the image
-    /// content is copied to the file. This allows |file_access| and its associated
-    /// data to be deleted after this function returns.
-    /// ```
-    #[inline]
-    pub fn FPDFImageObj_LoadJpegFileInline(
-        &self,
-        pages: &mut PdfiumPage,
-        count: i32,
-        image_object: &PdfiumPageObject,
-        file_access: &mut Box<crate::PdfiumReader>,
-    ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FPDFImageObj_LoadJpegFileInline)(
-                pages.into(),
-                count,
-                image_object.into(),
-                file_access.as_mut().into(),
-            )
-        })
-    }
-
-    /// C documentation for FPDFImageObj_SetBitmap:
-    ///
-    /// ```text
-    /// Set |bitmap| to |image_object|.
-    ///
-    ///   pages        - pointer to the start of all loaded pages, may be NULL.
-    ///   count        - number of |pages|, may be 0.
-    ///   image_object - handle to an image object.
-    ///   bitmap       - handle of the bitmap.
-    ///
-    /// Returns TRUE on success.
-    /// ```
-    #[inline]
-    pub fn FPDFImageObj_SetBitmap(
-        &self,
-        pages: &mut PdfiumPage,
-        count: i32,
-        image_object: &PdfiumPageObject,
-        bitmap: &PdfiumBitmap,
-    ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FPDFImageObj_SetBitmap)(
-                pages.into(),
-                count,
-                image_object.into(),
-                bitmap.into(),
-            )
-        })
-    }
-
     /// C documentation for FPDFImageObj_SetMatrix:
     ///
     /// ```text
@@ -4590,30 +4453,6 @@ impl Pdfium {
     #[inline]
     pub fn FPDFLink_CountWebLinks(&self, link_page: &PdfiumPageLink) -> i32 {
         unsafe { (self.fn_FPDFLink_CountWebLinks)(link_page.into()) }
-    }
-
-    /// C documentation for FPDFLink_Enumerate:
-    ///
-    /// ```text
-    /// Enumerates all the link annotations in |page|.
-    ///
-    ///   page       - handle to the page.
-    ///   start_pos  - the start position, should initially be 0 and is updated with
-    ///                the next start position on return.
-    ///   link_annot - the link handle for |startPos|.
-    ///
-    /// Returns TRUE on success.
-    /// ```
-    #[inline]
-    pub fn FPDFLink_Enumerate(
-        &self,
-        page: &PdfiumPage,
-        start_pos: &mut i32,
-        link_annot: &mut PdfiumLink,
-    ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FPDFLink_Enumerate)(page.into(), start_pos, link_annot.into())
-        })
     }
 
     /// C documentation for FPDFLink_GetAction:
@@ -8721,46 +8560,6 @@ impl Pdfium {
         }
     }
 
-    /// C documentation for FPDF_FreeDefaultSystemFontInfo:
-    ///
-    /// ```text
-    /// Function: FPDF_FreeDefaultSystemFontInfo
-    ///           Free a default system font info interface
-    /// Parameters:
-    ///           font_info       -   Pointer to a FPDF_SYSFONTINFO structure
-    /// Return Value:
-    ///           None
-    /// Comments:
-    ///           This function should be called on the output from
-    ///           FPDF_GetDefaultSystemFontInfo() once it is no longer needed.
-    /// ```
-    #[inline]
-    pub fn FPDF_FreeDefaultSystemFontInfo(&self, font_info: &mut PdfiumSystemFontInfo) {
-        unsafe { (self.fn_FPDF_FreeDefaultSystemFontInfo)(font_info.into()) }
-    }
-
-    /// C documentation for FPDF_GetDefaultSystemFontInfo:
-    ///
-    /// ```text
-    /// Function: FPDF_GetDefaultSystemFontInfo
-    ///          Get default system font info interface for current platform
-    /// Parameters:
-    ///          None
-    /// Return Value:
-    ///          Pointer to a FPDF_SYSFONTINFO structure describing the default
-    ///          interface, or NULL if the platform doesn't have a default interface.
-    ///          Application should call FPDF_FreeDefaultSystemFontInfo to free the
-    ///          returned pointer.
-    /// Comments:
-    ///          For some platforms, PDFium implements a default version of system
-    ///          font info interface. The default implementation can be passed to
-    ///          FPDF_SetSystemFontInfo().
-    /// ```
-    #[inline]
-    pub fn FPDF_GetDefaultSystemFontInfo(&self) -> PdfiumResult<PdfiumSystemFontInfo> {
-        PdfiumSystemFontInfo::new_from_handle(unsafe { (self.fn_FPDF_GetDefaultSystemFontInfo)() })
-    }
-
     /// C documentation for FPDF_GetDefaultTTFMap:
     ///
     /// ```text
@@ -8778,7 +8577,7 @@ impl Pdfium {
     ///     See https://crbug.com/348468114
     /// ```
     #[inline]
-    pub fn FPDF_GetDefaultTTFMap(&self) -> *const FPDF_CharsetFontMap {
+    pub(crate) fn FPDF_GetDefaultTTFMap(&self) -> *const FPDF_CharsetFontMap {
         unsafe { (self.fn_FPDF_GetDefaultTTFMap)() }
     }
 
@@ -8814,7 +8613,7 @@ impl Pdfium {
     ///     of bounds.
     /// ```
     #[inline]
-    pub fn FPDF_GetDefaultTTFMapEntry(&self, index: usize) -> *const FPDF_CharsetFontMap {
+    pub(crate) fn FPDF_GetDefaultTTFMapEntry(&self, index: usize) -> *const FPDF_CharsetFontMap {
         unsafe { (self.fn_FPDF_GetDefaultTTFMapEntry)(index) }
     }
 
@@ -10235,28 +10034,6 @@ impl Pdfium {
     #[inline]
     pub fn FPDF_SetSandBoxPolicy(&self, policy: FPDF_DWORD, enable: i32) {
         unsafe { (self.fn_FPDF_SetSandBoxPolicy)(policy, enable) }
-    }
-
-    /// C documentation for FPDF_SetSystemFontInfo:
-    ///
-    /// ```text
-    /// Function: FPDF_SetSystemFontInfo
-    ///          Set the system font info interface into PDFium
-    /// Parameters:
-    ///          font_info       -   Pointer to a FPDF_SYSFONTINFO structure
-    /// Return Value:
-    ///          None
-    /// Comments:
-    ///          Platform support implementation should implement required methods of
-    ///          FFDF_SYSFONTINFO interface, then call this function during PDFium
-    ///          initialization process.
-    ///
-    ///          Call this with NULL to tell PDFium to stop using a previously set
-    ///          |FPDF_SYSFONTINFO|.
-    /// ```
-    #[inline]
-    pub fn FPDF_SetSystemFontInfo(&self, font_info: &mut PdfiumSystemFontInfo) {
-        unsafe { (self.fn_FPDF_SetSystemFontInfo)(font_info.into()) }
     }
 
     /// C documentation for FPDF_StructElement_Attr_CountChildren:

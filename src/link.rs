@@ -45,12 +45,6 @@ impl From<&PdfiumLink> for FPDF_LINK {
     }
 }
 
-impl From<&mut PdfiumLink> for *mut FPDF_LINK {
-    fn from(value: &mut PdfiumLink) -> Self {
-        value.handle as *mut FPDF_LINK
-    }
-}
-
 // TODO: check lifecycle FPDF_LINK
 
 impl Drop for PdfiumLink {

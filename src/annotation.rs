@@ -46,12 +46,6 @@ impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
     }
 }
 
-impl From<&mut PdfiumAnnotation> for *mut FPDF_ANNOTATION {
-    fn from(value: &mut PdfiumAnnotation) -> Self {
-        value.handle as *mut FPDF_ANNOTATION
-    }
-}
-
 impl Drop for PdfiumAnnotation {
     /// # Closes this [`PdfiumAnnotation`], releasing held memory.
     fn drop(&mut self) {

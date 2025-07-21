@@ -141,12 +141,6 @@ impl From<&PdfiumBitmap> for FPDF_BITMAP {
     }
 }
 
-impl From<&mut PdfiumBitmap> for FPDF_BITMAP {
-    #[inline]
-    fn from(value: &mut PdfiumBitmap) -> Self {
-        value.handle
-    }
-}
 impl Drop for PdfiumBitmap {
     /// Closes this [PdfiumBitmap], releasing held memory.
     #[inline]
