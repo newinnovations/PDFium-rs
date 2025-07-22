@@ -10859,7 +10859,7 @@ fn to_char_ptr_mut(data: Option<&mut [i8]>) -> *mut c_char {
     }
 }
 
-fn to_result(b: FPDF_BOOL) -> PdfiumResult<()> {
+pub fn to_result(b: FPDF_BOOL) -> PdfiumResult<()> {
     if b == 0 {
         Err(PdfiumError::InvokationFailed)
     } else {

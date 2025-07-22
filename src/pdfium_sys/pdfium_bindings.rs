@@ -618,6 +618,24 @@ pub struct Pdfium {
         page: FPDF_PAGE,
         image_object: FPDF_PAGEOBJECT,
     ) -> FPDF_BITMAP,
+    pub(crate) fn_FPDFImageObj_LoadJpegFile: unsafe extern "C" fn(
+        pages: *mut FPDF_PAGE,
+        count: c_int,
+        image_object: FPDF_PAGEOBJECT,
+        file_access: *mut FPDF_FILEACCESS,
+    ) -> FPDF_BOOL,
+    pub(crate) fn_FPDFImageObj_LoadJpegFileInline: unsafe extern "C" fn(
+        pages: *mut FPDF_PAGE,
+        count: c_int,
+        image_object: FPDF_PAGEOBJECT,
+        file_access: *mut FPDF_FILEACCESS,
+    ) -> FPDF_BOOL,
+    pub(crate) fn_FPDFImageObj_SetBitmap: unsafe extern "C" fn(
+        pages: *mut FPDF_PAGE,
+        count: c_int,
+        image_object: FPDF_PAGEOBJECT,
+        bitmap: FPDF_BITMAP,
+    ) -> FPDF_BOOL,
     pub(crate) fn_FPDFImageObj_SetMatrix: unsafe extern "C" fn(
         image_object: FPDF_PAGEOBJECT,
         a: f64,
@@ -642,6 +660,11 @@ pub struct Pdfium {
     pub(crate) fn_FPDFLink_CountRects:
         unsafe extern "C" fn(link_page: FPDF_PAGELINK, link_index: c_int) -> c_int,
     pub(crate) fn_FPDFLink_CountWebLinks: unsafe extern "C" fn(link_page: FPDF_PAGELINK) -> c_int,
+    pub(crate) fn_FPDFLink_Enumerate: unsafe extern "C" fn(
+        page: FPDF_PAGE,
+        start_pos: *mut c_int,
+        link_annot: *mut FPDF_LINK,
+    ) -> FPDF_BOOL,
     pub(crate) fn_FPDFLink_GetAction: unsafe extern "C" fn(link: FPDF_LINK) -> FPDF_ACTION,
     pub(crate) fn_FPDFLink_GetAnnot:
         unsafe extern "C" fn(page: FPDF_PAGE, link_annot: FPDF_LINK) -> FPDF_ANNOTATION,
@@ -1235,6 +1258,9 @@ pub struct Pdfium {
         rotate: c_int,
         flags: c_int,
     ),
+    pub(crate) fn_FPDF_FreeDefaultSystemFontInfo:
+        unsafe extern "C" fn(font_info: *mut FPDF_SYSFONTINFO),
+    pub(crate) fn_FPDF_GetDefaultSystemFontInfo: unsafe extern "C" fn() -> *mut FPDF_SYSFONTINFO,
     pub(crate) fn_FPDF_GetDefaultTTFMap: unsafe extern "C" fn() -> *const FPDF_CharsetFontMap,
     pub(crate) fn_FPDF_GetDefaultTTFMapCount: unsafe extern "C" fn() -> usize,
     pub(crate) fn_FPDF_GetDefaultTTFMapEntry:
@@ -1432,6 +1458,7 @@ pub struct Pdfium {
         unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE, fieldType: c_int, color: c_ulong),
     pub(crate) fn_FPDF_SetSandBoxPolicy:
         unsafe extern "C" fn(policy: FPDF_DWORD, enable: FPDF_BOOL),
+    pub(crate) fn_FPDF_SetSystemFontInfo: unsafe extern "C" fn(font_info: *mut FPDF_SYSFONTINFO),
     pub(crate) fn_FPDF_StructElement_Attr_CountChildren:
         unsafe extern "C" fn(value: FPDF_STRUCTELEMENT_ATTR_VALUE) -> c_int,
     pub(crate) fn_FPDF_StructElement_Attr_GetBlobValue: unsafe extern "C" fn(

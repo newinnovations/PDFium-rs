@@ -22,8 +22,9 @@
 
 use crate::{
     Pdfium, PdfiumAnnotation, PdfiumAvailability, PdfiumBitmap, PdfiumClipPath, PdfiumDocument,
-    PdfiumFont, PdfiumJavascriptAction, PdfiumPage, PdfiumPageLink, PdfiumPageObject, PdfiumSearch,
-    PdfiumStructTree, PdfiumTextPage, PdfiumXObject, pdfium_types::*,
+    PdfiumFont, PdfiumJavascriptAction, PdfiumPage, PdfiumPageLink, PdfiumPageObject, PdfiumReader,
+    PdfiumResult, PdfiumSearch, PdfiumStructTree, PdfiumTextPage, PdfiumXObject,
+    pdfium_sys::pdfium::to_result, pdfium_types::*,
 };
 
 // These functions are internal to the crate
@@ -39,6 +40,7 @@ impl Pdfium {
     pub(crate) fn FPDFAvail_Destroy(&self, avail: &PdfiumAvailability) {
         unsafe { (self.fn_FPDFAvail_Destroy)(avail.into()) }
     }
+
     /// C documentation for FPDFBitmap_Destroy:
     ///
     /// ```text
@@ -57,6 +59,7 @@ impl Pdfium {
     pub(crate) fn FPDFBitmap_Destroy(&self, bitmap: &PdfiumBitmap) {
         unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
     }
+
     /// C documentation for FPDFBitmap_GetBuffer:
     ///
     /// ```text
@@ -83,6 +86,7 @@ impl Pdfium {
     ) -> *mut ::std::os::raw::c_void {
         unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap.into()) }
     }
+
     /// C documentation for FPDFDoc_CloseJavaScriptAction:
     ///
     /// ```text
@@ -92,6 +96,7 @@ impl Pdfium {
     pub(crate) fn FPDFDoc_CloseJavaScriptAction(&self, javascript: &PdfiumJavascriptAction) {
         unsafe { (self.fn_FPDFDoc_CloseJavaScriptAction)(javascript.into()) }
     }
+
     /// C documentation for FPDFFont_Close:
     ///
     /// ```text
@@ -103,6 +108,106 @@ impl Pdfium {
     pub(crate) fn FPDFFont_Close(&self, font: &PdfiumFont) {
         unsafe { (self.fn_FPDFFont_Close)(font.into()) }
     }
+
+    /// C documentation for FPDFImageObj_LoadJpegFile:
+    ///
+    /// ```text
+    /// Load an image from a JPEG image file and then set it into |image_object|.
+    ///
+    ///   pages        - pointer to the start of all loaded pages, may be NULL.
+    ///   count        - number of |pages|, may be 0.
+    ///   image_object - handle to an image object.
+    ///   file_access  - file access handler which specifies the JPEG image file.
+    ///
+    /// Returns TRUE on success.
+    ///
+    /// The image object might already have an associated image, which is shared and
+    /// cached by the loaded pages. In that case, we need to clear the cached image
+    /// for all the loaded pages. Pass |pages| and page count (|count|) to this API
+    /// to clear the image cache. If the image is not previously shared, or NULL is a
+    /// valid |pages| value.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDFImageObj_LoadJpegFile(
+        &self,
+        pages: *mut FPDF_PAGE,
+        count: i32,
+        image_object: &PdfiumPageObject,
+        file_access: &mut Box<PdfiumReader>,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFImageObj_LoadJpegFile)(
+                pages,
+                count,
+                image_object.into(),
+                file_access.as_mut().into(),
+            )
+        })
+    }
+
+    /// C documentation for FPDFImageObj_LoadJpegFileInline:
+    ///
+    /// ```text
+    /// Load an image from a JPEG image file and then set it into |image_object|.
+    ///
+    ///   pages        - pointer to the start of all loaded pages, may be NULL.
+    ///   count        - number of |pages|, may be 0.
+    ///   image_object - handle to an image object.
+    ///   file_access  - file access handler which specifies the JPEG image file.
+    ///
+    /// Returns TRUE on success.
+    ///
+    /// The image object might already have an associated image, which is shared and
+    /// cached by the loaded pages. In that case, we need to clear the cached image
+    /// for all the loaded pages. Pass |pages| and page count (|count|) to this API
+    /// to clear the image cache. If the image is not previously shared, or NULL is a
+    /// valid |pages| value. This function loads the JPEG image inline, so the image
+    /// content is copied to the file. This allows |file_access| and its associated
+    /// data to be deleted after this function returns.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDFImageObj_LoadJpegFileInline(
+        &self,
+        pages: *mut FPDF_PAGE,
+        count: i32,
+        image_object: &PdfiumPageObject,
+        file_access: &mut Box<PdfiumReader>,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFImageObj_LoadJpegFileInline)(
+                pages,
+                count,
+                image_object.into(),
+                file_access.as_mut().into(),
+            )
+        })
+    }
+
+    /// C documentation for FPDFImageObj_SetBitmap:
+    ///
+    /// ```text
+    /// Set |bitmap| to |image_object|.
+    ///
+    ///   pages        - pointer to the start of all loaded pages, may be NULL.
+    ///   count        - number of |pages|, may be 0.
+    ///   image_object - handle to an image object.
+    ///   bitmap       - handle of the bitmap.
+    ///
+    /// Returns TRUE on success.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDFImageObj_SetBitmap(
+        &self,
+        pages: *mut FPDF_PAGE,
+        count: i32,
+        image_object: &PdfiumPageObject,
+        bitmap: &PdfiumBitmap,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDFImageObj_SetBitmap)(pages, count, image_object.into(), bitmap.into())
+        })
+    }
+
     /// C documentation for FPDFLink_CloseWebLinks:
     ///
     /// ```text
@@ -117,6 +222,29 @@ impl Pdfium {
     pub(crate) fn FPDFLink_CloseWebLinks(&self, link_page: &PdfiumPageLink) {
         unsafe { (self.fn_FPDFLink_CloseWebLinks)(link_page.into()) }
     }
+
+    /// C documentation for FPDFLink_Enumerate:
+    ///
+    /// ```text
+    /// Enumerates all the link annotations in |page|.
+    ///
+    ///   page       - handle to the page.
+    ///   start_pos  - the start position, should initially be 0 and is updated with
+    ///                the next start position on return.
+    ///   link_annot - the link handle for |startPos|.
+    ///
+    /// Returns TRUE on success.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDFLink_Enumerate(
+        &self,
+        page: &PdfiumPage,
+        start_pos: &mut i32,
+        link_annot: *mut FPDF_LINK,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDFLink_Enumerate)(page.into(), start_pos, link_annot) })
+    }
+
     /// C documentation for FPDFPageObj_Destroy:
     ///
     /// ```text
@@ -132,6 +260,7 @@ impl Pdfium {
     pub(crate) fn FPDFPageObj_Destroy(&self, page_object: &PdfiumPageObject) {
         unsafe { (self.fn_FPDFPageObj_Destroy)(page_object.into()) }
     }
+
     /// C documentation for FPDFPage_CloseAnnot:
     ///
     /// ```text
@@ -146,6 +275,7 @@ impl Pdfium {
     pub(crate) fn FPDFPage_CloseAnnot(&self, annot: &PdfiumAnnotation) {
         unsafe { (self.fn_FPDFPage_CloseAnnot)(annot.into()) }
     }
+
     /// C documentation for FPDFText_ClosePage:
     ///
     /// ```text
@@ -162,6 +292,7 @@ impl Pdfium {
     pub(crate) fn FPDFText_ClosePage(&self, text_page: &PdfiumTextPage) {
         unsafe { (self.fn_FPDFText_ClosePage)(text_page.into()) }
     }
+
     /// C documentation for FPDFText_FindClose:
     ///
     /// ```text
@@ -177,6 +308,7 @@ impl Pdfium {
     pub(crate) fn FPDFText_FindClose(&self, handle: &PdfiumSearch) {
         unsafe { (self.fn_FPDFText_FindClose)(handle.into()) }
     }
+
     /// C documentation for FPDF_CloseDocument:
     ///
     /// ```text
@@ -191,6 +323,7 @@ impl Pdfium {
     pub(crate) fn FPDF_CloseDocument(&self, document: &PdfiumDocument) {
         unsafe { (self.fn_FPDF_CloseDocument)(document.into()) }
     }
+
     /// C documentation for FPDF_ClosePage:
     ///
     /// ```text
@@ -205,6 +338,7 @@ impl Pdfium {
     pub(crate) fn FPDF_ClosePage(&self, page: &PdfiumPage) {
         unsafe { (self.fn_FPDF_ClosePage)(page.into()) }
     }
+
     /// C documentation for FPDF_CloseXObject:
     ///
     /// ```text
@@ -216,6 +350,7 @@ impl Pdfium {
     pub(crate) fn FPDF_CloseXObject(&self, xobject: &PdfiumXObject) {
         unsafe { (self.fn_FPDF_CloseXObject)(xobject.into()) }
     }
+
     /// C documentation for FPDF_DestroyClipPath:
     ///
     /// ```text
@@ -227,6 +362,47 @@ impl Pdfium {
     pub(crate) fn FPDF_DestroyClipPath(&self, clipPath: &PdfiumClipPath) {
         unsafe { (self.fn_FPDF_DestroyClipPath)(clipPath.into()) }
     }
+
+    /// C documentation for FPDF_FreeDefaultSystemFontInfo:
+    ///
+    /// ```text
+    /// Function: FPDF_FreeDefaultSystemFontInfo
+    ///           Free a default system font info interface
+    /// Parameters:
+    ///           font_info       -   Pointer to a FPDF_SYSFONTINFO structure
+    /// Return Value:
+    ///           None
+    /// Comments:
+    ///           This function should be called on the output from
+    ///           FPDF_GetDefaultSystemFontInfo() once it is no longer needed.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDF_FreeDefaultSystemFontInfo(&self, font_info: *mut FPDF_SYSFONTINFO) {
+        unsafe { (self.fn_FPDF_FreeDefaultSystemFontInfo)(font_info) }
+    }
+
+    /// C documentation for FPDF_GetDefaultSystemFontInfo:
+    ///
+    /// ```text
+    /// Function: FPDF_GetDefaultSystemFontInfo
+    ///          Get default system font info interface for current platform
+    /// Parameters:
+    ///          None
+    /// Return Value:
+    ///          Pointer to a FPDF_SYSFONTINFO structure describing the default
+    ///          interface, or NULL if the platform doesn't have a default interface.
+    ///          Application should call FPDF_FreeDefaultSystemFontInfo to free the
+    ///          returned pointer.
+    /// Comments:
+    ///          For some platforms, PDFium implements a default version of system
+    ///          font info interface. The default implementation can be passed to
+    ///          FPDF_SetSystemFontInfo().
+    /// ```
+    #[inline]
+    pub(crate) fn FPDF_GetDefaultSystemFontInfo(&self) -> *mut FPDF_SYSFONTINFO {
+        unsafe { (self.fn_FPDF_GetDefaultSystemFontInfo)() }
+    }
+
     /// C documentation for FPDF_GetDefaultTTFMap:
     ///
     /// ```text
@@ -247,6 +423,7 @@ impl Pdfium {
     pub(crate) fn FPDF_GetDefaultTTFMap(&self) -> *const FPDF_CharsetFontMap {
         unsafe { (self.fn_FPDF_GetDefaultTTFMap)() }
     }
+
     /// C documentation for FPDF_GetDefaultTTFMapEntry:
     ///
     /// ```text
@@ -264,6 +441,29 @@ impl Pdfium {
     pub(crate) fn FPDF_GetDefaultTTFMapEntry(&self, index: usize) -> *const FPDF_CharsetFontMap {
         unsafe { (self.fn_FPDF_GetDefaultTTFMapEntry)(index) }
     }
+
+    /// C documentation for FPDF_SetSystemFontInfo:
+    ///
+    /// ```text
+    /// Function: FPDF_SetSystemFontInfo
+    ///          Set the system font info interface into PDFium
+    /// Parameters:
+    ///          font_info       -   Pointer to a FPDF_SYSFONTINFO structure
+    /// Return Value:
+    ///          None
+    /// Comments:
+    ///          Platform support implementation should implement required methods of
+    ///          FFDF_SYSFONTINFO interface, then call this function during PDFium
+    ///          initialization process.
+    ///
+    ///          Call this with NULL to tell PDFium to stop using a previously set
+    ///          |FPDF_SYSFONTINFO|.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDF_SetSystemFontInfo(&self, font_info: *mut FPDF_SYSFONTINFO) {
+        unsafe { (self.fn_FPDF_SetSystemFontInfo)(font_info) }
+    }
+
     /// C documentation for FPDF_StructTree_Close:
     ///
     /// ```text
