@@ -39,6 +39,11 @@ pub struct Pdfium {
         unsafe extern "C" fn(page: FPDF_PAGE, hHandle: FPDF_FORMHANDLE, aaType: c_int),
     pub(crate) fn_FORM_ForceToKillFocus:
         unsafe extern "C" fn(hHandle: FPDF_FORMHANDLE) -> FPDF_BOOL,
+    pub(crate) fn_FORM_GetFocusedAnnot: unsafe extern "C" fn(
+        handle: FPDF_FORMHANDLE,
+        page_index: *mut c_int,
+        annot: *mut FPDF_ANNOTATION,
+    ) -> FPDF_BOOL,
     pub(crate) fn_FORM_GetFocusedText: unsafe extern "C" fn(
         hHandle: FPDF_FORMHANDLE,
         page: FPDF_PAGE,

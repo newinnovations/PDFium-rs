@@ -32,6 +32,7 @@ impl Pdfium {
             fn_FORM_DoDocumentOpenAction: *dl(&lib, "FORM_DoDocumentOpenAction")?,
             fn_FORM_DoPageAAction: *dl(&lib, "FORM_DoPageAAction")?,
             fn_FORM_ForceToKillFocus: *dl(&lib, "FORM_ForceToKillFocus")?,
+            fn_FORM_GetFocusedAnnot: *dl(&lib, "FORM_GetFocusedAnnot")?,
             fn_FORM_GetFocusedText: *dl(&lib, "FORM_GetFocusedText")?,
             fn_FORM_GetSelectedText: *dl(&lib, "FORM_GetSelectedText")?,
             fn_FORM_IsIndexSelected: *dl(&lib, "FORM_IsIndexSelected")?,

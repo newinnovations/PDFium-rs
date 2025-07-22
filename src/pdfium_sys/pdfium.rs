@@ -28,8 +28,8 @@ use crate::{
     Pdfium, PdfiumAction, PdfiumAnnotation, PdfiumAttachment, PdfiumAvailability, PdfiumBitmap,
     PdfiumBookmark, PdfiumClipPath, PdfiumDestination, PdfiumDocument, PdfiumError, PdfiumFont,
     PdfiumForm, PdfiumGlyphPath, PdfiumJavascriptAction, PdfiumLink, PdfiumPage, PdfiumPageLink,
-    PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment, PdfiumResult,
-    PdfiumSearch, PdfiumSignature, PdfiumStructElement, PdfiumStructElementAttr,
+    PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment, PdfiumReader,
+    PdfiumResult, PdfiumSearch, PdfiumSignature, PdfiumStructElement, PdfiumStructElementAttr,
     PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumTextPage, PdfiumXObject, pdfium_types::*,
 };
 
@@ -177,6 +177,46 @@ impl Pdfium {
     #[inline]
     pub fn FORM_ForceToKillFocus(&self, hHandle: &PdfiumForm) -> PdfiumResult<()> {
         to_result(unsafe { (self.fn_FORM_ForceToKillFocus)(hHandle.into()) })
+    }
+
+    /// C documentation for FORM_GetFocusedAnnot:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Function: FORM_GetFocusedAnnot.
+    ///       Call this member function to get the currently focused annotation.
+    /// Parameters:
+    ///       handle      -   Handle to the form fill module, as returned by
+    ///                       FPDFDOC_InitFormFillEnvironment().
+    ///       page_index  -   Buffer to hold the index number of the page which
+    ///                       contains the focused annotation. 0 for the first page.
+    ///                       Can't be NULL.
+    ///       annot       -   Buffer to hold the focused annotation. Can't be NULL.
+    /// Return Value:
+    ///       On success, return true and write to the out parameters. Otherwise
+    ///       return false and leave the out parameters unmodified.
+    /// Comments:
+    ///       Not currently supported for XFA forms - will report no focused
+    ///       annotation.
+    ///       Must call FPDFPage_CloseAnnot() when the annotation returned in |annot|
+    ///       by this function is no longer needed.
+    ///       This will return true and set |page_index| to -1 and |annot| to NULL,
+    ///       if there is no focused annotation.
+    /// ```
+    #[inline]
+    pub fn FORM_GetFocusedAnnot(
+        &self,
+        handle: &PdfiumForm,
+        page_index: &mut i32,
+    ) -> PdfiumResult<PdfiumAnnotation> {
+        let mut annot: FPDF_ANNOTATION = Default::default();
+        let result =
+            unsafe { (self.fn_FORM_GetFocusedAnnot)(handle.into(), page_index, &mut annot) };
+        if result == 0 {
+            Err(PdfiumError::InvokationFailed)
+        } else {
+            PdfiumAnnotation::new_from_handle(annot)
+        }
     }
 
     /// C documentation for FORM_GetFocusedText:
@@ -2699,7 +2739,7 @@ impl Pdfium {
     pub fn FPDFAvail_Create(
         &self,
         file_avail: &mut FX_FILEAVAIL,
-        file: &mut Box<crate::PdfiumReader>,
+        file: &mut Box<PdfiumReader>,
     ) -> PdfiumResult<PdfiumAvailability> {
         PdfiumAvailability::new_from_handle(unsafe {
             (self.fn_FPDFAvail_Create)(file_avail, file.as_mut().into())
@@ -9182,7 +9222,7 @@ impl Pdfium {
     #[inline]
     pub fn FPDF_LoadCustomDocument(
         &self,
-        pFileAccess: &mut Box<crate::PdfiumReader>,
+        pFileAccess: &mut Box<PdfiumReader>,
         password: &CString,
     ) -> FPDF_DOCUMENT {
         unsafe { (self.fn_FPDF_LoadCustomDocument)(pFileAccess.as_mut().into(), password.as_ptr()) }
