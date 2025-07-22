@@ -19,6 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
+    guard::lib,
     pdfium_types::FPDF_AVAIL,
 };
 
@@ -45,12 +46,11 @@ impl From<&PdfiumAvailability> for FPDF_AVAIL {
     }
 }
 
-// TODO: check lifecycle FPDF_AVAIL
-
 impl Drop for PdfiumAvailability {
     /// Closes this [`PdfiumAvailability`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
         println!("Closing availability {:?}", self.handle);
+        lib().FPDFAvail_Destroy(self)
     }
 }

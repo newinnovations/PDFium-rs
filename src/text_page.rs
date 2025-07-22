@@ -19,6 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
+    guard::lib,
     pdfium_types::FPDF_TEXTPAGE,
 };
 
@@ -45,12 +46,11 @@ impl From<&PdfiumTextPage> for FPDF_TEXTPAGE {
     }
 }
 
-// TODO: check lifecycle FPDF_TEXTPAGE
-
 impl Drop for PdfiumTextPage {
     /// Closes this [`PdfiumTextPage`], releasing held memory.
     fn drop(&mut self) {
         #[cfg(feature = "debug_print")]
         println!("Closing text_page {:?}", self.handle);
+        lib().FPDFText_ClosePage(self)
     }
 }

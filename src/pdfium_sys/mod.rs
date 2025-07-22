@@ -21,6 +21,7 @@ pub mod pdfium;
 pub mod pdfium_bindings;
 pub mod pdfium_constants;
 pub mod pdfium_init;
+pub mod pdfium_private;
 pub mod pdfium_types;
 
 use std::{

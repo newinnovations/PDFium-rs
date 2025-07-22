@@ -19,6 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
+    guard::lib,
     pdfium_types::FPDF_PAGEOBJECT,
 };
 
@@ -45,11 +46,11 @@ impl From<&PdfiumPageObject> for FPDF_PAGEOBJECT {
     }
 }
 
-// TODO: check lifecycle FPDF_PAGEOBJECT
-
-// impl Drop for PdfiumPageObject {
-//     /// # Closes this [`PdfiumPageObject`], releasing held memory.
-//     fn drop(&mut self) {
-//         lib().FPDF_(self);
-//     }
-// }
+impl Drop for PdfiumPageObject {
+    /// # Closes this [`PdfiumPageObject`], releasing held memory.
+    fn drop(&mut self) {
+        #[cfg(feature = "debug_print")]
+        println!("Closing page_object {:?}", self.handle);
+        lib().FPDFPageObj_Destroy(self);
+    }
+}
