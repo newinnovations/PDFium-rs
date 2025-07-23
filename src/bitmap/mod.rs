@@ -201,9 +201,9 @@ mod tests {
         let page = document.page(1).unwrap();
         let bounds = page.boundaries().media().unwrap();
         let height = 1080;
-        let zoom = height as f32 / bounds.height();
-        let width = (bounds.width() * zoom) as i32;
-        let matrix = PdfiumMatrix::new_scale(zoom);
+        let scale = height as f32 / bounds.height();
+        let width = (bounds.width() * scale) as i32;
+        let matrix = PdfiumMatrix::new_scale(scale);
         let bitmap = page
             .render_with_matrix(
                 width,

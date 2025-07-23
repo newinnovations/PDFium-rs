@@ -61,20 +61,12 @@ impl App {
     }
     pub fn render_to_file(&self, filename: &str, index: i32) -> PdfiumResult<()> {
         let page = self.doc.page(index)?;
-        let bounds = page.boundaries().media()?;
-        let height = 1080;
-        let zoom = height as f32 / bounds.height();
-        let width = (bounds.width() * zoom) as i32;
-        let matrix = PdfiumMatrix::new_scale(zoom);
-        let bitmap = page.render_with_matrix(
-            width,
-            height,
-            PdfiumBitmapFormat::Bgra,
-            Some(PdfiumColor::WHITE),
-            &matrix,
-            PdfiumRenderFlags::empty(),
-            None,
-        )?;
+        let bitmap = page
+            .render_at_height(
+                1080,
+                crate::PdfiumBitmapFormat::Bgra,
+                PdfiumRenderFlags::empty(),
+            )?;
         bitmap.save(filename, image::ImageFormat::Png)
     }
 }
@@ -114,13 +106,13 @@ impl App {
         let mut top = 0.0;
         lib().FPDFPage_GetMediaBox(&page, &mut left, &mut bottom, &mut right, &mut top)?;
         let height = 1080;
-        let zoom = height as f32 / (top - bottom);
-        let width = ((right - left) * zoom) as i32;
+        let scale = height as f32 / (top - bottom);
+        let width = ((right - left) * scale) as i32;
         let matrix = pdfium_types::FS_MATRIX {
-            a: zoom,
+            a: scale,
             b: 0.0,
             c: 0.0,
-            d: zoom,
+            d: scale,
             e: 0.0,
             f: 0.0,
         };
@@ -150,7 +142,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.2"  # Check crates.io for the latest version
+pdfium = "0.6.3"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

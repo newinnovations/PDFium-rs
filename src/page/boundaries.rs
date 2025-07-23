@@ -184,10 +184,10 @@ mod tests {
         let page = document.page(0).unwrap();
         let boundary = page.boundaries().media().unwrap();
 
-        assert!(boundary.left == 0.0);
-        assert!(boundary.top == 841.92);
-        assert!(boundary.bottom == 0.0);
-        assert!(boundary.right == 594.95996);
+        assert_eq!(boundary.left, 0.0);
+        assert_eq!(boundary.top, 841.92);
+        assert_eq!(boundary.bottom, 0.0);
+        assert_eq!(boundary.right, 594.95996);
     }
 
     #[test]
@@ -196,9 +196,9 @@ mod tests {
         let page = document.page(0).unwrap();
         let boundary = page.boundaries().default().unwrap();
 
-        assert!(boundary.left == 0.0);
-        assert!(boundary.top == 841.92);
-        assert!(boundary.bottom == 0.0);
-        assert!(boundary.right == 594.95996);
+        assert_eq!(boundary.left, 0.0);
+        assert_eq!(boundary.top, 841.92);
+        assert_eq!(boundary.bottom, 0.0);
+        assert_eq!(boundary.right, 594.95996);
     }
 }

@@ -90,6 +90,108 @@ impl PdfiumPage {
         PdfiumPageBoundaries::new(self)
     }
 
+    /// Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] scaled to a specific height.
+    ///
+    /// This is a convenience method that automatically calculates the appropriate width
+    /// to maintain the page's aspect ratio when scaling to the specified height.
+    /// The page is rendered on a white background.
+    ///
+    /// ## Arguments
+    ///
+    /// * `height` - The desired height of the rendered bitmap in pixels
+    /// * `format` - The pixel format for the target bitmap
+    /// * `render_flags` - Flags controlling the rendering behavior
+    ///
+    /// ## Returns
+    ///
+    /// Returns a [`PdfiumBitmap`] containing the rendered page scaled to the specified height,
+    /// or a [`PdfiumError`] if rendering fails.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use pdfium::*;
+    ///
+    /// fn render_page_thumbnail(page: &PdfiumPage) -> PdfiumResult<PdfiumBitmap> {
+    ///     page.render_at_height(
+    ///         300, // 300px height thumbnail
+    ///         PdfiumBitmapFormat::Bgra,
+    ///         PdfiumRenderFlags::empty(),
+    ///     )
+    /// }
+    /// ```
+    pub fn render_at_height(
+        &self,
+        height: i32,
+        format: PdfiumBitmapFormat,
+        render_flags: PdfiumRenderFlags,
+    ) -> PdfiumResult<PdfiumBitmap> {
+        let bounds = self.boundaries().default()?;
+        let scale = height as f32 / bounds.height();
+        let width = (bounds.width() * scale) as i32;
+        let matrix = PdfiumMatrix::new_scale(scale);
+        self.render_with_matrix(
+            width,
+            height,
+            format,
+            Some(PdfiumColor::WHITE),
+            &matrix,
+            render_flags,
+            None,
+        )
+    }
+
+    /// Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] scaled to a specific width.
+    ///
+    /// This is a convenience method that automatically calculates the appropriate height
+    /// to maintain the page's aspect ratio when scaling to the specified width.
+    /// The page is rendered on a white background.
+    ///
+    /// ## Arguments
+    ///
+    /// * `width` - The desired width of the rendered bitmap in pixels
+    /// * `format` - The pixel format for the target bitmap
+    /// * `render_flags` - Flags controlling the rendering behavior
+    ///
+    /// ## Returns
+    ///
+    /// Returns a [`PdfiumBitmap`] containing the rendered page scaled to the specified width,
+    /// or a [`PdfiumError`] if rendering fails.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use pdfium::*;
+    ///
+    /// fn render_page_for_display(page: &PdfiumPage) -> PdfiumResult<PdfiumBitmap> {
+    ///     page.render_at_width(
+    ///         1920, // Full HD width
+    ///         PdfiumBitmapFormat::Bgra,
+    ///         PdfiumRenderFlags::empty(),
+    ///     )
+    /// }
+    /// ```
+    pub fn render_at_width(
+        &self,
+        width: i32,
+        format: PdfiumBitmapFormat,
+        render_flags: PdfiumRenderFlags,
+    ) -> PdfiumResult<PdfiumBitmap> {
+        let bounds = self.boundaries().default()?;
+        let scale = width as f32 / bounds.width();
+        let height = (bounds.height() * scale) as i32;
+        let matrix = PdfiumMatrix::new_scale(scale);
+        self.render_with_matrix(
+            width,
+            height,
+            format,
+            Some(PdfiumColor::WHITE),
+            &matrix,
+            render_flags,
+            None,
+        )
+    }
+
     /// # Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] using a transformation matrix.
     ///
     /// This function provides fine-grained control over the rendering process by allowing
@@ -123,9 +225,9 @@ impl PdfiumPage {
     /// ) -> PdfiumResult<PdfiumBitmap> {
     ///     let page = document.page(index)?;
     ///     let bounds = page.boundaries().default()?;
-    ///     let zoom = height as f32 / bounds.height();
-    ///     let width = (bounds.width() * zoom) as i32;
-    ///     let matrix = PdfiumMatrix::new_scale(zoom);
+    ///     let scale = height as f32 / bounds.height();
+    ///     let width = (bounds.width() * scale) as i32;
+    ///     let matrix = PdfiumMatrix::new_scale(scale);
     ///     page.render_with_matrix(
     ///         width,
     ///         height,
@@ -221,79 +323,37 @@ impl Drop for PdfiumPage {
 
 #[cfg(test)]
 mod tests {
-    use crate::document::PdfiumDocument;
+    use crate::{PdfiumRenderFlags, document::PdfiumDocument};
 
     #[test]
-    fn test_load_sequential_pages() {
+    fn test_sequential_page_access() {
         let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(0);
-        assert!(page.is_ok());
-        let page = document.page(1);
-        assert!(page.is_ok());
-        let page = document.page(0);
-        assert!(page.is_ok());
-        let page = document.page(1);
-        assert!(page.is_ok());
-        let page = document.page(0);
-        assert!(page.is_ok());
-        let page = document.page(1);
-        assert!(page.is_ok());
+        let _: Vec<_> = (0..8)
+            .map(|i| {
+                let page = document.page(i % 2);
+                assert!(page.is_ok());
+            })
+            .collect();
     }
 
     #[test]
-    fn test_parallel_load_1() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(0);
-        assert!(page.is_ok());
-    }
+    fn test_concurrent_page_access() {
+        use std::thread;
 
-    #[test]
-    fn test_parallel_load_2() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(1);
-        assert!(page.is_ok());
-    }
+        let handles: Vec<_> = (0..8)
+            .map(|i| {
+                thread::spawn(move || {
+                    let document =
+                        PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+                    let page = document.page(i % 2);
+                    assert!(page.is_ok());
+                })
+            })
+            .collect();
 
-    #[test]
-    fn test_parallel_load_3() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(0);
-        assert!(page.is_ok());
-    }
-
-    #[test]
-    fn test_parallel_load_4() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(1);
-        assert!(page.is_ok());
-    }
-
-    #[test]
-    fn test_parallel_load_5() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(0);
-        assert!(page.is_ok());
-    }
-
-    #[test]
-    fn test_parallel_load_6() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(1);
-        assert!(page.is_ok());
-    }
-
-    #[test]
-    fn test_parallel_load_7() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(0);
-        assert!(page.is_ok());
-    }
-
-    #[test]
-    fn test_parallel_load_8() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(1);
-        assert!(page.is_ok());
+        for handle in handles {
+            handle.join().unwrap();
+        }
     }
 
     #[test]
@@ -303,5 +363,35 @@ mod tests {
         assert!(page.is_err());
         let page = document.page(2);
         assert!(page.is_err());
+    }
+
+    #[test]
+    fn test_render_at_height() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let bitmap = page
+            .render_at_height(
+                1080,
+                crate::PdfiumBitmapFormat::Bgra,
+                PdfiumRenderFlags::empty(),
+            )
+            .unwrap();
+        assert_eq!(bitmap.width(), 763);
+        assert_eq!(bitmap.height(), 1080);
+    }
+
+    #[test]
+    fn test_render_at_width() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(1).unwrap();
+        let bitmap = page
+            .render_at_width(
+                1920,
+                crate::PdfiumBitmapFormat::Bgra,
+                PdfiumRenderFlags::empty(),
+            )
+            .unwrap();
+        assert_eq!(bitmap.width(), 1920);
+        assert_eq!(bitmap.height(), 2716);
     }
 }
