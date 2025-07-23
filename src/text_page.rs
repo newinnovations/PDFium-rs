@@ -19,7 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    guard::lib,
+    lib,
     pdfium_types::FPDF_TEXTPAGE,
 };
 

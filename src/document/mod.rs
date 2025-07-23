@@ -29,9 +29,10 @@ use std::{
 use crate::{
     document::reader::PdfiumReader,
     error::{PdfiumError, PdfiumResult},
-    guard::{lib, try_lib},
+    lib,
     page::PdfiumPage,
     pdfium_types::FPDF_DOCUMENT,
+    try_lib,
 };
 
 /// Rust interface to FPDF_DOCUMENT

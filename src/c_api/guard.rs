@@ -20,7 +20,7 @@
 use parking_lot::{ReentrantMutex, ReentrantMutexGuard};
 use std::sync::{LazyLock, Mutex, OnceLock, atomic::AtomicBool};
 
-use crate::{PdfiumError, error::PdfiumResult, pdfium_sys::pdfium_bindings::Pdfium};
+use crate::{PdfiumError, c_api::pdfium_bindings::Pdfium, error::PdfiumResult};
 
 static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Box<Pdfium>>>> = OnceLock::new();
 

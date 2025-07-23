@@ -21,10 +21,11 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::{
     PdfiumColor,
+    c_api::guard::PdfiumGuard,
     error::{PdfiumError, PdfiumResult},
-    guard::{PdfiumGuard, lib, try_lib},
-    pdfium_constants,
+    lib, pdfium_constants,
     pdfium_types::FPDF_BITMAP,
+    try_lib,
 };
 
 /// Rust interface to FPDF_BITMAP

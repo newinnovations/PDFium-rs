@@ -18,12 +18,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 pub mod boundaries;
+pub mod link;
+pub mod object;
+pub mod object_mark;
+pub mod range;
 
 use crate::{
     PdfiumColor, PdfiumMatrix, PdfiumRect,
     bitmap::{PdfiumBitmap, PdfiumBitmapFormat},
     error::{PdfiumError, PdfiumResult},
-    guard::lib,
+    lib,
     page::boundaries::PdfiumPageBoundaries,
     pdfium_constants,
     pdfium_types::{FPDF_PAGE, FS_MATRIX, FS_RECTF},

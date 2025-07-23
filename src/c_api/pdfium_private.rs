@@ -24,7 +24,7 @@ use crate::{
     Pdfium, PdfiumAnnotation, PdfiumAvailability, PdfiumBitmap, PdfiumClipPath, PdfiumDocument,
     PdfiumFont, PdfiumJavascriptAction, PdfiumPage, PdfiumPageLink, PdfiumPageObject, PdfiumReader,
     PdfiumResult, PdfiumSearch, PdfiumStructTree, PdfiumTextPage, PdfiumXObject,
-    pdfium_sys::pdfium::to_result, pdfium_types::*,
+    c_api::pdfium::to_result, pdfium_types::*,
 };
 
 // These functions are internal to the crate

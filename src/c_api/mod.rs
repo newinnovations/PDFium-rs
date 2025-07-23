@@ -17,6 +17,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+pub mod guard;
 pub mod pdfium;
 pub mod pdfium_bindings;
 pub mod pdfium_constants;
@@ -33,10 +34,10 @@ use libloading::{Library, Symbol};
 
 use crate::{
     PdfiumError,
+    c_api::pdfium_bindings::Pdfium,
     pdfium_constants::{
         FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
     },
-    pdfium_sys::pdfium_bindings::Pdfium,
     pdfium_types::FPDF_LIBRARY_CONFIG,
 };
 

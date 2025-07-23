@@ -16,15 +16,13 @@
 
 A modern, streamlined Rust wrapper for the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is Google's PDF library developed for (and used in) the Chromium and Chrome web browsers.
 
-PDFium-rs serves as one of the two PDF engines behind [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4. With a single keypress, you can switch engines and compare the rendering quality differences between mupdf and PDFium.
-
 ## Features
 
 - **Thread-safe static library access** - Initialize once, use everywhere
 - **Lifetime-free API** - No complex lifetime management for documents, pages, and bitmaps
-- **Access to C API** - Safe access to the low-level C API is [possible](#using-the-pdfium-c-api)
+- **Access to C API** - [Safe access](#using-the-pdfium-c-api) to the full C API. All 440+ functions are available, fully documented
+- **Idiomatic Rust abstractions** - An [idiomatic](#quick-start) high-level Rust interface to the most frequently used features
 - **Renderer selection** - [Select](#renderer-selection-skia-or-agg) either `Skia` or `AGG` (Anti-Grain Geometry) as renderer for PDFium
-- **Interactive rendering focus** - Optimized render functions for real-time applications
 
 ## Why This Crate?
 
@@ -38,9 +36,13 @@ This library uses a modern, static, and thread-safe initialization pattern with 
 
 Unlike other implementations, this crate doesn't impose lifetimes on structs representing documents, pages, bitmaps, and other structures. This makes integration into your application much simpler - you can store these objects wherever you need them without fighting the borrow checker. This makes it ideal for interactive use cases, such as PDF viewers, editors, and other real-time applications.
 
-### Access to C API without `unsafe` Functions
+### Access to the full C API without `unsafe` Functions
 
-While focusing on high-level safe Rust integration, PDFium-rs also provides safe public access to the C API. Unsafe pointers to C structures and memory are transparently replaced with their safe Rust counterparts.
+While most users will be using the high-level idiomatic Rust abstractions, PDFium-rs also provides safe public access to the full C API with documentation. Unsafe pointers to C structures and memory are transparently replaced with their Rust counterparts.
+
+## Used by MView6
+
+PDFium-rs serves as one of the two PDF engines behind [MView6](https://github.com/newinnovations/mview6), a PDF and photo viewer written in Rust and GTK4 by the same author. With a single keypress, you can switch engines and compare the rendering quality differences between mupdf and PDFium.
 
 ## Quick Start
 
@@ -89,7 +91,7 @@ This is the same example, but now using the C API of PDFium directly.
 
 - Using the C API is safe, no `unsafe` code blocks in your code
 - Access the C API through [`lib`] or [`try_lib`]
-- You can mix high-level Rust and C, shown here with the `bitmap.save` operation
+- You can mix idiomatic Rust with C, shown here with the `bitmap.save` operation
 
 ```rust
 use pdfium::*;
@@ -148,7 +150,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.1"  # Check crates.io for the latest version
+pdfium = "0.6.2"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.
@@ -255,7 +257,9 @@ If you encounter issues not covered here:
 
 ## Current Status
 
-**Work in Progress** - This crate is actively being developed and currently implements a focused subset of PDFium's functionality. While it covers the core rendering and document manipulation features needed for most interactive applications, it doesn't yet provide the complete feature set available in more comprehensive PDFium bindings.
+This crate is actively being developed and already implements a safe Rust interface to the full C API (all 440+ fuctions).
+
+The idomatic abstraction is focused on a subset of PDFium's functionality. While it covers the core rendering and document manipulation features needed for most interactive applications, it doesn't (yet) provide the complete feature set.
 
 ### What's Available
 
@@ -263,7 +267,7 @@ If you encounter issues not covered here:
 - Page rendering with customizable parameters
 - Bitmap handling and export
 - Thread-safe access patterns
-- Safe C API access
+- Full safe C API access
 
 ### Planned Features
 
