@@ -118,7 +118,7 @@ impl PdfiumPage {
     ///     height: i32,
     /// ) -> PdfiumResult<PdfiumBitmap> {
     ///     let page = document.page(index)?;
-    ///     let bounds = page.boundaries().media()?;
+    ///     let bounds = page.boundaries().default()?;
     ///     let zoom = height as f32 / bounds.height();
     ///     let width = (bounds.width() * zoom) as i32;
     ///     let matrix = PdfiumMatrix::new_scale(zoom);

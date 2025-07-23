@@ -152,7 +152,7 @@ impl<'a> PdfiumPageBoundaries<'a> {
         Ok(rect)
     }
 
-    /// Gets the boundary for use by PDF viewers
+    /// Gets the default boundary for use by PDF viewers
     ///
     /// Returns the most appropriate boundary box for displaying the page in a PDF viewer
     /// or similar application. This method implements a fallback hierarchy to determine
@@ -167,7 +167,7 @@ impl<'a> PdfiumPageBoundaries<'a> {
     /// This method ensures that viewer applications always have a valid boundary to work
     /// with, since MediaBox is required to exist in every PDF page. The returned rectangle
     /// represents the area that should be visible to end users when viewing the document.
-    pub fn viewer(&self) -> PdfiumResult<PdfiumRect> {
+    pub fn default(&self) -> PdfiumResult<PdfiumRect> {
         self.crop()
             .or_else(|_| self.trim())
             .or_else(|_| self.media())
@@ -182,11 +182,23 @@ mod tests {
     fn test_media_boundary() {
         let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
         let page = document.page(0).unwrap();
-        let media = page.boundaries().media().unwrap();
+        let boundary = page.boundaries().media().unwrap();
 
-        assert!(media.left == 0.0);
-        assert!(media.top == 841.92);
-        assert!(media.bottom == 0.0);
-        assert!(media.right == 594.95996);
+        assert!(boundary.left == 0.0);
+        assert!(boundary.top == 841.92);
+        assert!(boundary.bottom == 0.0);
+        assert!(boundary.right == 594.95996);
+    }
+
+    #[test]
+    fn test_default_boundary() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let boundary = page.boundaries().default().unwrap();
+
+        assert!(boundary.left == 0.0);
+        assert!(boundary.top == 841.92);
+        assert!(boundary.bottom == 0.0);
+        assert!(boundary.right == 594.95996);
     }
 }
