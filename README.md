@@ -14,7 +14,7 @@
 [build-badge]: https://img.shields.io/github/actions/workflow/status/newinnovations/PDFium-rs/cargo_test.yml
 [build-url]: https://github.com/newinnovations/PDFium-rs/actions/workflows/cargo_test.yml
 
-A modern, streamlined Rust wrapper for the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is Google's PDF library developed for (and used in) the Chromium and Chrome web browsers.
+A modern, streamlined Rust interface to the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is Google's PDF library developed for (and used in) the Chromium and Chrome web browsers.
 
 ## Features
 
@@ -142,7 +142,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.3"  # Check crates.io for the latest version
+pdfium = "0.6.4"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

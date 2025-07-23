@@ -1,4 +1,4 @@
-// PDFium-rs -- Modern Rust wrapper to PDFium, the PDF library from Google
+// PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
 // Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
 //

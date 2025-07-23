@@ -1,8 +1,8 @@
 [package]
 name = "pdfium"
-version = "0.6.3"
+version = "0.6.4"
 edition = "2024"
-description = "Modern Rust wrapper to PDFium, the PDF library from Google"
+description = "Modern Rust interface to PDFium, the PDF library from Google"
 keywords = ["pdf", "pdfium"]
 license = "GPL-3.0"
 readme = "README.md"
