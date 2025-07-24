@@ -64,7 +64,7 @@ impl App {
         let bitmap = page
             .render_at_height(
                 1080,
-                crate::PdfiumBitmapFormat::Bgra,
+                PdfiumBitmapFormat::Bgra,
                 PdfiumRenderFlags::empty(),
             )?;
         bitmap.save(filename, image::ImageFormat::Png)
