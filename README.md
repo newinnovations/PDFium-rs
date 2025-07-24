@@ -20,7 +20,7 @@ A modern, streamlined Rust interface to the PDFium C library, designed for simpl
 
 - **Thread-safe static library access** - Initialize once, use everywhere
 - **Lifetime-free API** - No complex lifetime management for documents, pages, and bitmaps
-- **Access to C API** - [Safe access](#using-the-pdfium-c-api) to the full C API. All 440+ functions are available, fully documented
+- **Access to C API** - [Safe access](#using-the-pdfium-c-api) to the full C API. All 440+ functions are available, fully [documented](https://docs.rs/pdfium/latest/pdfium/struct.Pdfium.html)
 - **Idiomatic Rust abstractions** - An [idiomatic](#quick-start) high-level Rust interface to the most frequently used features
 - **Renderer selection** - [Select](#renderer-selection-skia-or-agg) either `Skia` or `AGG` (Anti-Grain Geometry) as renderer for PDFium
 
@@ -142,7 +142,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.4"  # Check crates.io for the latest version
+pdfium = "0.6.5"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

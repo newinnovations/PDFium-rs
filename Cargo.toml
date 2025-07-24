@@ -1,6 +1,6 @@
 [package]
 name = "pdfium"
-version = "0.6.4"
+version = "0.6.5"
 edition = "2024"
 description = "Modern Rust interface to PDFium, the PDF library from Google"
 keywords = ["pdf", "pdfium"]
