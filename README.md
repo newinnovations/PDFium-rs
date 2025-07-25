@@ -1,7 +1,7 @@
 # PDFium-rs
 
 [![Crates.io][crates-badge]][crates-url]
-[![GitHub Actions Workflow Status][build-badge]][build-url]
+[![GitHub Actions Workflow Status][tests-badge]][tests-url]
 [![Docs.io][docs-badge]][docs-url]
 [![Crates.io License][lic-badge]][lic-url]
 
@@ -11,8 +11,8 @@
 [docs-url]: https://docs.rs/pdfium
 [lic-badge]: https://img.shields.io/crates/l/pdfium
 [lic-url]: https://github.com/newinnovations/PDFium-rs/blob/main/README.md
-[build-badge]: https://img.shields.io/github/actions/workflow/status/newinnovations/PDFium-rs/cargo_test.yml
-[build-url]: https://github.com/newinnovations/PDFium-rs/actions/workflows/cargo_test.yml
+[tests-badge]: https://img.shields.io/github/actions/workflow/status/newinnovations/PDFium-rs/cargo_test.yml?branch=main&label=tests
+[tests-url]: https://github.com/newinnovations/PDFium-rs/actions/workflows/cargo_test.yml
 
 A modern, streamlined Rust interface to the PDFium C library, designed for simplicity and thread safety in interactive applications. PDFium is Google's PDF library developed for (and used in) the Chromium and Chrome web browsers.
 
