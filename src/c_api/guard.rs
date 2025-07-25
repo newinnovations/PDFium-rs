@@ -18,9 +18,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use parking_lot::{ReentrantMutex, ReentrantMutexGuard};
-use std::sync::{LazyLock, Mutex, OnceLock, atomic::AtomicBool};
+use std::sync::{atomic::AtomicBool, LazyLock, Mutex, OnceLock};
 
-use crate::{PdfiumError, c_api::pdfium_bindings::Pdfium, error::PdfiumResult};
+use crate::{c_api::pdfium_bindings::Pdfium, error::PdfiumResult, PdfiumError};
 
 static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Box<Pdfium>>>> = OnceLock::new();
 

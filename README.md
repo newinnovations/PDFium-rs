@@ -142,7 +142,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.6"  # Check crates.io for the latest version
+pdfium = "0.6.7"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.
@@ -272,7 +272,7 @@ The idomatic abstraction is focused on a subset of PDFium's functionality. While
 
 ## Requirements
 
-- Rust 1.88 or later
+- Rust 1.80 or later
 - PDFium dynamic library (see [installation instructions](#dynamic-library-requirements))
 
 ## Contributing

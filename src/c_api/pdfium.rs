@@ -23,14 +23,16 @@
 
 use std::ffi::CString;
 use std::os::raw::{c_char, c_long, c_ulong, c_ushort, c_void};
+use std::ptr::null_mut;
 
 use crate::{
-    Pdfium, PdfiumAction, PdfiumAnnotation, PdfiumAttachment, PdfiumAvailability, PdfiumBitmap,
-    PdfiumBookmark, PdfiumClipPath, PdfiumDestination, PdfiumDocument, PdfiumError, PdfiumFont,
-    PdfiumForm, PdfiumGlyphPath, PdfiumJavascriptAction, PdfiumLink, PdfiumPage, PdfiumPageLink,
-    PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment, PdfiumReader,
-    PdfiumResult, PdfiumSearch, PdfiumSignature, PdfiumStructElement, PdfiumStructElementAttr,
-    PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumTextPage, PdfiumXObject, pdfium_types::*,
+    pdfium_types::*, Pdfium, PdfiumAction, PdfiumAnnotation, PdfiumAttachment, PdfiumAvailability,
+    PdfiumBitmap, PdfiumBookmark, PdfiumClipPath, PdfiumDestination, PdfiumDocument, PdfiumError,
+    PdfiumFont, PdfiumForm, PdfiumGlyphPath, PdfiumJavascriptAction, PdfiumLink, PdfiumPage,
+    PdfiumPageLink, PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment,
+    PdfiumReader, PdfiumResult, PdfiumSearch, PdfiumSignature, PdfiumStructElement,
+    PdfiumStructElementAttr, PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumTextPage,
+    PdfiumXObject,
 };
 
 /// This is the memory-safe wrapper around PDFium's C API. All raw C pointers and manual
@@ -209,7 +211,7 @@ impl Pdfium {
         handle: &PdfiumForm,
         page_index: &mut i32,
     ) -> PdfiumResult<PdfiumAnnotation> {
-        let mut annot: FPDF_ANNOTATION = Default::default();
+        let mut annot: FPDF_ANNOTATION = null_mut();
         let result =
             unsafe { (self.fn_FORM_GetFocusedAnnot)(handle.into(), page_index, &mut annot) };
         if result == 0 {

@@ -21,10 +21,10 @@
 #![allow(dead_code)]
 
 use crate::{
-    Pdfium, PdfiumAnnotation, PdfiumAvailability, PdfiumBitmap, PdfiumClipPath, PdfiumDocument,
-    PdfiumFont, PdfiumJavascriptAction, PdfiumPage, PdfiumPageLink, PdfiumPageObject, PdfiumReader,
-    PdfiumResult, PdfiumSearch, PdfiumStructTree, PdfiumTextPage, PdfiumXObject,
-    c_api::pdfium::to_result, pdfium_types::*,
+    c_api::pdfium::to_result, pdfium_types::*, Pdfium, PdfiumAnnotation, PdfiumAvailability,
+    PdfiumBitmap, PdfiumClipPath, PdfiumDocument, PdfiumFont, PdfiumJavascriptAction, PdfiumPage,
+    PdfiumPageLink, PdfiumPageObject, PdfiumReader, PdfiumResult, PdfiumSearch, PdfiumStructTree,
+    PdfiumTextPage, PdfiumXObject,
 };
 
 // These functions are internal to the crate

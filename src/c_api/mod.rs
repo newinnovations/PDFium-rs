@@ -33,12 +33,12 @@ use std::{
 use libloading::{Library, Symbol};
 
 use crate::{
-    PdfiumError,
     c_api::pdfium_bindings::Pdfium,
     pdfium_constants::{
         FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
     },
     pdfium_types::FPDF_LIBRARY_CONFIG,
+    PdfiumError,
 };
 
 impl Pdfium {

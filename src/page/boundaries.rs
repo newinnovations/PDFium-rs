@@ -17,7 +17,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{PdfiumRect, error::PdfiumResult, lib, page::PdfiumPage};
+use crate::{error::PdfiumResult, lib, page::PdfiumPage, PdfiumRect};
 
 /// Rust interface to the boundary boxes of a page
 ///

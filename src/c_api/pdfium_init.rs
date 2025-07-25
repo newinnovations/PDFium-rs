@@ -19,7 +19,7 @@
 
 #![allow(clippy::too_many_arguments)]
 
-use super::{Pdfium, PdfiumError, dl};
+use super::{dl, Pdfium, PdfiumError};
 use libloading::Library;
 
 impl Pdfium {

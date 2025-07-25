@@ -1,7 +1,7 @@
 [package]
 name = "pdfium"
-version = "0.6.6"
-edition = "2024"
+version = "0.6.7"
+edition = "2021"
 description = "Modern Rust interface to PDFium, the PDF library from Google"
 keywords = ["pdf", "pdfium"]
 license = "GPL-3.0"
@@ -12,7 +12,7 @@ homepage = "https://github.com/newinnovations/pdfium-rs"
 [dependencies]
 bitflags = "2.9.1"
 libloading = "0.8.8"
-image = "0.25.6"
+image = { version = "0.25.6", default-features = false, features = ["jpeg", "png"] }
 parking_lot = "0.12.4"
 
 [features]
