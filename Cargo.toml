@@ -2,6 +2,7 @@
 name = "pdfium"
 version = "0.6.7"
 edition = "2021"
+rust-version = "1.80"
 description = "Modern Rust interface to PDFium, the PDF library from Google"
 keywords = ["pdf", "pdfium"]
 license = "GPL-3.0"

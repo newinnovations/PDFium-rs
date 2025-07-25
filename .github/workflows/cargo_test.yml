@@ -55,6 +55,11 @@ jobs:
         run: |
           cargo test
 
+      - name: Test build on Rust 1.80
+        if: runner.os == 'Linux'
+        run: |
+          docker build -t pdfium-rs-test .
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
