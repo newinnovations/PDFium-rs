@@ -38,7 +38,7 @@ Unlike other implementations, this crate doesn't impose lifetimes on structs rep
 
 ### Access to the full C API without `unsafe` Functions
 
-While most users will be using the high-level idiomatic Rust abstractions, PDFium-rs also provides safe public access to the full C API with documentation. Unsafe pointers to C structures and memory are transparently replaced with their Rust counterparts.
+While most users will be using the high-level idiomatic Rust abstractions, PDFium-rs does provide safe public access to the entire C API with full [documentation](https://docs.rs/pdfium/latest/pdfium/struct.Pdfium.html). Unsafe pointers to C structures and memory have been transparently replaced with their Rust counterparts. This feature makes it also possible to seamlessly mix idiomatic Rust functions with the C API functions.
 
 ## Used by MView6
 
@@ -142,7 +142,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.5"  # Check crates.io for the latest version
+pdfium = "0.6.6"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.
