@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_SIGNATURE,
+    pdfium_types::{Handle, SignatureHandle, FPDF_SIGNATURE},
 };
 
 /// # Rust interface to FPDF_SIGNATURE
+#[derive(Debug, Clone)]
 pub struct PdfiumSignature {
-    handle: FPDF_SIGNATURE,
+    handle: SignatureHandle,
 }
 
 impl PdfiumSignature {
@@ -32,25 +33,15 @@ impl PdfiumSignature {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New signature {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new_const(handle), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumSignature> for FPDF_SIGNATURE {
-    fn from(value: &PdfiumSignature) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_SIGNATURE
-
-impl Drop for PdfiumSignature {
-    /// Closes this [`PdfiumSignature`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing signature {:?}", self.handle);
+    fn from(signature: &PdfiumSignature) -> Self {
+        signature.handle.handle()
     }
 }

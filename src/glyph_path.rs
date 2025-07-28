@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_GLYPHPATH,
+    pdfium_types::{GlyphPathHandle, Handle, FPDF_GLYPHPATH},
 };
 
 /// # Rust interface to FPDF_GLYPHPATH
+#[derive(Debug, Clone)]
 pub struct PdfiumGlyphPath {
-    handle: FPDF_GLYPHPATH,
+    handle: GlyphPathHandle,
 }
 
 impl PdfiumGlyphPath {
@@ -32,25 +33,15 @@ impl PdfiumGlyphPath {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New glyph_path {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new_const(handle), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumGlyphPath> for FPDF_GLYPHPATH {
-    fn from(value: &PdfiumGlyphPath) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_GLYPHPATH
-
-impl Drop for PdfiumGlyphPath {
-    /// Closes this [`PdfiumGlyphPath`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing glyph_path {:?}", self.handle);
+    fn from(glyph_path: &PdfiumGlyphPath) -> Self {
+        glyph_path.handle.handle()
     }
 }

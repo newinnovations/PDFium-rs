@@ -22,6 +22,7 @@
 #![allow(dead_code)]
 
 //! Types (structures and typedefs) used by the PDFium C library
+pub use crate::c_api::pdfium_handle::Handle;
 
 /// Define 'max_align_t' to match the GCC definition.
 #[repr(C)]
@@ -2649,3 +2650,34 @@ pub type FPDF_SYSFONTINFO = _FPDF_SYSFONTINFO;
 ///    Provides the name of a font to use for a given charset value.
 /// ```
 pub type FPDF_CharsetFontMap = FPDF_CharsetFontMap_;
+
+pub type ActionHandle = Handle<fpdf_action_t__>;
+pub type AnnotationHandle = Handle<fpdf_annotation_t__>;
+pub type AttachmentHandle = Handle<fpdf_attachment_t__>;
+pub type AvailabilityHandle = Handle<fpdf_avail_t__>;
+pub type BitmapHandle = Handle<fpdf_bitmap_t__>;
+pub type BookmarkHandle = Handle<fpdf_bookmark_t__>;
+pub type ClipPathHandle = Handle<fpdf_clippath_t__>;
+pub type DestinationHandle = Handle<fpdf_dest_t__>;
+pub type DocumentHandle = Handle<fpdf_document_t__>;
+pub type FontHandle = Handle<fpdf_font_t__>;
+pub type FormHandle = Handle<fpdf_form_handle_t__>;
+pub type GlyphPathHandle = Handle<fpdf_glyphpath_t__>;
+pub type JavascriptActionHandle = Handle<fpdf_javascript_action_t>;
+pub type LinkHandle = Handle<fpdf_link_t__>;
+pub type PageHandle = Handle<fpdf_page_t__>;
+pub type PageLinkHandle = Handle<fpdf_pagelink_t__>;
+pub type PageObjectHandle = Handle<fpdf_pageobject_t__>;
+pub type PageObjectMarkHandle = Handle<fpdf_pageobjectmark_t__>;
+pub type PageRangeHandle = Handle<fpdf_pagerange_t__>;
+pub type PathSegmentHandle = Handle<fpdf_pathsegment_t>;
+pub type SearchHandle = Handle<fpdf_schhandle_t__>;
+pub type SignatureHandle = Handle<fpdf_signature_t__>;
+pub type SkiaCanvasHandle = Handle<::std::os::raw::c_void>;
+pub type StructElementHandle = Handle<fpdf_structelement_t__>;
+pub type StructElementAttrHandle = Handle<fpdf_structelement_attr_t__>;
+pub type StructElementAttrValueHandle = Handle<fpdf_structelement_attr_value_t__>;
+pub type StructTreeHandle = Handle<fpdf_structtree_t__>;
+pub type TextPageHandle = Handle<fpdf_textpage_t__>;
+pub type WidgetHandle = Handle<fpdf_widget_t__>;
+pub type XObjectHandle = Handle<fpdf_xobject_t__>;

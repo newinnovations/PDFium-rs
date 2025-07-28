@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_LINK,
+    pdfium_types::{Handle, LinkHandle, FPDF_LINK},
 };
 
 /// # Rust interface to FPDF_LINK
+#[derive(Debug, Clone)]
 pub struct PdfiumLink {
-    handle: FPDF_LINK,
+    handle: LinkHandle,
 }
 
 impl PdfiumLink {
@@ -32,25 +33,15 @@ impl PdfiumLink {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New link {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumLink> for FPDF_LINK {
-    fn from(value: &PdfiumLink) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_LINK
-
-impl Drop for PdfiumLink {
-    /// Closes this [`PdfiumLink`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing link {:?}", self.handle);
+    fn from(link: &PdfiumLink) -> Self {
+        link.handle.handle()
     }
 }

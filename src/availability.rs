@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_AVAIL,
+    pdfium_types::{AvailabilityHandle, Handle, FPDF_AVAIL},
 };
 
 /// # Rust interface to FPDF_AVAIL
+#[derive(Debug, Clone)]
 pub struct PdfiumAvailability {
-    handle: FPDF_AVAIL,
+    handle: AvailabilityHandle,
 }
 
 impl PdfiumAvailability {
@@ -33,24 +34,19 @@ impl PdfiumAvailability {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New availability {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_availability)),
+            })
         }
     }
 }
 
 impl From<&PdfiumAvailability> for FPDF_AVAIL {
-    fn from(value: &PdfiumAvailability) -> Self {
-        value.handle
+    fn from(availability: &PdfiumAvailability) -> Self {
+        availability.handle.handle()
     }
 }
 
-impl Drop for PdfiumAvailability {
-    /// Closes this [`PdfiumAvailability`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing availability {:?}", self.handle);
-        lib().FPDFAvail_Destroy(self)
-    }
+fn close_availability(availability: FPDF_AVAIL) {
+    lib().FPDFAvail_Destroy(availability);
 }

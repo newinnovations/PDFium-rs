@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_XOBJECT,
+    pdfium_types::{Handle, XObjectHandle, FPDF_XOBJECT},
 };
 
 /// # Rust interface to FPDF_XOBJECT
+#[derive(Debug, Clone)]
 pub struct PdfiumXObject {
-    handle: FPDF_XOBJECT,
+    handle: XObjectHandle,
 }
 
 impl PdfiumXObject {
@@ -33,24 +34,19 @@ impl PdfiumXObject {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New x_object {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_xobject)),
+            })
         }
     }
 }
 
 impl From<&PdfiumXObject> for FPDF_XOBJECT {
-    fn from(value: &PdfiumXObject) -> Self {
-        value.handle
+    fn from(xobject: &PdfiumXObject) -> Self {
+        xobject.handle.handle()
     }
 }
 
-impl Drop for PdfiumXObject {
-    /// # Closes this [`PdfiumXObject`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing x_object {:?}", self.handle);
-        lib().FPDF_CloseXObject(self);
-    }
+fn close_xobject(xobject: FPDF_XOBJECT) {
+    lib().FPDF_CloseXObject(xobject);
 }

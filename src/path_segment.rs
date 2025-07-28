@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_PATHSEGMENT,
+    pdfium_types::{Handle, PathSegmentHandle, FPDF_PATHSEGMENT},
 };
 
 /// # Rust interface to FPDF_PATHSEGMENT
+#[derive(Debug, Clone)]
 pub struct PdfiumPathSegment {
-    handle: FPDF_PATHSEGMENT,
+    handle: PathSegmentHandle,
 }
 
 impl PdfiumPathSegment {
@@ -32,25 +33,15 @@ impl PdfiumPathSegment {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New path_segment {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new_const(handle), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumPathSegment> for FPDF_PATHSEGMENT {
-    fn from(value: &PdfiumPathSegment) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_PATHSEGMENT
-
-impl Drop for PdfiumPathSegment {
-    /// Closes this [`PdfiumPathSegment`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing path_segment {:?}", self.handle);
+    fn from(path_segment: &PdfiumPathSegment) -> Self {
+        path_segment.handle.handle()
     }
 }

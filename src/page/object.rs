@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_PAGEOBJECT,
+    pdfium_types::{Handle, PageObjectHandle, FPDF_PAGEOBJECT},
 };
 
 /// # Rust interface to FPDF_PAGEOBJECT
+#[derive(Debug, Clone)]
 pub struct PdfiumPageObject {
-    handle: FPDF_PAGEOBJECT,
+    handle: PageObjectHandle,
 }
 
 impl PdfiumPageObject {
@@ -33,24 +34,19 @@ impl PdfiumPageObject {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New page_object {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_page_object)),
+            })
         }
     }
 }
 
 impl From<&PdfiumPageObject> for FPDF_PAGEOBJECT {
-    fn from(value: &PdfiumPageObject) -> Self {
-        value.handle
+    fn from(page_object: &PdfiumPageObject) -> Self {
+        page_object.handle.handle()
     }
 }
 
-impl Drop for PdfiumPageObject {
-    /// # Closes this [`PdfiumPageObject`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing page_object {:?}", self.handle);
-        lib().FPDFPageObj_Destroy(self);
-    }
+fn close_page_object(page_object: FPDF_PAGEOBJECT) {
+    lib().FPDFPageObj_Destroy(page_object);
 }

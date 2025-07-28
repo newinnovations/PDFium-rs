@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_CLIPPATH,
+    pdfium_types::{ClipPathHandle, Handle, FPDF_CLIPPATH},
 };
 
 /// # Rust interface to FPDF_CLIPPATH
+#[derive(Debug, Clone)]
 pub struct PdfiumClipPath {
-    handle: FPDF_CLIPPATH,
+    handle: ClipPathHandle,
 }
 
 impl PdfiumClipPath {
@@ -33,24 +34,19 @@ impl PdfiumClipPath {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New clip_path {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_clip_path)),
+            })
         }
     }
 }
 
 impl From<&PdfiumClipPath> for FPDF_CLIPPATH {
-    fn from(value: &PdfiumClipPath) -> Self {
-        value.handle
+    fn from(clip_path: &PdfiumClipPath) -> Self {
+        clip_path.handle.handle()
     }
 }
 
-impl Drop for PdfiumClipPath {
-    /// # Closes this [`PdfiumClipPath`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing clip_path {:?}", self.handle);
-        lib().FPDF_DestroyClipPath(self);
-    }
+fn close_clip_path(clip_path: FPDF_CLIPPATH) {
+    lib().FPDF_DestroyClipPath(clip_path);
 }

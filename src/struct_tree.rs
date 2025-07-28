@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_STRUCTTREE,
+    pdfium_types::{Handle, StructTreeHandle, FPDF_STRUCTTREE},
 };
 
 /// # Rust interface to FPDF_STRUCTTREE
+#[derive(Debug, Clone)]
 pub struct PdfiumStructTree {
-    handle: FPDF_STRUCTTREE,
+    handle: StructTreeHandle,
 }
 
 impl PdfiumStructTree {
@@ -33,24 +34,19 @@ impl PdfiumStructTree {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New struct_tree {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_struct_tree)),
+            })
         }
     }
 }
 
 impl From<&PdfiumStructTree> for FPDF_STRUCTTREE {
-    fn from(value: &PdfiumStructTree) -> Self {
-        value.handle
+    fn from(struct_tree: &PdfiumStructTree) -> Self {
+        struct_tree.handle.handle()
     }
 }
 
-impl Drop for PdfiumStructTree {
-    /// # Closes this [`PdfiumStructTree`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing struct_tree {:?}", self.handle);
-        lib().FPDF_StructTree_Close(self);
-    }
+fn close_struct_tree(struct_tree: FPDF_STRUCTTREE) {
+    lib().FPDF_StructTree_Close(struct_tree);
 }

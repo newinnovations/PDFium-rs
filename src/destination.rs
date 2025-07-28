@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_DEST,
+    pdfium_types::{DestinationHandle, Handle, FPDF_DEST},
 };
 
 /// # Rust interface to FPDF_DEST
+#[derive(Debug, Clone)]
 pub struct PdfiumDestination {
-    handle: FPDF_DEST,
+    handle: DestinationHandle,
 }
 
 impl PdfiumDestination {
@@ -32,25 +33,15 @@ impl PdfiumDestination {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New destination {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumDestination> for FPDF_DEST {
-    fn from(value: &PdfiumDestination) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_DEST
-
-impl Drop for PdfiumDestination {
-    /// Closes this [`PdfiumDestination`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing destination {:?}", self.handle);
+    fn from(destination: &PdfiumDestination) -> Self {
+        destination.handle.handle()
     }
 }

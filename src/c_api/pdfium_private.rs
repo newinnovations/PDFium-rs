@@ -20,12 +20,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use crate::{
-    c_api::pdfium::to_result, pdfium_types::*, Pdfium, PdfiumAnnotation, PdfiumAvailability,
-    PdfiumBitmap, PdfiumClipPath, PdfiumDocument, PdfiumFont, PdfiumJavascriptAction, PdfiumPage,
-    PdfiumPageLink, PdfiumPageObject, PdfiumReader, PdfiumResult, PdfiumSearch, PdfiumStructTree,
-    PdfiumTextPage, PdfiumXObject,
-};
+use crate::{c_api::pdfium::to_result, pdfium_types::*, Pdfium, PdfiumResult};
 
 // These functions are internal to the crate
 impl Pdfium {
@@ -37,8 +32,8 @@ impl Pdfium {
     ///   avail - handle to document availability provider to be destroyed.
     /// ```
     #[inline]
-    pub(crate) fn FPDFAvail_Destroy(&self, avail: &PdfiumAvailability) {
-        unsafe { (self.fn_FPDFAvail_Destroy)(avail.into()) }
+    pub(crate) fn FPDFAvail_Destroy(&self, avail: FPDF_AVAIL) {
+        unsafe { (self.fn_FPDFAvail_Destroy)(avail) }
     }
 
     /// C documentation for FPDFBitmap_Destroy:
@@ -56,8 +51,8 @@ impl Pdfium {
     ///          the bitmap was created.
     /// ```
     #[inline]
-    pub(crate) fn FPDFBitmap_Destroy(&self, bitmap: &PdfiumBitmap) {
-        unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap.into()) }
+    pub(crate) fn FPDFBitmap_Destroy(&self, bitmap: FPDF_BITMAP) {
+        unsafe { (self.fn_FPDFBitmap_Destroy)(bitmap) }
     }
 
     /// C documentation for FPDFBitmap_GetBuffer:
@@ -80,11 +75,8 @@ impl Pdfium {
     ///          Use FPDFBitmap_GetFormat() to find out the format of the data.
     /// ```
     #[inline]
-    pub(crate) fn FPDFBitmap_GetBuffer(
-        &self,
-        bitmap: &PdfiumBitmap,
-    ) -> *mut ::std::os::raw::c_void {
-        unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap.into()) }
+    pub(crate) fn FPDFBitmap_GetBuffer(&self, bitmap: FPDF_BITMAP) -> *mut ::std::os::raw::c_void {
+        unsafe { (self.fn_FPDFBitmap_GetBuffer)(bitmap) }
     }
 
     /// C documentation for FPDFDoc_CloseJavaScriptAction:
@@ -93,8 +85,8 @@ impl Pdfium {
     ///   javascript - Handle to a JavaScript action.
     /// ```
     #[inline]
-    pub(crate) fn FPDFDoc_CloseJavaScriptAction(&self, javascript: &PdfiumJavascriptAction) {
-        unsafe { (self.fn_FPDFDoc_CloseJavaScriptAction)(javascript.into()) }
+    pub(crate) fn FPDFDoc_CloseJavaScriptAction(&self, javascript: FPDF_JAVASCRIPT_ACTION) {
+        unsafe { (self.fn_FPDFDoc_CloseJavaScriptAction)(javascript) }
     }
 
     /// C documentation for FPDFFont_Close:
@@ -105,8 +97,8 @@ impl Pdfium {
     /// font   - Handle to the loaded font.
     /// ```
     #[inline]
-    pub(crate) fn FPDFFont_Close(&self, font: &PdfiumFont) {
-        unsafe { (self.fn_FPDFFont_Close)(font.into()) }
+    pub(crate) fn FPDFFont_Close(&self, font: FPDF_FONT) {
+        unsafe { (self.fn_FPDFFont_Close)(font) }
     }
 
     /// C documentation for FPDFImageObj_LoadJpegFile:
@@ -131,17 +123,12 @@ impl Pdfium {
     pub(crate) fn FPDFImageObj_LoadJpegFile(
         &self,
         pages: *mut FPDF_PAGE,
-        count: i32,
-        image_object: &PdfiumPageObject,
-        file_access: &mut Box<PdfiumReader>,
+        count: ::std::os::raw::c_int,
+        image_object: FPDF_PAGEOBJECT,
+        file_access: *mut FPDF_FILEACCESS,
     ) -> PdfiumResult<()> {
         to_result(unsafe {
-            (self.fn_FPDFImageObj_LoadJpegFile)(
-                pages,
-                count,
-                image_object.into(),
-                file_access.as_mut().into(),
-            )
+            (self.fn_FPDFImageObj_LoadJpegFile)(pages, count, image_object, file_access)
         })
     }
 
@@ -169,17 +156,12 @@ impl Pdfium {
     pub(crate) fn FPDFImageObj_LoadJpegFileInline(
         &self,
         pages: *mut FPDF_PAGE,
-        count: i32,
-        image_object: &PdfiumPageObject,
-        file_access: &mut Box<PdfiumReader>,
+        count: ::std::os::raw::c_int,
+        image_object: FPDF_PAGEOBJECT,
+        file_access: *mut FPDF_FILEACCESS,
     ) -> PdfiumResult<()> {
         to_result(unsafe {
-            (self.fn_FPDFImageObj_LoadJpegFileInline)(
-                pages,
-                count,
-                image_object.into(),
-                file_access.as_mut().into(),
-            )
+            (self.fn_FPDFImageObj_LoadJpegFileInline)(pages, count, image_object, file_access)
         })
     }
 
@@ -199,13 +181,11 @@ impl Pdfium {
     pub(crate) fn FPDFImageObj_SetBitmap(
         &self,
         pages: *mut FPDF_PAGE,
-        count: i32,
-        image_object: &PdfiumPageObject,
-        bitmap: &PdfiumBitmap,
+        count: ::std::os::raw::c_int,
+        image_object: FPDF_PAGEOBJECT,
+        bitmap: FPDF_BITMAP,
     ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FPDFImageObj_SetBitmap)(pages, count, image_object.into(), bitmap.into())
-        })
+        to_result(unsafe { (self.fn_FPDFImageObj_SetBitmap)(pages, count, image_object, bitmap) })
     }
 
     /// C documentation for FPDFLink_CloseWebLinks:
@@ -219,8 +199,8 @@ impl Pdfium {
     ///          None.
     /// ```
     #[inline]
-    pub(crate) fn FPDFLink_CloseWebLinks(&self, link_page: &PdfiumPageLink) {
-        unsafe { (self.fn_FPDFLink_CloseWebLinks)(link_page.into()) }
+    pub(crate) fn FPDFLink_CloseWebLinks(&self, link_page: FPDF_PAGELINK) {
+        unsafe { (self.fn_FPDFLink_CloseWebLinks)(link_page) }
     }
 
     /// C documentation for FPDFLink_Enumerate:
@@ -238,11 +218,11 @@ impl Pdfium {
     #[inline]
     pub(crate) fn FPDFLink_Enumerate(
         &self,
-        page: &PdfiumPage,
-        start_pos: &mut i32,
+        page: FPDF_PAGE,
+        start_pos: *mut ::std::os::raw::c_int,
         link_annot: *mut FPDF_LINK,
     ) -> PdfiumResult<()> {
-        to_result(unsafe { (self.fn_FPDFLink_Enumerate)(page.into(), start_pos, link_annot) })
+        to_result(unsafe { (self.fn_FPDFLink_Enumerate)(page, start_pos, link_annot) })
     }
 
     /// C documentation for FPDFPageObj_Destroy:
@@ -257,8 +237,8 @@ impl Pdfium {
     ///   page_object - handle to a page object.
     /// ```
     #[inline]
-    pub(crate) fn FPDFPageObj_Destroy(&self, page_object: &PdfiumPageObject) {
-        unsafe { (self.fn_FPDFPageObj_Destroy)(page_object.into()) }
+    pub(crate) fn FPDFPageObj_Destroy(&self, page_object: FPDF_PAGEOBJECT) {
+        unsafe { (self.fn_FPDFPageObj_Destroy)(page_object) }
     }
 
     /// C documentation for FPDFPage_CloseAnnot:
@@ -272,8 +252,8 @@ impl Pdfium {
     ///   annot  - handle to an annotation.
     /// ```
     #[inline]
-    pub(crate) fn FPDFPage_CloseAnnot(&self, annot: &PdfiumAnnotation) {
-        unsafe { (self.fn_FPDFPage_CloseAnnot)(annot.into()) }
+    pub(crate) fn FPDFPage_CloseAnnot(&self, annot: FPDF_ANNOTATION) {
+        unsafe { (self.fn_FPDFPage_CloseAnnot)(annot) }
     }
 
     /// C documentation for FPDFText_ClosePage:
@@ -289,8 +269,8 @@ impl Pdfium {
     ///          None.
     /// ```
     #[inline]
-    pub(crate) fn FPDFText_ClosePage(&self, text_page: &PdfiumTextPage) {
-        unsafe { (self.fn_FPDFText_ClosePage)(text_page.into()) }
+    pub(crate) fn FPDFText_ClosePage(&self, text_page: FPDF_TEXTPAGE) {
+        unsafe { (self.fn_FPDFText_ClosePage)(text_page) }
     }
 
     /// C documentation for FPDFText_FindClose:
@@ -305,8 +285,8 @@ impl Pdfium {
     ///          None.
     /// ```
     #[inline]
-    pub(crate) fn FPDFText_FindClose(&self, handle: &PdfiumSearch) {
-        unsafe { (self.fn_FPDFText_FindClose)(handle.into()) }
+    pub(crate) fn FPDFText_FindClose(&self, handle: FPDF_SCHHANDLE) {
+        unsafe { (self.fn_FPDFText_FindClose)(handle) }
     }
 
     /// C documentation for FPDF_CloseDocument:
@@ -320,8 +300,8 @@ impl Pdfium {
     ///          None.
     /// ```
     #[inline]
-    pub(crate) fn FPDF_CloseDocument(&self, document: &PdfiumDocument) {
-        unsafe { (self.fn_FPDF_CloseDocument)(document.into()) }
+    pub(crate) fn FPDF_CloseDocument(&self, document: FPDF_DOCUMENT) {
+        unsafe { (self.fn_FPDF_CloseDocument)(document) }
     }
 
     /// C documentation for FPDF_ClosePage:
@@ -335,8 +315,8 @@ impl Pdfium {
     ///          None.
     /// ```
     #[inline]
-    pub(crate) fn FPDF_ClosePage(&self, page: &PdfiumPage) {
-        unsafe { (self.fn_FPDF_ClosePage)(page.into()) }
+    pub(crate) fn FPDF_ClosePage(&self, page: FPDF_PAGE) {
+        unsafe { (self.fn_FPDF_ClosePage)(page) }
     }
 
     /// C documentation for FPDF_CloseXObject:
@@ -347,8 +327,8 @@ impl Pdfium {
     /// FPDF_PAGEOBJECTs created from the FPDF_XOBJECT handle are not affected.
     /// ```
     #[inline]
-    pub(crate) fn FPDF_CloseXObject(&self, xobject: &PdfiumXObject) {
-        unsafe { (self.fn_FPDF_CloseXObject)(xobject.into()) }
+    pub(crate) fn FPDF_CloseXObject(&self, xobject: FPDF_XOBJECT) {
+        unsafe { (self.fn_FPDF_CloseXObject)(xobject) }
     }
 
     /// C documentation for FPDF_DestroyClipPath:
@@ -359,8 +339,8 @@ impl Pdfium {
     /// clipPath - A handle to the clip path. It will be invalid after this call.
     /// ```
     #[inline]
-    pub(crate) fn FPDF_DestroyClipPath(&self, clipPath: &PdfiumClipPath) {
-        unsafe { (self.fn_FPDF_DestroyClipPath)(clipPath.into()) }
+    pub(crate) fn FPDF_DestroyClipPath(&self, clipPath: FPDF_CLIPPATH) {
+        unsafe { (self.fn_FPDF_DestroyClipPath)(clipPath) }
     }
 
     /// C documentation for FPDF_FreeDefaultSystemFontInfo:
@@ -476,7 +456,7 @@ impl Pdfium {
     ///          None.
     /// ```
     #[inline]
-    pub(crate) fn FPDF_StructTree_Close(&self, struct_tree: &PdfiumStructTree) {
-        unsafe { (self.fn_FPDF_StructTree_Close)(struct_tree.into()) }
+    pub(crate) fn FPDF_StructTree_Close(&self, struct_tree: FPDF_STRUCTTREE) {
+        unsafe { (self.fn_FPDF_StructTree_Close)(struct_tree) }
     }
 }

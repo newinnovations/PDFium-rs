@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_STRUCTELEMENT,
+    pdfium_types::{Handle, StructElementHandle, FPDF_STRUCTELEMENT},
 };
 
 /// # Rust interface to FPDF_STRUCTELEMENT
+#[derive(Debug, Clone)]
 pub struct PdfiumStructElement {
-    handle: FPDF_STRUCTELEMENT,
+    handle: StructElementHandle,
 }
 
 impl PdfiumStructElement {
@@ -32,25 +33,15 @@ impl PdfiumStructElement {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New struct_element {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumStructElement> for FPDF_STRUCTELEMENT {
-    fn from(value: &PdfiumStructElement) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_STRUCTELEMENT
-
-impl Drop for PdfiumStructElement {
-    /// # Closes this [`PdfiumStructElement`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing struct_element {:?}", self.handle);
+    fn from(struct_element: &PdfiumStructElement) -> Self {
+        struct_element.handle.handle()
     }
 }

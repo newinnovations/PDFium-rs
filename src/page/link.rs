@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_PAGELINK,
+    pdfium_types::{Handle, PageLinkHandle, FPDF_PAGELINK},
 };
 
 /// # Rust interface to FPDF_PAGELINK
+#[derive(Debug, Clone)]
 pub struct PdfiumPageLink {
-    handle: FPDF_PAGELINK,
+    handle: PageLinkHandle,
 }
 
 impl PdfiumPageLink {
@@ -33,24 +34,19 @@ impl PdfiumPageLink {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New page_link {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_page_link)),
+            })
         }
     }
 }
 
 impl From<&PdfiumPageLink> for FPDF_PAGELINK {
-    fn from(value: &PdfiumPageLink) -> Self {
-        value.handle
+    fn from(page_link: &PdfiumPageLink) -> Self {
+        page_link.handle.handle()
     }
 }
 
-impl Drop for PdfiumPageLink {
-    /// Closes this [`PdfiumPageLink`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing page_link {:?}", self.handle);
-        lib().FPDFLink_CloseWebLinks(self);
-    }
+fn close_page_link(page_link: FPDF_PAGELINK) {
+    lib().FPDFLink_CloseWebLinks(page_link);
 }

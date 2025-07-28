@@ -34,7 +34,7 @@ This library uses a modern, static, and thread-safe initialization pattern with 
 
 ### No Lifetime Complexity
 
-Unlike other implementations, this crate doesn't impose lifetimes on structs representing documents, pages, bitmaps, and other structures. This makes integration into your application much simpler - you can store these objects wherever you need them without fighting the borrow checker. This makes it ideal for interactive use cases, such as PDF viewers, editors, and other real-time applications.
+Unlike other implementations, this crate doesn't impose lifetimes on structs representing documents, pages, bitmaps, and other structures. This makes integration into your application much simpler - you can store these objects wherever you need them without fighting the borrow checker. They are even clonable. This makes it ideal for interactive use cases, such as PDF viewers, editors, and other real-time applications.
 
 ### Access to the full C API without `unsafe` Functions
 
@@ -142,7 +142,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.6.7"  # Check crates.io for the latest version
+pdfium = "0.7.0"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.
