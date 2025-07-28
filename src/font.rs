@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_FONT,
+    pdfium_types::{FontHandle, Handle, FPDF_FONT},
 };
 
 /// # Rust interface to FPDF_FONT
+#[derive(Debug, Clone)]
 pub struct PdfiumFont {
-    handle: FPDF_FONT,
+    handle: FontHandle,
 }
 
 impl PdfiumFont {
@@ -33,24 +34,19 @@ impl PdfiumFont {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New font {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_font)),
+            })
         }
     }
 }
 
 impl From<&PdfiumFont> for FPDF_FONT {
-    fn from(value: &PdfiumFont) -> Self {
-        value.handle
+    fn from(font: &PdfiumFont) -> Self {
+        font.handle.handle()
     }
 }
 
-impl Drop for PdfiumFont {
-    /// Closes this [`PdfiumFont`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing font {:?}", self.handle);
-        lib().FPDFFont_Close(self);
-    }
+fn close_font(font: FPDF_FONT) {
+    lib().FPDFFont_Close(font);
 }

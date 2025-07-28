@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_PAGERANGE,
+    pdfium_types::{Handle, PageRangeHandle, FPDF_PAGERANGE},
 };
 
 /// # Rust interface to FPDF_PAGERANGE
+#[derive(Debug, Clone)]
 pub struct PdfiumPageRange {
-    handle: FPDF_PAGERANGE,
+    handle: PageRangeHandle,
 }
 
 impl PdfiumPageRange {
@@ -32,25 +33,15 @@ impl PdfiumPageRange {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New page_range {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new_const(handle), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumPageRange> for FPDF_PAGERANGE {
-    fn from(value: &PdfiumPageRange) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_PAGERANGE
-
-impl Drop for PdfiumPageRange {
-    /// # Closes this [`PdfiumPageRange`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing page_range {:?}", self.handle);
+    fn from(page_range: &PdfiumPageRange) -> Self {
+        page_range.handle.handle()
     }
 }

@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_BOOKMARK,
+    pdfium_types::{BookmarkHandle, Handle, FPDF_BOOKMARK},
 };
 
 /// # Rust interface to FPDF_BOOKMARK
+#[derive(Debug, Clone)]
 pub struct PdfiumBookmark {
-    handle: FPDF_BOOKMARK,
+    handle: BookmarkHandle,
 }
 
 impl PdfiumBookmark {
@@ -32,25 +33,15 @@ impl PdfiumBookmark {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New bookmark {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumBookmark> for FPDF_BOOKMARK {
-    fn from(value: &PdfiumBookmark) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_BOOKMARK
-
-impl Drop for PdfiumBookmark {
-    /// Closes this [`PdfiumBookmark`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing bookmark {:?}", self.handle);
+    fn from(bookmark: &PdfiumBookmark) -> Self {
+        bookmark.handle.handle()
     }
 }

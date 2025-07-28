@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_FORMHANDLE,
+    pdfium_types::{FormHandle, Handle, FPDF_FORMHANDLE},
 };
 
 /// # Rust interface to FPDF_FORMHANDLE
+#[derive(Debug, Clone)]
 pub struct PdfiumForm {
-    handle: FPDF_FORMHANDLE,
+    handle: FormHandle,
 }
 
 impl PdfiumForm {
@@ -32,25 +33,15 @@ impl PdfiumForm {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New form {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumForm> for FPDF_FORMHANDLE {
-    fn from(value: &PdfiumForm) -> Self {
-        value.handle
+    fn from(form: &PdfiumForm) -> Self {
+        form.handle.handle()
     }
 }
-
-// TODO: check that FPDF_FORMHANDLE gets destroyed by assigning it
-
-// impl Drop for PdfiumForm {
-//     /// # Closes this [`PdfiumForm`], releasing held memory.
-//     fn drop(&mut self) {
-//         println!("Closing form {:?}", self.handle);
-//         lib().FPDF_Close(self);
-//     }
-// }

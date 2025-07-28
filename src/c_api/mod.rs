@@ -21,6 +21,7 @@ pub mod guard;
 pub mod pdfium;
 pub mod pdfium_bindings;
 pub mod pdfium_constants;
+pub mod pdfium_handle;
 pub mod pdfium_init;
 pub mod pdfium_private;
 pub mod pdfium_types;

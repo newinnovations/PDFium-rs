@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_TEXTPAGE,
+    pdfium_types::{Handle, TextPageHandle, FPDF_TEXTPAGE},
 };
 
 /// # Rust interface to FPDF_TEXTPAGE
+#[derive(Debug, Clone)]
 pub struct PdfiumTextPage {
-    handle: FPDF_TEXTPAGE,
+    handle: TextPageHandle,
 }
 
 impl PdfiumTextPage {
@@ -33,24 +34,19 @@ impl PdfiumTextPage {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New text_page {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_text_page)),
+            })
         }
     }
 }
 
 impl From<&PdfiumTextPage> for FPDF_TEXTPAGE {
-    fn from(value: &PdfiumTextPage) -> Self {
-        value.handle
+    fn from(text_page: &PdfiumTextPage) -> Self {
+        text_page.handle.handle()
     }
 }
 
-impl Drop for PdfiumTextPage {
-    /// Closes this [`PdfiumTextPage`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing text_page {:?}", self.handle);
-        lib().FPDFText_ClosePage(self)
-    }
+fn close_text_page(text_page: FPDF_TEXTPAGE) {
+    lib().FPDFText_ClosePage(text_page);
 }

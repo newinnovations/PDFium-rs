@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_PAGEOBJECTMARK,
+    pdfium_types::{Handle, PageObjectMarkHandle, FPDF_PAGEOBJECTMARK},
 };
 
 /// # Rust interface to FPDF_PAGEOBJECTMARK
+#[derive(Debug, Clone)]
 pub struct PdfiumPageObjectMark {
-    handle: FPDF_PAGEOBJECTMARK,
+    handle: PageObjectMarkHandle,
 }
 
 impl PdfiumPageObjectMark {
@@ -32,25 +33,15 @@ impl PdfiumPageObjectMark {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New page_object_mark {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumPageObjectMark> for FPDF_PAGEOBJECTMARK {
-    fn from(value: &PdfiumPageObjectMark) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_PAGEOBJECTMARK
-
-impl Drop for PdfiumPageObjectMark {
-    /// Closes this [`PdfiumPageObjectMark`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing page_object_mark {:?}", self.handle);
+    fn from(page_object_mark: &PdfiumPageObjectMark) -> Self {
+        page_object_mark.handle.handle()
     }
 }

@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_JAVASCRIPT_ACTION,
+    pdfium_types::{Handle, JavascriptActionHandle, FPDF_JAVASCRIPT_ACTION},
 };
 
 /// # Rust interface to FPDF_JAVASCRIPT_ACTION
+#[derive(Debug, Clone)]
 pub struct PdfiumJavascriptAction {
-    handle: FPDF_JAVASCRIPT_ACTION,
+    handle: JavascriptActionHandle,
 }
 
 impl PdfiumJavascriptAction {
@@ -33,24 +34,19 @@ impl PdfiumJavascriptAction {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New javascript_action {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_javascript_action)),
+            })
         }
     }
 }
 
 impl From<&PdfiumJavascriptAction> for FPDF_JAVASCRIPT_ACTION {
-    fn from(value: &PdfiumJavascriptAction) -> Self {
-        value.handle
+    fn from(javascript_action: &PdfiumJavascriptAction) -> Self {
+        javascript_action.handle.handle()
     }
 }
 
-impl Drop for PdfiumJavascriptAction {
-    /// Closes this [`PdfiumJavascriptAction`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing javascript_action {:?}", self.handle);
-        lib().FPDFDoc_CloseJavaScriptAction(self);
-    }
+fn close_javascript_action(javascript_action: FPDF_JAVASCRIPT_ACTION) {
+    lib().FPDFDoc_CloseJavaScriptAction(javascript_action);
 }

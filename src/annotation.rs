@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_ANNOTATION,
+    pdfium_types::{AnnotationHandle, Handle, FPDF_ANNOTATION},
 };
 
 /// # Rust interface to FPDF_ANNOTATION
+#[derive(Debug, Clone)]
 pub struct PdfiumAnnotation {
-    handle: FPDF_ANNOTATION,
+    handle: AnnotationHandle,
 }
 
 impl PdfiumAnnotation {
@@ -33,24 +34,19 @@ impl PdfiumAnnotation {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New annotation {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_annotation)),
+            })
         }
     }
 }
 
 impl From<&PdfiumAnnotation> for FPDF_ANNOTATION {
-    fn from(value: &PdfiumAnnotation) -> Self {
-        value.handle
+    fn from(annotation: &PdfiumAnnotation) -> Self {
+        annotation.handle.handle()
     }
 }
 
-impl Drop for PdfiumAnnotation {
-    /// # Closes this [`PdfiumAnnotation`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing annotation {:?}", self.handle);
-        lib().FPDFPage_CloseAnnot(self);
-    }
+fn close_annotation(annotation: FPDF_ANNOTATION) {
+    lib().FPDFPage_CloseAnnot(annotation);
 }

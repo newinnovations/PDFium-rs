@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_STRUCTELEMENT_ATTR_VALUE,
+    pdfium_types::{Handle, StructElementAttrValueHandle, FPDF_STRUCTELEMENT_ATTR_VALUE},
 };
 
 /// # Rust interface to FPDF_STRUCTELEMENT_ATTR_VALUE
+#[derive(Debug, Clone)]
 pub struct PdfiumStructElementAttrValue {
-    handle: FPDF_STRUCTELEMENT_ATTR_VALUE,
+    handle: StructElementAttrValueHandle,
 }
 
 impl PdfiumStructElementAttrValue {
@@ -32,25 +33,15 @@ impl PdfiumStructElementAttrValue {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New struct_element_attr_value {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new_const(handle), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumStructElementAttrValue> for FPDF_STRUCTELEMENT_ATTR_VALUE {
-    fn from(value: &PdfiumStructElementAttrValue) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_STRUCTELEMENT_ATTR_VALUE
-
-impl Drop for PdfiumStructElementAttrValue {
-    /// # Closes this [`PdfiumStructElementAttrValue`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing struct_element_attr_value {:?}", self.handle);
+    fn from(struct_element_attr_value: &PdfiumStructElementAttrValue) -> Self {
+        struct_element_attr_value.handle.handle()
     }
 }

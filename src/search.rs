@@ -20,12 +20,13 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::FPDF_SCHHANDLE,
+    pdfium_types::{Handle, SearchHandle, FPDF_SCHHANDLE},
 };
 
 /// # Rust interface to FPDF_SCHHANDLE
+#[derive(Debug, Clone)]
 pub struct PdfiumSearch {
-    handle: FPDF_SCHHANDLE,
+    handle: SearchHandle,
 }
 
 impl PdfiumSearch {
@@ -33,24 +34,19 @@ impl PdfiumSearch {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New search {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_search)),
+            })
         }
     }
 }
 
 impl From<&PdfiumSearch> for FPDF_SCHHANDLE {
-    fn from(value: &PdfiumSearch) -> Self {
-        value.handle
+    fn from(search: &PdfiumSearch) -> Self {
+        search.handle.handle()
     }
 }
 
-impl Drop for PdfiumSearch {
-    /// Closes this [`PdfiumSearch`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing search {:?}", self.handle);
-        lib().FPDFText_FindClose(self);
-    }
+fn close_search(search: FPDF_SCHHANDLE) {
+    lib().FPDFText_FindClose(search);
 }

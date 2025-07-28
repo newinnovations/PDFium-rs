@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_ATTACHMENT,
+    pdfium_types::{AttachmentHandle, Handle, FPDF_ATTACHMENT},
 };
 
 /// # Rust interface to FPDF_ATTACHMENT
+#[derive(Debug, Clone)]
 pub struct PdfiumAttachment {
-    handle: FPDF_ATTACHMENT,
+    handle: AttachmentHandle,
 }
 
 impl PdfiumAttachment {
@@ -32,26 +33,15 @@ impl PdfiumAttachment {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New attachment {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumAttachment> for FPDF_ATTACHMENT {
-    fn from(value: &PdfiumAttachment) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_ATTACHMENT
-
-impl Drop for PdfiumAttachment {
-    /// Closes this [`PdfiumAttachment`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing attachment {:?}", self.handle);
-        // lib().attac(self);
+    fn from(attachment: &PdfiumAttachment) -> Self {
+        attachment.handle.handle()
     }
 }

@@ -29,13 +29,14 @@ use crate::{
     lib,
     page::boundaries::PdfiumPageBoundaries,
     pdfium_constants,
-    pdfium_types::{FPDF_PAGE, FS_MATRIX, FS_RECTF},
+    pdfium_types::{Handle, PageHandle, FPDF_PAGE, FS_MATRIX, FS_RECTF},
     PdfiumColor, PdfiumMatrix, PdfiumRect,
 };
 
 /// # Rust interface to FPDF_PAGE
+#[derive(Debug, Clone)]
 pub struct PdfiumPage {
-    handle: FPDF_PAGE,
+    handle: PageHandle,
 }
 
 use bitflags::bitflags;
@@ -80,9 +81,9 @@ impl PdfiumPage {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New page {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_page)),
+            })
         }
     }
 
@@ -306,19 +307,14 @@ impl PdfiumPage {
 
 impl From<&PdfiumPage> for FPDF_PAGE {
     #[inline]
-    fn from(value: &PdfiumPage) -> Self {
-        value.handle
+    fn from(page: &PdfiumPage) -> Self {
+        page.handle.handle()
     }
 }
 
-impl Drop for PdfiumPage {
-    /// # Closes this [`PdfiumPage`], releasing held memory.
-    #[inline]
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing page {:?}", self.handle);
-        lib().FPDF_ClosePage(self);
-    }
+/// Closes this [`PdfiumPage`], releasing held memory.
+fn close_page(page: FPDF_PAGE) {
+    lib().FPDF_ClosePage(page);
 }
 
 #[cfg(test)]

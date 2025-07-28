@@ -21,9 +21,11 @@ pub mod reader;
 
 use std::{
     ffi::CString,
+    fmt::Debug,
     fs::File,
     io::{Read, Seek},
     path::Path,
+    rc::Rc,
 };
 
 use crate::{
@@ -31,14 +33,24 @@ use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
     page::PdfiumPage,
-    pdfium_types::FPDF_DOCUMENT,
+    pdfium_types::{DocumentHandle, Handle, FPDF_DOCUMENT},
     try_lib,
 };
 
 /// Rust interface to FPDF_DOCUMENT
+#[derive(Clone)]
 pub struct PdfiumDocument {
-    handle: FPDF_DOCUMENT,
-    _reader: Option<Box<PdfiumReader>>,
+    handle: DocumentHandle,
+    #[allow(clippy::redundant_allocation)]
+    _reader: Option<Rc<Box<PdfiumReader>>>,
+}
+
+impl Debug for PdfiumDocument {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PdfiumDocument")
+            .field("handle", &self.handle)
+            .finish()
+    }
 }
 
 impl PdfiumDocument {
@@ -56,11 +68,9 @@ impl PdfiumDocument {
                 _ => PdfiumError::Unknown,
             })
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New document {handle:?}");
             Ok(Self {
-                handle,
-                _reader: reader,
+                handle: Handle::new(handle, Some(close_document)),
+                _reader: reader.map(Rc::new),
             })
         }
     }
@@ -94,18 +104,13 @@ impl PdfiumDocument {
 impl From<&PdfiumDocument> for FPDF_DOCUMENT {
     #[inline]
     fn from(value: &PdfiumDocument) -> Self {
-        value.handle
+        value.handle.handle()
     }
 }
 
-impl Drop for PdfiumDocument {
-    /// Closes this [PdfiumDocument], releasing held memory.
-    #[inline]
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing document {:?}", self.handle);
-        lib().FPDF_CloseDocument(self);
-    }
+/// Closes this [PdfiumDocument], releasing held memory.
+fn close_document(document: FPDF_DOCUMENT) {
+    lib().FPDF_CloseDocument(document);
 }
 
 #[cfg(test)]

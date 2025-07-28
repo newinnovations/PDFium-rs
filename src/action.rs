@@ -19,12 +19,13 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::FPDF_ACTION,
+    pdfium_types::{ActionHandle, Handle, FPDF_ACTION},
 };
 
 /// # Rust interface to FPDF_ACTION
+#[derive(Debug, Clone)]
 pub struct PdfiumAction {
-    handle: FPDF_ACTION,
+    handle: ActionHandle,
 }
 
 impl PdfiumAction {
@@ -32,25 +33,15 @@ impl PdfiumAction {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New action {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, None), // TODO: check close is not needed
+            })
         }
     }
 }
 
 impl From<&PdfiumAction> for FPDF_ACTION {
-    fn from(value: &PdfiumAction) -> Self {
-        value.handle
-    }
-}
-
-// TODO: check lifecycle FPDF_ACTION
-
-impl Drop for PdfiumAction {
-    /// Closes this [`PdfiumAction`], releasing held memory.
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing action {:?}", self.handle);
+    fn from(action: &PdfiumAction) -> Self {
+        action.handle.handle()
     }
 }

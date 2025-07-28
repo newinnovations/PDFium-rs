@@ -23,13 +23,14 @@ use crate::{
     c_api::guard::PdfiumGuard,
     error::{PdfiumError, PdfiumResult},
     lib, pdfium_constants,
-    pdfium_types::FPDF_BITMAP,
+    pdfium_types::{BitmapHandle, Handle, FPDF_BITMAP},
     try_lib, PdfiumColor,
 };
 
 /// Rust interface to FPDF_BITMAP
+#[derive(Debug, Clone)]
 pub struct PdfiumBitmap {
-    handle: FPDF_BITMAP,
+    handle: BitmapHandle,
 }
 
 impl PdfiumBitmap {
@@ -37,9 +38,9 @@ impl PdfiumBitmap {
         if handle.is_null() {
             Err(PdfiumError::NullHandle)
         } else {
-            #[cfg(feature = "debug_print")]
-            println!("New bitmap {handle:?}");
-            Ok(Self { handle })
+            Ok(Self {
+                handle: Handle::new(handle, Some(close_bitmap)),
+            })
         }
     }
 
@@ -90,7 +91,7 @@ impl PdfiumBitmap {
     ///
     /// This function does not attempt any color channel normalization.
     pub fn as_raw_bytes<'a>(&self, lib: &'a PdfiumGuard) -> &'a [u8] {
-        let buffer = lib.FPDFBitmap_GetBuffer(self);
+        let buffer = lib.FPDFBitmap_GetBuffer(self.handle.handle());
         let len = lib.FPDFBitmap_GetStride(self) * lib.FPDFBitmap_GetHeight(self);
         unsafe { std::slice::from_raw_parts(buffer as *const u8, len as usize) }
     }
@@ -137,18 +138,13 @@ impl PdfiumBitmap {
 impl From<&PdfiumBitmap> for FPDF_BITMAP {
     #[inline]
     fn from(value: &PdfiumBitmap) -> Self {
-        value.handle
+        value.handle.handle()
     }
 }
 
-impl Drop for PdfiumBitmap {
-    /// Closes this [PdfiumBitmap], releasing held memory.
-    #[inline]
-    fn drop(&mut self) {
-        #[cfg(feature = "debug_print")]
-        println!("Closing bitmap {:?}", self.handle);
-        lib().FPDFBitmap_Destroy(self);
-    }
+/// Closes this [PdfiumBitmap], releasing held memory.
+fn close_bitmap(bitmap: FPDF_BITMAP) {
+    lib().FPDFBitmap_Destroy(bitmap);
 }
 
 /// The pixel format of the backing buffer of a [PdfiumBitmap].
