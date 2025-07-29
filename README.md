@@ -77,9 +77,30 @@ fn main() -> PdfiumResult<()> {
 }
 ```
 
+## Lifetimes
+
+The [quick start](#quick-start) example already shows PDFium-rs is easy with lifetimes: a `PdfiumDocument` can be stored in a struct without lifetime issues. The same applies to all other PDFium-rs structs.
+
+They are also clonable and the library will track their usage and close when possible, as shown below:
+
+```rust
+use pdfium::*;
+
+let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+let page = document.page(0).unwrap();
+drop(document); // Demonstrate that the page can be used after the document is dropped.
+let bitmap = page
+    .render_at_height(
+        1080,
+        PdfiumBitmapFormat::Bgra,
+        PdfiumRenderFlags::empty(),
+    ).unwrap();
+bitmap.save("groningen-drop-demo.png", image::ImageFormat::Png);
+```
+
 ## Using the PDFium C API
 
-This is the same example, but now using the C API of PDFium directly.
+This is the same example as the [quick start](#quick-start), but now using the C API of PDFium directly.
 
 - Using the C API is safe, no `unsafe` code blocks in your code
 - Access the C API through [`lib`] or [`try_lib`]
@@ -142,7 +163,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.7.0"  # Check crates.io for the latest version
+pdfium = "0.7.1"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

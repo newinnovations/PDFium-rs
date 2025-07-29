@@ -97,7 +97,9 @@ impl PdfiumDocument {
 
     /// Returns the [`PdfiumPage`] indicated by `index` from this [`PdfiumDocument`].
     pub fn page(&self, index: i32) -> PdfiumResult<PdfiumPage> {
-        lib().FPDF_LoadPage(self, index)
+        let mut page = lib().FPDF_LoadPage(self, index)?;
+        page.set_owner(self.clone());
+        Ok(page)
     }
 }
 

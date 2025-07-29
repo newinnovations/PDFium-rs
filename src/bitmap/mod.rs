@@ -194,6 +194,7 @@ mod tests {
     fn test_render_to_image() {
         let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
         let page = document.page(1).unwrap();
+        drop(document); // Demonstrate that the page can be used after the document is dropped.
         let bounds = page.boundaries().media().unwrap();
         let height = 1080;
         let scale = height as f32 / bounds.height();

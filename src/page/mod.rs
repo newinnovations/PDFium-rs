@@ -30,13 +30,14 @@ use crate::{
     page::boundaries::PdfiumPageBoundaries,
     pdfium_constants,
     pdfium_types::{Handle, PageHandle, FPDF_PAGE, FS_MATRIX, FS_RECTF},
-    PdfiumColor, PdfiumMatrix, PdfiumRect,
+    PdfiumColor, PdfiumDocument, PdfiumMatrix, PdfiumRect,
 };
 
 /// # Rust interface to FPDF_PAGE
 #[derive(Debug, Clone)]
 pub struct PdfiumPage {
     handle: PageHandle,
+    owner: Option<PdfiumDocument>,
 }
 
 use bitflags::bitflags;
@@ -83,8 +84,13 @@ impl PdfiumPage {
         } else {
             Ok(Self {
                 handle: Handle::new(handle, Some(close_page)),
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumDocument) {
+        self.owner = Some(owner);
     }
 
     pub fn boundaries(&self) -> PdfiumPageBoundaries {
