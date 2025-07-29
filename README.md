@@ -95,7 +95,7 @@ let bitmap = page
         PdfiumBitmapFormat::Bgra,
         PdfiumRenderFlags::empty(),
     ).unwrap();
-bitmap.save("groningen-drop-demo.png", image::ImageFormat::Png);
+bitmap.save("groningen-drop-demo.jpg", image::ImageFormat::Jpeg);
 ```
 
 ## Using the PDFium C API
@@ -163,7 +163,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.7.1"  # Check crates.io for the latest version
+pdfium = "0.7.2"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

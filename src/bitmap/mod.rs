@@ -116,7 +116,7 @@ impl PdfiumBitmap {
     }
 
     /// Returns a copy of this a bitmap as a [`DynamicImage::ImageRgba8`]
-    pub fn as_image(&self) -> PdfiumResult<DynamicImage> {
+    pub fn as_rgba8_image(&self) -> PdfiumResult<DynamicImage> {
         let rgba_bytes = self.as_rgba_bytes()?;
         match RgbaImage::from_raw(self.width() as u32, self.height() as u32, rgba_bytes) {
             Some(image) => Ok(DynamicImage::ImageRgba8(image)),
@@ -124,11 +124,23 @@ impl PdfiumBitmap {
         }
     }
 
+    /// Returns a copy of this a bitmap as a [`DynamicImage::ImageRgb8`]
+    pub fn as_rgb8_image(&self) -> PdfiumResult<DynamicImage> {
+        Ok(self
+            .as_rgba8_image()?
+            .into_rgb8() // Convert RGBA to RGB by dropping the alpha channel
+            .into())
+    }
+
     /// Saves this bitmap to the given path.
     ///
-    /// As the underlying image contains an alpha channel, the [`ImageFormat`] needs to support it.
+    /// Include alpha channel only if the [`ImageFormat`] supports it.
     pub fn save(&self, path: &str, format: ImageFormat) -> PdfiumResult<()> {
-        let image = self.as_image()?;
+        let image = if format == ImageFormat::Png {
+            self.as_rgba8_image()?
+        } else {
+            self.as_rgb8_image()?
+        };
         image
             .save_with_format(path, format)
             .or(Err(PdfiumError::ImageError))
