@@ -18,18 +18,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 pub mod reader;
+pub mod writer;
 
 use std::{
     ffi::CString,
     fmt::Debug,
     fs::File,
-    io::{Read, Seek},
+    io::{Cursor, Read, Seek, Write},
     path::Path,
     rc::Rc,
 };
 
 use crate::{
-    document::reader::PdfiumReader,
+    document::{reader::PdfiumReader, writer::PdfiumWriter},
     error::{PdfiumError, PdfiumResult},
     lib,
     page::PdfiumPage,
@@ -76,7 +77,7 @@ impl PdfiumDocument {
     }
 
     pub fn new_from_path<P: AsRef<Path>>(path: P, password: Option<&str>) -> PdfiumResult<Self> {
-        let reader = File::open(path).map_err(|e| PdfiumError::IoError(e.to_string()))?;
+        let reader = File::open(path)?;
         Self::new_from_reader(reader, password)
     }
 
@@ -91,6 +92,185 @@ impl PdfiumDocument {
         Self::new_from_handle(handle, Some(reader))
     }
 
+    /// Saves this [`PdfiumDocument`] to a file at the specified path.
+    ///
+    /// This is a convenience method that creates a new file at the given path and writes
+    /// the PDF document to it. The file will be created if it doesn't exist, or truncated
+    /// if it does exist.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - A path-like type (String, &str, Path, PathBuf, etc.) that specifies
+    ///   where to save the PDF file. Uses AsRef<Path> for maximum flexibility.
+    /// * `version` - Optional PDF version to save as. If None, saves as a copy of the
+    ///   original document preserving its version. If Some(version), converts
+    ///   the document to the specified PDF version (e.g., 14 for PDF 1.4).
+    ///
+    /// # Returns
+    ///
+    /// * `PdfiumResult<()>` - Ok(()) on success, or an error if file creation fails
+    ///   or the PDF save operation encounters an issue.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Save to current directory preserving original PDF version
+    /// document.save_to_path("document.pdf", None)?;
+    ///
+    /// // Save as PDF 1.4 to a specific path
+    /// document.save_to_path("document_v14.pdf", Some(14))?;
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function can fail if:
+    /// * The file cannot be created (permissions, invalid path, disk full, etc.)
+    /// * The underlying PDF save operation fails (corrupt document, unsupported features, etc.)
+    pub fn save_to_path<P: AsRef<Path>>(&self, path: P, version: Option<i32>) -> PdfiumResult<()> {
+        self.save_to_writer(File::create(path)?, version)?;
+        Ok(())
+    }
+
+    /// Saves this [`PdfiumDocument`] to a byte vector in memory.
+    ///
+    /// This method is useful when you need the PDF data as bytes rather than writing
+    /// directly to a file. Common use cases include:
+    /// * Serving PDF content over HTTP without creating temporary files
+    /// * Storing PDF data in a database as a BLOB
+    /// * Further processing the PDF bytes (compression, encryption, etc.)
+    /// * Testing scenarios where you want to verify PDF content
+    ///
+    /// # Arguments
+    ///
+    /// * `version` - Optional PDF version to save as. If None, preserves the original
+    ///   document's PDF version. If Some(version), converts to the specified
+    ///   version (e.g., 17 for PDF 1.7).
+    ///
+    /// # Returns
+    ///
+    /// * `PdfiumResult<Vec<u8>>` - On success, returns a Vec<u8> containing the complete
+    ///   PDF file data. On failure, returns a PdfiumResult error.
+    ///
+    /// # Memory Considerations
+    ///
+    /// The entire PDF is loaded into memory, so this method may use significant RAM
+    /// for large documents. Consider `save_to_writer()` with a streaming writer for
+    /// very large PDFs.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Get PDF bytes preserving original version
+    /// let pdf_bytes = document.save_to_bytes(None)?;
+    ///
+    /// // Convert to PDF 1.5 and get bytes
+    /// let pdf_v15_bytes = document.save_to_bytes(Some(15))?;
+    ///
+    /// // Use the bytes (e.g., send over HTTP)
+    /// response.set_body(pdf_bytes);
+    /// ```
+    pub fn save_to_bytes(&self, version: Option<i32>) -> PdfiumResult<Vec<u8>> {
+        let cursor = Cursor::new(Vec::new());
+        let cursor = self.save_to_writer(cursor, version)?;
+        Ok(cursor.into_inner())
+    }
+
+    /// Writes this [`PdfiumDocument`] to the given writer.
+    ///
+    /// This is the core implementation method that all other save methods delegate to.
+    /// It accepts any type that implements the Write trait, providing maximum flexibility
+    /// for different output destinations (files, network streams, in-memory buffers, etc.).
+    ///
+    /// The method wraps the provided writer in a PdfiumWriter, which handles
+    /// the low-level details of interfacing with the Pdfium C library, such as:
+    /// - Implements the callback interface expected by Pdfium's C API
+    /// - Handles buffering and error propagation
+    /// - Manages the lifetime and ownership of the underlying writer
+    ///
+    /// # Arguments
+    ///
+    /// * `writer` - Any type implementing Write + 'static. The 'static lifetime bound
+    ///   ensures the writer can be stored and moved around safely without
+    ///   lifetime issues. Common types include File, TcpStream, Cursor<Vec<u8>>, etc.
+    /// * `version` - Optional PDF version specification:
+    ///   - None: Save as copy preserving original document version and structure
+    ///   - Some(version): Convert document to specified PDF version (10-20 typical range)
+    ///
+    /// # Returns
+    ///
+    /// * `PdfiumResult<Box<W>>` - On success, returns the original writer wrapped in a Box.
+    ///   This allows you to continue using the writer after the save
+    ///   operation completes (e.g., to write additional data).
+    ///
+    /// # PDF Version Notes
+    ///
+    /// PDF versions are typically specified as integers:
+    /// * 10 = PDF 1.0, 11 = PDF 1.1, ..., 17 = PDF 1.7, 20 = PDF 2.0
+    /// * Converting to an older version may lose features not supported in that version
+    /// * Converting to a newer version may enable additional features but reduce compatibility
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Save to a file
+    /// let file = File::create("document.pdf")?;
+    /// let file = document.save_to_writer(file, None)?;
+    ///
+    /// // Save to a network stream
+    /// let stream = TcpStream::connect("server:8080")?;
+    /// let stream = document.save_to_writer(stream, Some(17))?;
+    ///
+    /// // Save to memory buffer
+    /// let buffer = Cursor::new(Vec::new());
+    /// let buffer = document.save_to_writer(buffer, None)?;
+    /// ```
+    ///
+    /// # Implementation Details
+    ///
+    /// The method uses the Pdfium library's C API functions:
+    /// * `FPDF_SaveWithVersion()` - When a specific version is requested
+    /// * `FPDF_SaveAsCopy()` - When preserving the original version
+    ///
+    /// Both functions use a callback-based approach where Pdfium calls back into our
+    /// PdfiumWriter to actually write the data chunks as they're generated.
+    pub fn save_to_writer<W: Write + 'static>(
+        &self,
+        writer: W,
+        version: Option<i32>,
+    ) -> PdfiumResult<Box<W>> {
+        // Set flags to 0 - this typically means "use default behavior" in Pdfium.
+        // Other flag values might control incremental updates, linearization,
+        // object stream compression, etc., but aren't used in this implementation.
+        let flags = 0;
+
+        let mut pdfium_writer = PdfiumWriter::new(writer);
+
+        // Choose the appropriate Pdfium API function based on whether a version was specified
+        match version {
+            Some(version) => {
+                // Save with a specific PDF version.
+                lib().FPDF_SaveWithVersion(
+                    self.into(),
+                    pdfium_writer.as_mut().into(),
+                    flags,
+                    version,
+                )
+            }
+            None => lib().FPDF_SaveAsCopy(self.into(), pdfium_writer.as_mut().into(), flags),
+        }?;
+
+        // Ensure all buffered data is written to the underlying writer.
+        // This is crucial because the PdfiumWriter may buffer data for performance,
+        // and we need to guarantee everything is written before returning.
+        pdfium_writer.flush()?;
+
+        // Extract and return the original writer. The take_writer() method
+        // consumes the PdfiumWriter and returns ownership of the wrapped writer,
+        // allowing the caller to continue using it if needed.
+        Ok(pdfium_writer.take_writer())
+    }
+
+    /// Returns the number of pages in this [`PdfiumDocument`].
     pub fn page_count(&self) -> i32 {
         lib().FPDF_GetPageCount(self)
     }
@@ -134,6 +314,15 @@ mod tests {
     #[test]
     fn test_page_count() {
         let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page_count = document.page_count();
+        assert_eq!(page_count, 2);
+    }
+
+    #[test]
+    fn test_doc_save() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        document.save_to_path("groningen_copy.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("groningen_copy.pdf", None).unwrap();
         let page_count = document.page_count();
         assert_eq!(page_count, 2);
     }

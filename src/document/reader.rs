@@ -61,7 +61,7 @@ impl PdfiumReader {
 /// for FFI purposes. This allows passing the file access structure to PDFium's C API.
 impl From<&mut PdfiumReader> for *mut FPDF_FILEACCESS {
     fn from(value: &mut PdfiumReader) -> Self {
-        unsafe { &mut *(&mut value.file_access_ptr as *mut FPDF_FILEACCESS) }
+        &mut value.file_access_ptr as *mut FPDF_FILEACCESS
     }
 }
 

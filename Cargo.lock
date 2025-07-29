@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "pdfium"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "bitflags 2.9.1",
  "image",

@@ -2,5 +2,6 @@
 libpdfium.so
 libpdfium.dylib
 pdfium.dll
-*.png
-*.jpg
+/*.pdf
+/*.png
+/*.jpg

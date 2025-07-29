@@ -422,6 +422,58 @@ impl Pdfium {
         unsafe { (self.fn_FPDF_GetDefaultTTFMapEntry)(index) }
     }
 
+    /// C documentation for FPDF_SaveAsCopy:
+    ///
+    /// ```text
+    /// Function: FPDF_SaveAsCopy
+    ///          Saves the copy of specified document in custom way.
+    /// Parameters:
+    ///          document        -   Handle to document, as returned by
+    ///                              FPDF_LoadDocument() or FPDF_CreateNewDocument().
+    ///          pFileWrite      -   A pointer to a custom file write structure.
+    ///          flags           -   Flags above that affect how the PDF gets saved.
+    ///                              Pass in 0 when there are no flags.
+    /// Return value:
+    ///          TRUE for succeed, FALSE for failed.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDF_SaveAsCopy(
+        &self,
+        document: FPDF_DOCUMENT,
+        pFileWrite: *mut FPDF_FILEWRITE,
+        flags: FPDF_DWORD,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe { (self.fn_FPDF_SaveAsCopy)(document, pFileWrite, flags) })
+    }
+
+    /// C documentation for FPDF_SaveWithVersion:
+    ///
+    /// ```text
+    /// Function: FPDF_SaveWithVersion
+    ///          Same as FPDF_SaveAsCopy(), except the file version of the
+    ///          saved document can be specified by the caller.
+    /// Parameters:
+    ///          document        -   Handle to document.
+    ///          pFileWrite      -   A pointer to a custom file write structure.
+    ///          flags           -   The creating flags.
+    ///          fileVersion     -   The PDF file version. File version: 14 for 1.4,
+    ///                              15 for 1.5, ...
+    /// Return value:
+    ///          TRUE if succeed, FALSE if failed.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDF_SaveWithVersion(
+        &self,
+        document: FPDF_DOCUMENT,
+        pFileWrite: *mut FPDF_FILEWRITE,
+        flags: FPDF_DWORD,
+        fileVersion: ::std::os::raw::c_int,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDF_SaveWithVersion)(document, pFileWrite, flags, fileVersion)
+        })
+    }
+
     /// C documentation for FPDF_SetSystemFontInfo:
     ///
     /// ```text

@@ -71,6 +71,12 @@ pub enum PdfiumError {
     ImageError,
 }
 
+impl From<std::io::Error> for PdfiumError {
+    fn from(err: std::io::Error) -> Self {
+        PdfiumError::IoError(err.to_string())
+    }
+}
+
 impl Error for PdfiumError {}
 
 impl Display for PdfiumError {
