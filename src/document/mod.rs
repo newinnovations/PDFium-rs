@@ -303,7 +303,6 @@ impl PdfiumDocument {
     ///   dest_doc. The first page is zero.
     ///
     /// Returns `Err` if any pages in `pagerange` is invalid or cannot be read.
-    /// ```
     #[inline]
     pub fn import_pages(
         &self,
@@ -325,7 +324,6 @@ impl PdfiumDocument {
     ///   into `dest_doc`. The first page is zero.
     ///
     /// Returns `Err` if any pages in `src_indices` is invalid or cannot be read.
-    /// ```
     #[inline]
     pub fn import_pages_by_index(
         &self,

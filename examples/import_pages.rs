@@ -102,7 +102,7 @@ pub fn example_import_pages_by_index() -> PdfiumResult<()> {
     // Import pages using explicit 0-based indices
     // Parameters breakdown:
     // - &src_doc: Reference to the source document
-    // - Some(&vec![11, 13, 29, 30, 31, 32, 33]): Vector of 0-based page indices
+    // - Some(&[11, 13, 29, 30, 31, 32, 33]): Vector of 0-based page indices
     //   * Index 11 = Page 12 in human numbering (11 + 1 = 12)
     //   * Index 13 = Page 14 in human numbering (13 + 1 = 14)
     //   * Indices 29-33 = Pages 30-34 in human numbering
@@ -128,7 +128,6 @@ pub fn example_import_pages_by_index() -> PdfiumResult<()> {
     // - 1 page at index 13 (page 14)
     // - 5 pages at indices 29-33 (pages 30-34)
     // Total: 7 pages
-
     assert_eq!(page_count, 7);
 
     Ok(())

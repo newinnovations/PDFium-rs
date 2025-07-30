@@ -1,22 +1,26 @@
 # How to use `PDFium-rs`
 
-PDFium-rs requires the PDFium dynamic library to be available on your system:
+PDFium-rs requires the PDFium dynamic library to be available:
 
 - **Linux**: `libpdfium.so`
 - **Windows**: `pdfium.dll`
 - **macOS**: `libpdfium.dylib`
 
-See the main `README.md` how to obtain and install these.
+See the main `README.md` how to obtain and install for your system.
 
-## export_pages_to_images.rs
+## Export pages to images
 
-Run with `cargo run --example export_pages_to_images`
+File: `export_pages.rs`
+
+Run with: `cargo run --example export_pages`
 
 - Exports all pages from a PDF document as individual JPEG images.
 
-## import_pages_into_doc.rs
+## Import pages from another document
 
-Run with `cargo run --example import_pages_into_doc`
+File: `import_pages.rs`
+
+Run with: `cargo run --example import_pages`
 
 - Demonstrates importing PDF pages using
   - *string*-based page specification
