@@ -22,7 +22,7 @@ pub mod writer;
 
 use std::{
     cell::OnceCell,
-    ffi::CString,
+    ffi::{c_ulong, CString},
     fmt::Debug,
     fs::File,
     io::{Cursor, Read, Seek, Write},
@@ -338,7 +338,7 @@ impl PdfiumDocument {
                 self.into(),
                 src_doc.into(),
                 indices.as_ptr(),
-                indices.len() as u64,
+                indices.len() as c_ulong,
                 index,
             ),
             None => lib().FPDF_ImportPagesByIndex(self.into(), src_doc.into(), null(), 0, index),
