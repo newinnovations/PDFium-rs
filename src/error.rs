@@ -19,6 +19,7 @@
 
 use std::{
     error::Error,
+    ffi::NulError,
     fmt::{Display, Formatter},
 };
 
@@ -69,11 +70,20 @@ pub enum PdfiumError {
 
     /// An error occurred in the image create
     ImageError,
+
+    /// An error indicating that an interior nul byte was found in a string.
+    NulError,
 }
 
 impl From<std::io::Error> for PdfiumError {
     fn from(err: std::io::Error) -> Self {
         PdfiumError::IoError(err.to_string())
+    }
+}
+
+impl From<NulError> for PdfiumError {
+    fn from(_err: NulError) -> Self {
+        PdfiumError::NulError
     }
 }
 

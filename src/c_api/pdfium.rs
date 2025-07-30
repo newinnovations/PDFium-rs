@@ -9121,44 +9121,6 @@ impl Pdfium {
         })
     }
 
-    /// C documentation for FPDF_ImportPagesByIndex:
-    ///
-    /// ```text
-    /// Experimental API.
-    /// Import pages to a FPDF_DOCUMENT.
-    ///
-    ///   dest_doc     - The destination document for the pages.
-    ///   src_doc      - The document to be imported.
-    ///   page_indices - An array of page indices to be imported. The first page is
-    ///                  zero. If |page_indices| is NULL, all pages from |src_doc|
-    ///                  are imported.
-    ///   length       - The length of the |page_indices| array.
-    ///   index        - The page index at which to insert the first imported page
-    ///                  into |dest_doc|. The first page is zero.
-    ///
-    /// Returns TRUE on success. Returns FALSE if any pages in |page_indices| is
-    /// invalid.
-    /// ```
-    #[inline]
-    pub fn FPDF_ImportPagesByIndex(
-        &self,
-        dest_doc: &PdfiumDocument,
-        src_doc: &PdfiumDocument,
-        page_indices: &i32,
-        length: c_ulong,
-        index: i32,
-    ) -> PdfiumResult<()> {
-        to_result(unsafe {
-            (self.fn_FPDF_ImportPagesByIndex)(
-                dest_doc.into(),
-                src_doc.into(),
-                page_indices,
-                length,
-                index,
-            )
-        })
-    }
-
     /// C documentation for FPDF_InitLibrary:
     ///
     /// ```text

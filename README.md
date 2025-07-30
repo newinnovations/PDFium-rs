@@ -157,13 +157,17 @@ fn main() -> PdfiumResult<()> {
 }
 ```
 
+## More examples
+
+You can find more information on how to use PDFium-rs in the `examples/` directory.
+
 ## Installation
 
 Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pdfium = "0.7.3"  # Check crates.io for the latest version
+pdfium = "0.8.0"  # Check crates.io for the latest version
 ```
 
 For the latest version, visit [crates.io](https://crates.io/crates/pdfium) or use `cargo search pdfium`.

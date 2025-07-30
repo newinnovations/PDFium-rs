@@ -422,6 +422,38 @@ impl Pdfium {
         unsafe { (self.fn_FPDF_GetDefaultTTFMapEntry)(index) }
     }
 
+    /// C documentation for FPDF_ImportPagesByIndex:
+    ///
+    /// ```text
+    /// Experimental API.
+    /// Import pages to a FPDF_DOCUMENT.
+    ///
+    ///   dest_doc     - The destination document for the pages.
+    ///   src_doc      - The document to be imported.
+    ///   page_indices - An array of page indices to be imported. The first page is
+    ///                  zero. If |page_indices| is NULL, all pages from |src_doc|
+    ///                  are imported.
+    ///   length       - The length of the |page_indices| array.
+    ///   index        - The page index at which to insert the first imported page
+    ///                  into |dest_doc|. The first page is zero.
+    ///
+    /// Returns TRUE on success. Returns FALSE if any pages in |page_indices| is
+    /// invalid.
+    /// ```
+    #[inline]
+    pub(crate) fn FPDF_ImportPagesByIndex(
+        &self,
+        dest_doc: FPDF_DOCUMENT,
+        src_doc: FPDF_DOCUMENT,
+        page_indices: *const ::std::os::raw::c_int,
+        length: ::std::os::raw::c_ulong,
+        index: ::std::os::raw::c_int,
+    ) -> PdfiumResult<()> {
+        to_result(unsafe {
+            (self.fn_FPDF_ImportPagesByIndex)(dest_doc, src_doc, page_indices, length, index)
+        })
+    }
+
     /// C documentation for FPDF_SaveAsCopy:
     ///
     /// ```text
