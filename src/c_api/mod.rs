@@ -39,7 +39,7 @@ use crate::{
         FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
     },
     pdfium_types::FPDF_LIBRARY_CONFIG,
-    PdfiumError,
+    PdfiumError, PdfiumResult,
 };
 
 impl Pdfium {
@@ -123,5 +123,27 @@ pub(crate) fn dl<'a, T>(
             eprintln!("== {e}");
             Err(PdfiumError::LibraryError(e))
         }
+    }
+}
+
+pub fn _i32_to_bool(i: i32) -> bool {
+    i != 0
+}
+
+pub fn i32_to_bool_result(i: i32) -> PdfiumResult<bool> {
+    if i == 0 {
+        Ok(false)
+    } else if i > 0 {
+        Ok(true)
+    } else {
+        Err(PdfiumError::InvokationFailed)
+    }
+}
+
+pub fn i32_to_result(i: i32) -> PdfiumResult<i32> {
+    if i < 0 {
+        Err(PdfiumError::InvokationFailed)
+    } else {
+        Ok(i)
     }
 }

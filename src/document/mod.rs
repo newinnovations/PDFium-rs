@@ -21,7 +21,6 @@ pub mod reader;
 pub mod writer;
 
 use std::{
-    cell::OnceCell,
     ffi::{c_ulong, CString},
     fmt::Debug,
     fs::File,
@@ -35,7 +34,7 @@ use crate::{
     document::{reader::PdfiumReader, writer::PdfiumWriter},
     error::{PdfiumError, PdfiumResult},
     lib,
-    page::PdfiumPage,
+    page::{pages::PdfiumPages, PdfiumPage},
     pdfium_types::{DocumentHandle, Handle, FPDF_DOCUMENT},
     try_lib,
 };
@@ -289,6 +288,7 @@ impl PdfiumDocument {
         Ok(page)
     }
 
+    /// Return an [`Iterator`] for the pages in this [`PdfiumDocument`].
     pub fn pages(&self) -> PdfiumPages {
         PdfiumPages::new(self)
     }
@@ -344,54 +344,6 @@ impl PdfiumDocument {
     }
 }
 
-/// Iterator for [`PdfiumPage`]
-pub struct PdfiumPages<'a> {
-    doc: &'a PdfiumDocument,
-    page_count: OnceCell<i32>,
-    current_page: i32,
-}
-
-impl<'a> PdfiumPages<'a> {
-    fn new(doc: &'a PdfiumDocument) -> PdfiumPages<'a> {
-        Self {
-            doc,
-            page_count: OnceCell::new(),
-            current_page: 0,
-        }
-    }
-
-    /// Returns the number of pages in the [`PdfiumDocument`].
-    ///
-    /// Use `len` instead of `count` as the latter will consume
-    /// the iterator and load all the pages in the process.
-    pub fn len(&self) -> i32 {
-        *self.page_count.get_or_init(|| self.doc.page_count())
-    }
-
-    /// Returns the [`PdfiumPage`] indicated by `index` from the [`PdfiumDocument`].
-    pub fn get(&self, index: i32) -> PdfiumResult<PdfiumPage> {
-        self.doc.page(index)
-    }
-}
-
-impl<'a> Iterator for PdfiumPages<'a> {
-    type Item = PdfiumPage;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current_page >= self.len() {
-            None
-        } else {
-            match self.doc.page(self.current_page) {
-                Ok(page) => {
-                    self.current_page += 1;
-                    Some(page)
-                }
-                Err(_) => None,
-            }
-        }
-    }
-}
-
 impl From<&PdfiumDocument> for FPDF_DOCUMENT {
     #[inline]
     fn from(value: &PdfiumDocument) -> Self {
@@ -427,10 +379,9 @@ mod tests {
         assert_eq!(page_count, 2);
 
         let pages = document.pages();
-        let page_count = pages.len();
+        let page_count = pages.page_count();
         assert_eq!(page_count, 2);
 
-        // Don't use this as it will load all the pages in the process
         let page_count = pages.count();
         assert_eq!(page_count, 2);
     }

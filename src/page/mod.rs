@@ -21,16 +21,17 @@ pub mod boundaries;
 pub mod link;
 pub mod object;
 pub mod object_mark;
+pub mod pages;
 pub mod range;
 
 use crate::{
     bitmap::{PdfiumBitmap, PdfiumBitmapFormat},
     error::{PdfiumError, PdfiumResult},
     lib,
-    page::boundaries::PdfiumPageBoundaries,
+    page::{boundaries::PdfiumPageBoundaries, object::objects::PdfiumPageObjects},
     pdfium_constants,
     pdfium_types::{Handle, PageHandle, FPDF_PAGE, FS_MATRIX, FS_RECTF},
-    PdfiumColor, PdfiumDocument, PdfiumMatrix, PdfiumRect,
+    PdfiumColor, PdfiumDocument, PdfiumMatrix, PdfiumPageObject, PdfiumRect,
 };
 
 /// # Rust interface to FPDF_PAGE
@@ -95,6 +96,23 @@ impl PdfiumPage {
 
     pub fn boundaries(&self) -> PdfiumPageBoundaries {
         PdfiumPageBoundaries::new(self)
+    }
+
+    /// Get number of page objects inside this [`PdfiumPage`].
+    pub fn object_count(&self) -> i32 {
+        lib().FPDFPage_CountObjects(self)
+    }
+
+    /// Returns the [`PdfiumPageObject`] indicated by `index` from this [`PdfiumPage`].
+    pub fn object(&self, index: i32) -> PdfiumResult<PdfiumPageObject> {
+        let mut object = lib().FPDFPage_GetObject(self, index)?;
+        object.set_owner(self.clone());
+        Ok(object)
+    }
+
+    /// Return an [`Iterator`] for the ojects in this [`PdfiumPage`].
+    pub fn objects(&self) -> PdfiumPageObjects {
+        PdfiumPageObjects::new(self)
     }
 
     /// Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] scaled to a specific height.

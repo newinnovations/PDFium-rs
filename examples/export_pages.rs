@@ -60,7 +60,7 @@ pub fn example_export_pages_to_images() -> PdfiumResult<()> {
         //   * Other options include: REVERSE_BYTE_ORDER, ANNOTATIONS, LCD_TEXT, etc.
         //   * Multiple flags can be combined
         let bitmap =
-            page.render_at_height(1080, PdfiumBitmapFormat::Bgra, PdfiumRenderFlags::empty())?;
+            page?.render_at_height(1080, PdfiumBitmapFormat::Bgra, PdfiumRenderFlags::empty())?;
 
         // Verify that the bitmap was rendered at the requested height
         // This assertion ensures the rendering process worked as expected

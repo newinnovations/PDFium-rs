@@ -17,36 +17,17 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{
-    error::{PdfiumError, PdfiumResult},
-    lib,
-    pdfium_types::{Handle, PageObjectHandle, FPDF_PAGEOBJECT},
-};
+use pdfium::*;
 
-/// # Rust interface to FPDF_PAGEOBJECT
-#[derive(Debug, Clone)]
-pub struct PdfiumPageObject {
-    handle: PageObjectHandle,
+pub fn example_extract_text() -> PdfiumResult<()> {
+    let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None)?;
+
+    for _page in document.pages() {}
+
+    Ok(())
 }
 
-impl PdfiumPageObject {
-    pub(crate) fn new_from_handle(handle: FPDF_PAGEOBJECT) -> PdfiumResult<Self> {
-        if handle.is_null() {
-            Err(PdfiumError::NullHandle)
-        } else {
-            Ok(Self {
-                handle: Handle::new(handle, Some(close_page_object)),
-            })
-        }
-    }
-}
-
-impl From<&PdfiumPageObject> for FPDF_PAGEOBJECT {
-    fn from(page_object: &PdfiumPageObject) -> Self {
-        page_object.handle.handle()
-    }
-}
-
-fn close_page_object(page_object: FPDF_PAGEOBJECT) {
-    lib().FPDFPageObj_Destroy(page_object);
+fn main() -> PdfiumResult<()> {
+    example_extract_text()?;
+    Ok(())
 }
