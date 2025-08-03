@@ -17,7 +17,10 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::os::raw::{c_ulong, c_ushort};
+use std::{
+    os::raw::{c_ulong, c_ushort},
+    vec,
+};
 
 use crate::{
     c_api::{i32_to_bool_result, i32_to_result},
@@ -44,79 +47,60 @@ impl PdfiumTextPage {
         }
     }
 
-    /// Function: FPDFLink_LoadWebLinks
-    /// Prepare information about weblinks in a page.
-    /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// Return Value:
-    /// A handle to the page's links information structure, or
-    /// NULL if something goes wrong.
-    /// Comments:
-    /// Weblinks are those links implicitly embedded in PDF pages. PDF also
-    /// has a type of annotation called "link" (FPDFTEXT doesn't deal with
-    /// that kind of link). FPDFTEXT weblink feature is useful for
-    /// automatically detecting links in the page contents. For example,
-    /// things like "https://www.example.com" will be detected, so
-    /// applications can allow user to click on those characters to activate
-    /// the link, even the PDF doesn't come with link annotations.
+    /// Get information about weblinks in a page.
     ///
-    /// FPDFLink_CloseWebLinks must be called to release resources.
+    /// Comments:
+    /// * Weblinks are those links implicitly embedded in PDF pages. PDF also
+    ///   has a type of annotation called "link" (FPDFTEXT doesn't deal with
+    ///   that kind of link). FPDFTEXT weblink feature is useful for
+    ///   automatically detecting links in the page contents. For example,
+    ///   things like "https://www.example.com" will be detected, so
+    ///   applications can allow user to click on those characters to activate
+    ///   the link, even the PDF doesn't come with link annotations.
     pub fn load_web_links(&self) -> PdfiumResult<PdfiumPageLink> {
         lib().FPDFLink_LoadWebLinks(self)
     }
 
-    /// Function: FPDFText_CountChars
     /// Get number of characters in a page.
-    /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// Return value:
-    /// Number of characters in the page. Return -1 for error.
+    ///
     /// Generated characters, like additional space characters, new line
     /// characters, are also counted.
+    ///
     /// Comments:
-    /// Characters in a page form a "stream", inside the stream, each
-    /// character has an index.
-    /// We will use the index parameters in many of FPDFTEXT functions. The
-    /// first character in the page
-    /// has an index value of zero.
-    pub fn count_chars(&self) -> i32 {
-        lib().FPDFText_CountChars(self)
+    /// * Characters in a page form a "stream", inside the stream, each
+    ///   character has an index. We will use the index parameters in many
+    ///   of FPDFTEXT functions. The first character in the page has an index
+    ///   value of zero.
+    pub fn char_count(&self) -> PdfiumResult<i32> {
+        i32_to_result(lib().FPDFText_CountChars(self))
     }
 
-    /// Function: FPDFText_CountRects
-    /// Counts number of rectangular areas occupied by a segment of text,
-    /// and caches the result for subsequent FPDFText_GetRect() calls.
+    /// Counts number of rectangular areas occupied by a segment of text
+    ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// start_index -   Index for the start character.
-    /// count       -   Number of characters, or -1 for all remaining.
-    /// Return value:
-    /// Number of rectangles, 0 if text_page is null, or -1 on bad
-    /// start_index.
+    /// * start_index -   Index for the start character.
+    /// * count       -   Number of characters, or -1 for all remaining.
+    ///
+    /// Returns:
+    /// * Number of rectangles, Err -1 on bad start_index.
+    ///
     /// Comments:
-    /// This function, along with FPDFText_GetRect can be used by
-    /// applications to detect the position on the page for a text segment,
-    /// so proper areas can be highlighted. The FPDFText_* functions will
-    /// automatically merge small character boxes into bigger one if those
-    /// characters are on the same line and use same font settings.
-    pub fn count_rects(&self, start_index: i32, count: i32) -> i32 {
-        lib().FPDFText_CountRects(self, start_index, count)
+    /// * This function, along with FPDFText_GetRect can be used by
+    ///   applications to detect the position on the page for a text segment,
+    ///   so proper areas can be highlighted. The FPDFText_* functions will
+    ///   automatically merge small character boxes into bigger one if those
+    ///   characters are on the same line and use same font settings.
+    /// * Caches the result for subsequent FPDFText_GetRect() calls.
+    pub fn count_rects(&self, start_index: i32, count: i32) -> PdfiumResult<i32> {
+        i32_to_result(lib().FPDFText_CountRects(self, start_index, count))
     }
 
-    /// Function: FPDFText_FindStart
     /// Start a search.
+    ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// findwhat    -   A unicode match pattern.
-    /// flags       -   Option flags.
-    /// start_index -   Start from this character. -1 for end of the page.
-    /// Return Value:
-    /// A handle for the search context. FPDFText_FindClose must be called
-    /// to release this handle.
+    /// * findwhat    -   A unicode match pattern.
+    /// * flags       -   Option flags.
+    /// * start_index -   Start from this character. -1 for end of the page.
     pub fn find_start(
         &self,
         findwhat: &str,
@@ -138,7 +122,7 @@ impl PdfiumTextPage {
     /// buffer      -   Caller-allocated buffer to receive UTF-16 values.
     /// buflen      -   Number of UTF-16 values (not bytes) that `buffer`
     /// is capable of holding.
-    /// Return Value:
+    /// Returns:
     /// If buffer is NULL or buflen is zero, return number of UTF-16
     /// values (not bytes) of text present within the rectangle, excluding
     /// a terminating NUL. Generally you should pass a buffer at least one
@@ -161,49 +145,43 @@ impl PdfiumTextPage {
         lib().FPDFText_GetBoundedText(self, left, top, right, bottom, buffer, buflen)
     }
 
-    /// Function: FPDFText_GetCharAngle
     /// Get character rotation angle.
+    ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// index       -   Zero-based index of the character.
-    /// Return Value:
+    /// * index       -   Zero-based index of the character.
+    ///
+    /// Returns:
     /// On success, return the angle value in radian. Value will always be
-    /// greater or equal to 0. If |text_page| is invalid, or if |index| is
-    /// out of bounds, then return -1.
+    /// greater or equal to 0. If |index| is out of bounds, then return -1.
     pub fn get_char_angle(&self, index: i32) -> f32 {
         lib().FPDFText_GetCharAngle(self, index)
     }
 
-    /// Function: FPDFText_GetCharBox
     /// Get bounding box of a particular character.
+    ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// index       -   Zero-based index of the character.
-    /// left        -   Pointer to a double number receiving left position
-    /// of the character box.
-    /// right       -   Pointer to a double number receiving right position
-    /// of the character box.
-    /// bottom      -   Pointer to a double number receiving bottom position
-    /// of the character box.
-    /// top         -   Pointer to a double number receiving top position of
-    /// the character box.
-    /// Return Value:
-    /// On success, return TRUE and fill in |left|, |right|, |bottom|, and
-    /// |top|. If |text_page| is invalid, or if |index| is out of bounds,
-    /// then return FALSE, and the out parameters remain unmodified.
+    /// * index       -   Zero-based index of the character.
+    ///
+    /// Returns:
+    /// * The position of the character box as FS_RECTF. An Err if |index|
+    ///   is out of bounds
+    ///
     /// Comments:
-    /// All positions are measured in PDF "user space".
-    pub fn get_char_box(
-        &self,
-        index: i32,
-        left: &mut f64,
-        right: &mut f64,
-        bottom: &mut f64,
-        top: &mut f64,
-    ) -> PdfiumResult<()> {
-        lib().FPDFText_GetCharBox(self, index, left, right, bottom, top)
+    /// * All positions are measured in PDF "user space"
+    pub fn get_char_box(&self, index: i32) -> PdfiumResult<FS_RECTF> {
+        let mut left = 0.0;
+        let mut right = 0.0;
+        let mut bottom = 0.0;
+        let mut top = 0.0;
+
+        lib().FPDFText_GetCharBox(self, index, &mut left, &mut right, &mut bottom, &mut top)?;
+
+        Ok(FS_RECTF {
+            left: left as f32,
+            top: top as f32,
+            right: right as f32,
+            bottom: bottom as f32,
+        })
     }
 
     /// Function: FPDFText_GetCharIndexAtPos
@@ -218,22 +196,21 @@ impl PdfiumTextPage {
     /// detection, in point units.
     /// yTolerance  -   A y-axis tolerance value for character hit
     /// detection, in point units.
-    /// Return Value:
+    /// Returns:
     /// The zero-based index of the character at, or nearby the point (x,y).
-    /// If there is no character at or nearby the point, return value will
+    /// If there is no character at or nearby the point, Returns will
     /// be -1. If an error occurs, -3 will be returned.
     pub fn get_char_index_at_pos(&self, x: f64, y: f64, x_tolerance: f64, y_tolerance: f64) -> i32 {
         lib().FPDFText_GetCharIndexAtPos(self, x, y, x_tolerance, y_tolerance)
     }
 
-    /// Get the character index in |text_page| internal character list.
+    /// Get the character index in this [`PdfiumTextPage`] internal character list.
     ///
-    /// text_page  - a text page information structure.
     /// nTextIndex - index of the text returned from FPDFText_GetText().
     ///
     /// Returns the index of the character in internal character list. -1 for error.
-    pub fn get_char_index_from_text_index(&self, n_text_index: i32) -> i32 {
-        lib().FPDFText_GetCharIndexFromTextIndex(self, n_text_index)
+    pub fn get_char_index_from_text_index(&self, n_text_index: i32) -> PdfiumResult<i32> {
+        i32_to_result(lib().FPDFText_GetCharIndexFromTextIndex(self, n_text_index))
     }
 
     /// Function: FPDFText_GetCharOrigin
@@ -246,7 +223,7 @@ impl PdfiumTextPage {
     /// the character origin.
     /// y           -   Pointer to a double number receiving y coordinate of
     /// the character origin.
-    /// Return Value:
+    /// Returns:
     /// Whether the call succeeded. If false, x and y are unchanged.
     /// Comments:
     /// All positions are measured in PDF "user space".
@@ -268,7 +245,7 @@ impl PdfiumTextPage {
     /// blue value of the fill color.
     /// A              -   Pointer to an unsigned int number receiving the
     /// alpha value of the fill color.
-    /// Return value:
+    /// Returns:
     /// Whether the call succeeded. If false, |R|, |G|, |B| and |A| are
     /// unchanged.
     pub fn get_fill_color(
@@ -293,7 +270,7 @@ impl PdfiumTextPage {
     /// flags     - Optional pointer to an int receiving the font flags.
     /// These flags should be interpreted per PDF spec 1.7
     /// Section 5.7.1 Font Descriptor Flags.
-    /// Return value:
+    /// Returns:
     /// On success, return the length of the font name, including the
     /// trailing NUL character, in bytes. If this length is less than or
     /// equal to |length|, |buffer| is set to the font name, |flags| is
@@ -315,7 +292,7 @@ impl PdfiumTextPage {
     /// text_page   -   Handle to a text page information structure.
     /// Returned by FPDFText_LoadPage function.
     /// index       -   Zero-based index of the character.
-    /// Return value:
+    /// Returns:
     /// The font size of the particular character, measured in points (about
     /// 1/72 inch). This is the typographic size of the font (so called
     /// "em size").
@@ -329,7 +306,7 @@ impl PdfiumTextPage {
     /// text_page   -   Handle to a text page information structure.
     /// Returned by FPDFText_LoadPage function.
     /// index       -   Zero-based index of the character.
-    /// Return value:
+    /// Returns:
     /// On success, return the font weight of the particular character. If
     /// |text_page| is invalid, if |index| is out of bounds, or if the
     /// character's text object is undefined, return -1.
@@ -346,7 +323,7 @@ impl PdfiumTextPage {
     /// Returned by FPDFText_LoadPage function.
     /// index       -   Zero-based index of the character.
     /// rect        -   Pointer to a FS_RECTF receiving the character box.
-    /// Return Value:
+    /// Returns:
     /// On success, return TRUE and fill in |rect|. If |text_page| is
     /// invalid, or if |index| is out of bounds, then return FALSE, and the
     /// |rect| out parameter remains unmodified.
@@ -364,7 +341,7 @@ impl PdfiumTextPage {
     /// index       -   Zero-based index of the character.
     /// matrix      -   Pointer to a FS_MATRIX receiving the transformation
     /// matrix.
-    /// Return Value:
+    /// Returns:
     /// On success, return TRUE and fill in |matrix|. If |text_page| is
     /// invalid, or if |index| is out of bounds, or if |matrix| is NULL,
     /// then return FALSE, and |matrix| remains unmodified.
@@ -387,7 +364,7 @@ impl PdfiumTextPage {
     /// right boundary.
     /// bottom      -   Pointer to a double value receiving the rectangle
     /// bottom boundary.
-    /// Return Value:
+    /// Returns:
     /// On success, return TRUE and fill in |left|, |top|, |right|, and
     /// |bottom|. If |text_page| is invalid then return FALSE, and the out
     /// parameters remain unmodified. If |text_page| is valid but
@@ -418,7 +395,7 @@ impl PdfiumTextPage {
     /// blue value of the stroke color.
     /// A              -   Pointer to an unsigned int number receiving the
     /// alpha value of the stroke color.
-    /// Return value:
+    /// Returns:
     /// Whether the call succeeded. If false, |R|, |G|, |B| and |A| are
     /// unchanged.
     pub fn get_stroke_color(
@@ -432,32 +409,53 @@ impl PdfiumTextPage {
         lib().FPDFText_GetStrokeColor(self, index, r, g, b, a)
     }
 
-    /// Function: FPDFText_GetText
-    /// Extract unicode text string from the page.
+    /// Extract unicode text section from the page as string.
+    ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// start_index -   Index for the start characters.
-    /// count       -   Number of UCS-2 values to be extracted.
-    /// result      -   A buffer (allocated by application) receiving the
-    /// extracted UCS-2 values. The buffer must be able to
-    /// hold `count` UCS-2 values plus a terminator.
-    /// Return Value:
-    /// Number of characters written into the result buffer, including the
-    /// trailing terminator.
+    /// * start_index -   Index for the start characters.
+    /// * count       -   Number of UCS-2 values to be extracted.
+    ///
+    /// Returns:
+    /// * String containing the requested text part
+    ///
     /// Comments:
-    /// This function ignores characters without UCS-2 representations.
-    /// It considers all characters on the page, even those that are not
-    /// visible when the page has a cropbox. To filter out the characters
-    /// outside of the cropbox, use FPDF_GetPageBoundingBox() and
-    /// FPDFText_GetCharBox().
-    pub fn get_text(&self, start_index: i32, count: i32, result: &mut c_ushort) -> i32 {
-        lib().FPDFText_GetText(self, start_index, count, result)
+    /// * UTF-16 and UCS-2 are both character encoding schemes for representing Unicode text
+    ///   * UCS-2: stands for Universal Character Set-2
+    ///     - Fixed-length encoding that uses 2 bytes (16 bits) per character.
+    ///     - Supports only the Basic Multilingual Plane (BMP), which includes Unicode code points
+    ///       from U+0000 to U+FFFF (65,536 characters).
+    ///   * UTF-16: stands for Unicode Transformation Format-16.
+    ///     - Variable-length encoding that uses 2 or 4 bytes per character.
+    ///     - Can represent all Unicode code points (U+0000 to U+10FFFF), including those outside the BMP
+    ///     - Backward compatible with UCS-2 for BMP characters, as they are encoded identically
+    /// * If the page contains UTF-16 4-byte characters they are handled as two UCS-2 values, and may get
+    ///   split up depending on `start_index` and `count`. This will result into an invalid UTF-16
+    ///   character and returned as `REPLACEMENT_CHARACTER`. See the test-case.
+    /// * This function ignores characters without UCS-2 representations.
+    ///   It considers all characters on the page, even those that are not
+    ///   visible when the page has a cropbox. To filter out the characters
+    ///   outside of the cropbox, use FPDF_GetPageBoundingBox() and
+    ///   FPDFText_GetCharBox().
+    pub fn extract(&self, start_index: i32, count: i32) -> String {
+        if count < 1 {
+            return String::default();
+        }
+        let mut vec_utf16 = vec![0u16; count as usize + 1];
+        let num = lib().FPDFText_GetText(self.into(), start_index, count, vec_utf16.as_mut_ptr());
+        if num < 1 {
+            return String::default();
+        }
+        let vec_utf16 = &vec_utf16[..num as usize - 1];
+        String::from_utf16_lossy(vec_utf16)
     }
 
-    /// Get the text index in |text_page| internal character list.
+    /// Gets the full text of the page as string.
+    pub fn full(&self) -> String {
+        self.extract(0, self.char_count().unwrap_or_default())
+    }
+
+    /// Get the text index in this [`PdfiumTextPage`] internal character list.
     ///
-    /// text_page  - a text page information structure.
     /// nCharIndex - index of the character in internal character list.
     ///
     /// Returns the index of the text returned from FPDFText_GetText(). -1 for error.
@@ -470,29 +468,28 @@ impl PdfiumTextPage {
     /// Get the FPDF_PAGEOBJECT associated with a given character.
     ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// index       -   Zero-based index of the character.
+    /// * index       -   Zero-based index of the character.
     ///
-    /// Return value:
-    /// The associated text object for the character at |index|, or NULL on
-    /// error. The returned text object, if non-null, is of type
-    /// |FPDF_PAGEOBJ_TEXT|. The caller does not own the returned object.
+    /// Returns:
+    /// * The associated text object for the character at |index|, or NULL on
+    ///   error. The returned text object, if non-null, is of type
+    ///   |FPDF_PAGEOBJ_TEXT|. The caller does not own the returned object.
     pub fn get_text_object(&self, index: i32) -> PdfiumResult<PdfiumPageObject> {
         lib().FPDFText_GetTextObject(self, index)
     }
 
-    /// Function: FPDFText_GetUnicode
     /// Get Unicode of a character in a page.
+    ///
     /// Parameters:
-    /// text_page   -   Handle to a text page information structure.
-    /// Returned by FPDFText_LoadPage function.
-    /// index       -   Zero-based index of the character.
-    /// Return value:
-    /// The Unicode of the particular character.
-    /// If a character is not encoded in Unicode and Foxit engine can't
-    /// convert to Unicode,
-    /// the return value will be zero.
+    /// * index       -   Zero-based index of the character.
+    ///
+    /// Returns:
+    /// * The Unicode of the particular character.
+    ///
+    /// Notes:
+    /// * If a character is not encoded in Unicode and Foxit engine can't
+    ///   convert to Unicode, the Returns will be zero.
+    /// * This does not support UTF-16 4-byte characters
     pub fn get_unicode(&self, index: i32) -> u32 {
         lib().FPDFText_GetUnicode(self, index)
     }
@@ -503,7 +500,7 @@ impl PdfiumTextPage {
     /// text_page   -   Handle to a text page information structure.
     /// Returned by FPDFText_LoadPage function.
     /// index       -   Zero-based index of the character.
-    /// Return value:
+    /// Returns:
     /// 1 if the character has an invalid unicode mapping.
     /// 0 if the character has no known unicode mapping issues.
     /// -1 if there was an error.
@@ -517,7 +514,7 @@ impl PdfiumTextPage {
     /// text_page   -   Handle to a text page information structure.
     /// Returned by FPDFText_LoadPage function.
     /// index       -   Zero-based index of the character.
-    /// Return value:
+    /// Returns:
     /// 1 if the character is generated by PDFium.
     /// 0 if the character is not generated by PDFium.
     /// -1 if there was an error.
@@ -531,7 +528,7 @@ impl PdfiumTextPage {
     /// text_page   -   Handle to a text page information structure.
     /// Returned by FPDFText_LoadPage function.
     /// index       -   Zero-based index of the character.
-    /// Return value:
+    /// Returns:
     /// 1 if the character is a hyphen.
     /// 0 if the character is not a hyphen.
     /// -1 if there was an error.
@@ -548,4 +545,50 @@ impl From<&PdfiumTextPage> for FPDF_TEXTPAGE {
 
 fn close_text_page(text_page: FPDF_TEXTPAGE) {
     lib().FPDFText_ClosePage(text_page);
+}
+
+#[cfg(test)]
+mod tests {
+    use std::char::REPLACEMENT_CHARACTER;
+
+    use crate::*;
+
+    #[test]
+    fn test_text_page() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+
+        let page = document.page(0).unwrap();
+
+        let text = page.text().unwrap();
+
+        let num_chars = text.char_count().unwrap();
+
+        assert_eq!(num_chars, 1102);
+
+        let t = text.extract(0, 27);
+        assert_eq!(t, "🌟 Welcome to Groningen! 🌟");
+        assert_eq!(t.chars().count(), 25);
+        assert_eq!(t.len(), 31);
+
+        let t = text.extract(0, 1);
+        assert_eq!(t.chars().next().unwrap(), REPLACEMENT_CHARACTER);
+        assert_eq!(t.chars().count(), 1);
+        assert_eq!(t.len(), 3);
+
+        let t = text.extract(0, 2);
+        assert_eq!(t.chars().next().unwrap() as u32, 0x1F31F); // Glowing Star
+        assert_eq!(t.chars().count(), 1);
+        assert_eq!(t.len(), 4);
+
+        let t = text.extract(1091, 100);
+        assert_eq!(t, "Netherlands");
+        assert_eq!(t.chars().count(), 11);
+        assert_eq!(t.len(), 11);
+
+        let t = text.extract(1200, 100);
+        assert_eq!(t, "");
+
+        let full = text.full();
+        println!("{full}")
+    }
 }

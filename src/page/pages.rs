@@ -17,9 +17,9 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::cell::OnceCell;
+use std::{cell::OnceCell, ffi::CString, os::raw::c_ulong, ptr::null};
 
-use crate::{PdfiumDocument, PdfiumPage, PdfiumResult};
+use crate::{lib, PdfiumDocument, PdfiumPage, PdfiumResult};
 
 /// Iterator for [`PdfiumPage`]
 pub struct PdfiumPages<'a> {
@@ -45,6 +45,58 @@ impl<'a> PdfiumPages<'a> {
     /// Returns the [`PdfiumPage`] indicated by `index` from the [`PdfiumDocument`].
     pub fn get(&self, index: i32) -> PdfiumResult<PdfiumPage> {
         self.doc.page(index)
+    }
+
+    /// Import pages to this [`PdfiumDocument`].
+    ///
+    /// # Arguments
+    /// * `src_doc` - The document to be imported.
+    /// * `pagerange` - A page range string, Such as "1,3,5-7". The first page is one.
+    ///   If `pagerange` is empty, all pages from `src_doc` are imported.
+    /// * index - The page index at which to insert the first imported page into
+    ///   dest_doc. The first page is zero.
+    ///
+    /// Returns `Err` if any pages in `pagerange` is invalid or cannot be read.
+    #[inline]
+    pub fn import(
+        &self,
+        src_doc: &PdfiumDocument,
+        pagerange: &str,
+        index: i32,
+    ) -> PdfiumResult<()> {
+        let pagerange = CString::new(pagerange)?;
+        lib().FPDF_ImportPages(self.doc, src_doc, &pagerange, index)
+    }
+
+    /// Import pages to this [`PdfiumDocument`] by index.
+    ///
+    /// # Arguments
+    /// * `src_doc` - The document to be imported.
+    /// * `src_indices` - An array of page indices to be imported. The first page is
+    ///   zero. If `src_indices` is None, all pages from `src_doc` are imported.
+    /// * `index` - The page index at which to insert the first imported page
+    ///   into `dest_doc`. The first page is zero.
+    ///
+    /// Returns `Err` if any pages in `src_indices` is invalid or cannot be read.
+    #[inline]
+    pub fn import_by_index(
+        &self,
+        src_doc: &PdfiumDocument,
+        src_indices: Option<&[i32]>,
+        index: i32,
+    ) -> PdfiumResult<()> {
+        match src_indices {
+            Some(indices) => lib().FPDF_ImportPagesByIndex(
+                self.doc.into(),
+                src_doc.into(),
+                indices.as_ptr(),
+                indices.len() as c_ulong,
+                index,
+            ),
+            None => {
+                lib().FPDF_ImportPagesByIndex(self.doc.into(), src_doc.into(), null(), 0, index)
+            }
+        }
     }
 }
 
@@ -111,5 +163,30 @@ mod tests {
 
         assert_eq!(pages.page_count(), 2);
         assert_eq!(pages.count(), 1); // remaining in iterator
+    }
+
+    #[test]
+    fn test_import_pages() {
+        let document = PdfiumDocument::new().unwrap();
+        let src_doc = PdfiumDocument::new_from_path("resources/pg1342-images-3.pdf", None).unwrap();
+        document.pages().import(&src_doc, "12,14,30-34", 0).unwrap();
+        document.save_to_path("pride-1.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("pride-1.pdf", None).unwrap();
+        let page_count = document.page_count();
+        assert_eq!(page_count, 7);
+    }
+
+    #[test]
+    fn test_import_pages_by_index() {
+        let document = PdfiumDocument::new().unwrap();
+        let src_doc = PdfiumDocument::new_from_path("resources/pg1342-images-3.pdf", None).unwrap();
+        document
+            .pages()
+            .import_by_index(&src_doc, Some(&[11, 13, 29, 30, 31, 32, 33]), 0)
+            .unwrap();
+        document.save_to_path("pride-2.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("pride-2.pdf", None).unwrap();
+        let page_count = document.page_count();
+        assert_eq!(page_count, 7);
     }
 }

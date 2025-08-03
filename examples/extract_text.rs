@@ -20,9 +20,16 @@
 use pdfium::*;
 
 pub fn example_extract_text() -> PdfiumResult<()> {
-    let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None)?;
+    let document = PdfiumDocument::new_from_path("resources/chapter1.pdf", None)?;
 
-    for _page in document.pages() {}
+    for (index, page) in document.pages().enumerate() {
+        let text = page?.text()?.full();
+
+        println!("Page {}", index + 1);
+        println!("------");
+        println!("{text}");
+        println!()
+    }
 
     Ok(())
 }

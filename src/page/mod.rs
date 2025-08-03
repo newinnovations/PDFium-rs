@@ -20,9 +20,9 @@
 pub mod boundaries;
 pub mod link;
 pub mod object;
-pub mod object_mark;
 pub mod pages;
 pub mod range;
+pub mod text;
 
 use crate::{
     bitmap::{PdfiumBitmap, PdfiumBitmapFormat},
@@ -31,7 +31,7 @@ use crate::{
     page::{boundaries::PdfiumPageBoundaries, object::objects::PdfiumPageObjects},
     pdfium_constants,
     pdfium_types::{Handle, PageHandle, FPDF_PAGE, FS_MATRIX, FS_RECTF},
-    PdfiumColor, PdfiumDocument, PdfiumMatrix, PdfiumPageObject, PdfiumRect,
+    PdfiumColor, PdfiumDocument, PdfiumMatrix, PdfiumPageObject, PdfiumRect, PdfiumTextPage,
 };
 
 /// # Rust interface to FPDF_PAGE
@@ -113,6 +113,13 @@ impl PdfiumPage {
     /// Return an [`Iterator`] for the ojects in this [`PdfiumPage`].
     pub fn objects(&self) -> PdfiumPageObjects {
         PdfiumPageObjects::new(self)
+    }
+
+    /// Get text page information structure
+    ///
+    /// Contains information about all characters in a page.
+    pub fn text(&self) -> PdfiumResult<PdfiumTextPage> {
+        lib().FPDFText_LoadPage(self)
     }
 
     /// Renders this [`PdfiumPage`] into a new [`PdfiumBitmap`] scaled to a specific height.

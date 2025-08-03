@@ -57,7 +57,7 @@ pub fn example_import_pages() -> PdfiumResult<()> {
     // - 0: Index position where imported pages should be inserted
     //   * 0 means insert at the beginning of the destination document
     //   * If the destination had existing pages, imported pages would be inserted before them
-    document.import_pages(&src_doc, "12,14,30-34", 0)?;
+    document.pages().import(&src_doc, "12,14,30-34", 0)?;
 
     // Save the destination document with imported pages to a new file
     // The second parameter (None) indicates we're not specifying a version
@@ -110,7 +110,9 @@ pub fn example_import_pages_by_index() -> PdfiumResult<()> {
     //   * The Some() wrapper indicates we're providing a specific list of indices
     //   * Using None instead would import all pages from the source document
     // - 0: Insertion position (beginning of destination document)
-    document.import_pages_by_index(&src_doc, Some(&[11, 13, 29, 30, 31, 32, 33]), 0)?;
+    document
+        .pages()
+        .import_by_index(&src_doc, Some(&[11, 13, 29, 30, 31, 32, 33]), 0)?;
 
     // Save the document with a different filename to distinguish from the first example
     // Even though the content should be identical, using different names helps with testing

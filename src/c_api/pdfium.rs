@@ -7782,40 +7782,6 @@ impl Pdfium {
         to_result(unsafe { (self.fn_FPDFText_GetStrokeColor)(text_page.into(), index, R, G, B, A) })
     }
 
-    /// C documentation for FPDFText_GetText:
-    ///
-    /// ```text
-    /// Function: FPDFText_GetText
-    ///          Extract unicode text string from the page.
-    /// Parameters:
-    ///          text_page   -   Handle to a text page information structure.
-    ///                          Returned by FPDFText_LoadPage function.
-    ///          start_index -   Index for the start characters.
-    ///          count       -   Number of UCS-2 values to be extracted.
-    ///          result      -   A buffer (allocated by application) receiving the
-    ///                          extracted UCS-2 values. The buffer must be able to
-    ///                          hold `count` UCS-2 values plus a terminator.
-    /// Return Value:
-    ///          Number of characters written into the result buffer, including the
-    ///          trailing terminator.
-    /// Comments:
-    ///          This function ignores characters without UCS-2 representations.
-    ///          It considers all characters on the page, even those that are not
-    ///          visible when the page has a cropbox. To filter out the characters
-    ///          outside of the cropbox, use FPDF_GetPageBoundingBox() and
-    ///          FPDFText_GetCharBox().
-    /// ```
-    #[inline]
-    pub fn FPDFText_GetText(
-        &self,
-        text_page: &PdfiumTextPage,
-        start_index: i32,
-        count: i32,
-        result: &mut c_ushort,
-    ) -> i32 {
-        unsafe { (self.fn_FPDFText_GetText)(text_page.into(), start_index, count, result) }
-    }
-
     /// C documentation for FPDFText_GetTextIndexFromCharIndex:
     ///
     /// ```text

@@ -25,3 +25,11 @@ Run with: `cargo run --example import_pages`
 - Demonstrates importing PDF pages using
   - *string*-based page specification
   - *index*-based page specification
+
+## Extract text from documents
+
+File: `extract_text.rs`
+
+Run with: `cargo run --example extract_text`
+
+- Demonstrates extracting text from PDF documents

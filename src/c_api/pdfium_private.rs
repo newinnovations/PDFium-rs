@@ -289,6 +289,40 @@ impl Pdfium {
         unsafe { (self.fn_FPDFText_FindClose)(handle) }
     }
 
+    /// C documentation for FPDFText_GetText:
+    ///
+    /// ```text
+    /// Function: FPDFText_GetText
+    ///          Extract unicode text string from the page.
+    /// Parameters:
+    ///          text_page   -   Handle to a text page information structure.
+    ///                          Returned by FPDFText_LoadPage function.
+    ///          start_index -   Index for the start characters.
+    ///          count       -   Number of UCS-2 values to be extracted.
+    ///          result      -   A buffer (allocated by application) receiving the
+    ///                          extracted UCS-2 values. The buffer must be able to
+    ///                          hold `count` UCS-2 values plus a terminator.
+    /// Return Value:
+    ///          Number of characters written into the result buffer, including the
+    ///          trailing terminator.
+    /// Comments:
+    ///          This function ignores characters without UCS-2 representations.
+    ///          It considers all characters on the page, even those that are not
+    ///          visible when the page has a cropbox. To filter out the characters
+    ///          outside of the cropbox, use FPDF_GetPageBoundingBox() and
+    ///          FPDFText_GetCharBox().
+    /// ```
+    #[inline]
+    pub(crate) fn FPDFText_GetText(
+        &self,
+        text_page: FPDF_TEXTPAGE,
+        start_index: ::std::os::raw::c_int,
+        count: ::std::os::raw::c_int,
+        result: *mut ::std::os::raw::c_ushort,
+    ) -> i32 {
+        unsafe { (self.fn_FPDFText_GetText)(text_page, start_index, count, result) }
+    }
+
     /// C documentation for FPDF_CloseDocument:
     ///
     /// ```text
