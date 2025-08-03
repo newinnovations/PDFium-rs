@@ -549,7 +549,7 @@ fn close_text_page(text_page: FPDF_TEXTPAGE) {
 
 #[cfg(test)]
 mod tests {
-    use std::char::REPLACEMENT_CHARACTER;
+    use std::{char::REPLACEMENT_CHARACTER, fs};
 
     use crate::*;
 
@@ -596,5 +596,8 @@ mod tests {
 
         let t = text.extract(1200, 100);
         assert_eq!(t, "");
+
+        let full_text = text.full();
+        fs::write("groningen-page-1-full.txt", full_text).unwrap();
     }
 }

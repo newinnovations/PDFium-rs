@@ -66,3 +66,6 @@ jobs:
           name: pdfium-rs-output-${{ matrix.os }}
           path: |
             *.png
+            *.jpg
+            *.pdf
+            *.txt
