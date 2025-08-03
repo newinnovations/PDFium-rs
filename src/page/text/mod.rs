@@ -17,6 +17,8 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+pub mod search;
+
 use std::{
     os::raw::{c_ulong, c_ushort},
     vec,
@@ -26,8 +28,9 @@ use crate::{
     c_api::{i32_to_bool_result, i32_to_result},
     error::{PdfiumError, PdfiumResult},
     lib,
+    page::text::search::PdfiumSearchFlags,
     pdfium_types::{Handle, TextPageHandle, FPDF_TEXTPAGE, FS_MATRIX, FS_RECTF},
-    PdfiumPageLink, PdfiumPageObject, PdfiumSearch,
+    PdfiumPageLink, PdfiumPageObject, PdfiumRect, PdfiumSearch,
 };
 
 /// # Rust interface to FPDF_TEXTPAGE
@@ -54,7 +57,7 @@ impl PdfiumTextPage {
     ///   has a type of annotation called "link" (FPDFTEXT doesn't deal with
     ///   that kind of link). FPDFTEXT weblink feature is useful for
     ///   automatically detecting links in the page contents. For example,
-    ///   things like "https://www.example.com" will be detected, so
+    ///   things like <https://www.example.com> will be detected, so
     ///   applications can allow user to click on those characters to activate
     ///   the link, even the PDF doesn't come with link annotations.
     pub fn load_web_links(&self) -> PdfiumResult<PdfiumPageLink> {
@@ -104,10 +107,10 @@ impl PdfiumTextPage {
     pub fn find_start(
         &self,
         findwhat: &str,
-        flags: c_ulong,
+        flags: PdfiumSearchFlags,
         start_index: i32,
     ) -> PdfiumResult<PdfiumSearch> {
-        lib().FPDFText_FindStart(self, findwhat, flags, start_index)
+        lib().FPDFText_FindStart(self, findwhat, flags.bits() as c_ulong, start_index)
     }
 
     /// Function: FPDFText_GetBoundedText
@@ -152,7 +155,7 @@ impl PdfiumTextPage {
     ///
     /// Returns:
     /// On success, return the angle value in radian. Value will always be
-    /// greater or equal to 0. If |index| is out of bounds, then return -1.
+    /// greater or equal to 0. If `index` is out of bounds, then return -1.
     pub fn get_char_angle(&self, index: i32) -> f32 {
         lib().FPDFText_GetCharAngle(self, index)
     }
@@ -163,12 +166,12 @@ impl PdfiumTextPage {
     /// * index       -   Zero-based index of the character.
     ///
     /// Returns:
-    /// * The position of the character box as FS_RECTF. An Err if |index|
+    /// * The position of the character box as PdfiumRect. An Err if `index`
     ///   is out of bounds
     ///
     /// Comments:
     /// * All positions are measured in PDF "user space"
-    pub fn get_char_box(&self, index: i32) -> PdfiumResult<FS_RECTF> {
+    pub fn get_char_box(&self, index: i32) -> PdfiumResult<PdfiumRect> {
         let mut left = 0.0;
         let mut right = 0.0;
         let mut bottom = 0.0;
@@ -176,7 +179,7 @@ impl PdfiumTextPage {
 
         lib().FPDFText_GetCharBox(self, index, &mut left, &mut right, &mut bottom, &mut top)?;
 
-        Ok(FS_RECTF {
+        Ok(PdfiumRect {
             left: left as f32,
             top: top as f32,
             right: right as f32,
@@ -308,7 +311,7 @@ impl PdfiumTextPage {
     /// index       -   Zero-based index of the character.
     /// Returns:
     /// On success, return the font weight of the particular character. If
-    /// |text_page| is invalid, if |index| is out of bounds, or if the
+    /// |text_page| is invalid, if `index` is out of bounds, or if the
     /// character's text object is undefined, return -1.
     pub fn get_font_weight(&self, index: i32) -> PdfiumResult<i32> {
         i32_to_result(lib().FPDFText_GetFontWeight(self, index))
@@ -325,7 +328,7 @@ impl PdfiumTextPage {
     /// rect        -   Pointer to a FS_RECTF receiving the character box.
     /// Returns:
     /// On success, return TRUE and fill in |rect|. If |text_page| is
-    /// invalid, or if |index| is out of bounds, then return FALSE, and the
+    /// invalid, or if `index` is out of bounds, then return FALSE, and the
     /// |rect| out parameter remains unmodified.
     /// Comments:
     /// All positions are measured in PDF "user space".
@@ -343,7 +346,7 @@ impl PdfiumTextPage {
     /// matrix.
     /// Returns:
     /// On success, return TRUE and fill in |matrix|. If |text_page| is
-    /// invalid, or if |index| is out of bounds, or if |matrix| is NULL,
+    /// invalid, or if `index` is out of bounds, or if |matrix| is NULL,
     /// then return FALSE, and |matrix| remains unmodified.
     pub fn get_matrix(&self, index: i32, matrix: &mut FS_MATRIX) -> PdfiumResult<()> {
         lib().FPDFText_GetMatrix(self, index, matrix)
@@ -471,7 +474,7 @@ impl PdfiumTextPage {
     /// * index       -   Zero-based index of the character.
     ///
     /// Returns:
-    /// * The associated text object for the character at |index|, or NULL on
+    /// * The associated text object for the character at `index`, or NULL on
     ///   error. The returned text object, if non-null, is of type
     ///   |FPDF_PAGEOBJ_TEXT|. The caller does not own the returned object.
     pub fn get_text_object(&self, index: i32) -> PdfiumResult<PdfiumPageObject> {

@@ -106,7 +106,7 @@ impl PdfiumDocument {
     /// # Arguments
     ///
     /// * `path` - A path-like type (String, &str, Path, PathBuf, etc.) that specifies
-    ///   where to save the PDF file. Uses AsRef<Path> for maximum flexibility.
+    ///   where to save the PDF file. Uses `AsRef<Path>` for maximum flexibility.
     /// * `version` - Optional PDF version to save as. If None, saves as a copy of the
     ///   original document preserving its version. If Some(version), converts
     ///   the document to the specified PDF version (e.g., 14 for PDF 1.4).
@@ -153,7 +153,7 @@ impl PdfiumDocument {
     ///
     /// # Returns
     ///
-    /// * `PdfiumResult<Vec<u8>>` - On success, returns a Vec<u8> containing the complete
+    /// * `PdfiumResult<Vec<u8>>` - On success, returns a `Vec<u8>` containing the complete
     ///   PDF file data. On failure, returns a PdfiumResult error.
     ///
     /// # Memory Considerations
@@ -196,7 +196,7 @@ impl PdfiumDocument {
     ///
     /// * `writer` - Any type implementing Write + 'static. The 'static lifetime bound
     ///   ensures the writer can be stored and moved around safely without
-    ///   lifetime issues. Common types include File, TcpStream, Cursor<Vec<u8>>, etc.
+    ///   lifetime issues. Common types include `File`, `TcpStream`, `Cursor<Vec<u8>>`, etc.
     /// * `version` - Optional PDF version specification:
     ///   - None: Save as copy preserving original document version and structure
     ///   - Some(version): Convert document to specified PDF version (10-20 typical range)
