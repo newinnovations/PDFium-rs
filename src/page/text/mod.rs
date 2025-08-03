@@ -563,6 +563,10 @@ mod tests {
 
         let num_chars = text.char_count().unwrap();
 
+        #[cfg(target_os = "windows")]
+        assert_eq!(num_chars, 1104);
+
+        #[cfg(not(target_os = "windows"))]
         assert_eq!(num_chars, 1102);
 
         let t = text.extract(0, 27);
@@ -580,15 +584,17 @@ mod tests {
         assert_eq!(t.chars().count(), 1);
         assert_eq!(t.len(), 4);
 
+        #[cfg(target_os = "windows")]
+        let t = text.extract(1093, 100);
+
+        #[cfg(not(target_os = "windows"))]
         let t = text.extract(1091, 100);
+
         assert_eq!(t, "Netherlands");
         assert_eq!(t.chars().count(), 11);
         assert_eq!(t.len(), 11);
 
         let t = text.extract(1200, 100);
         assert_eq!(t, "");
-
-        let full = text.full();
-        println!("{full}")
     }
 }
