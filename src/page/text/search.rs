@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    c_api::i32_to_bool,
     error::{PdfiumError, PdfiumResult},
     lib, pdfium_constants,
     pdfium_types::{Handle, SearchHandle, FPDF_SCHHANDLE},
@@ -102,6 +103,38 @@ impl PdfiumSearch {
             })
         }
     }
+
+    /// Search in the direction from page start to end.
+    ///
+    /// Returns:
+    /// * Whether a match is found.
+    pub fn find_next(&self) -> bool {
+        i32_to_bool(lib().FPDFText_FindNext(self))
+    }
+
+    /// Search in the direction from page end to start.
+    ///
+    /// Returns:
+    /// * Whether a match is found.
+    pub fn find_prev(&self) -> bool {
+        i32_to_bool(lib().FPDFText_FindPrev(self))
+    }
+
+    /// Get the number of matched characters in the search result.
+    ///
+    /// Returns:
+    /// * Number of matched characters.
+    pub fn get_count(&self) -> i32 {
+        lib().FPDFText_GetSchCount(self)
+    }
+
+    /// Get the starting character index of the search result.
+    ///
+    /// Returns:
+    /// * Index for the starting character.
+    pub fn get_index(&self) -> i32 {
+        lib().FPDFText_GetSchResultIndex(self)
+    }
 }
 
 impl From<&PdfiumSearch> for FPDF_SCHHANDLE {
@@ -112,4 +145,42 @@ impl From<&PdfiumSearch> for FPDF_SCHHANDLE {
 
 fn close_search(search: FPDF_SCHHANDLE) {
     lib().FPDFText_FindClose(search);
+}
+
+pub struct PdfiumSearchResult {
+    index: i32,
+    count: i32,
+}
+
+impl PdfiumSearchResult {
+    pub fn index(&self) -> i32 {
+        self.index
+    }
+    pub fn count(&self) -> i32 {
+        self.count
+    }
+}
+
+pub struct PdfiumSearchIterator {
+    pub(crate) inner: PdfiumResult<PdfiumSearch>,
+}
+
+impl Iterator for PdfiumSearchIterator {
+    type Item = PdfiumSearchResult;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match &self.inner {
+            Ok(search) => {
+                if search.find_next() {
+                    Some(PdfiumSearchResult {
+                        index: search.get_index(),
+                        count: search.get_count(),
+                    })
+                } else {
+                    None
+                }
+            }
+            Err(_) => None,
+        }
+    }
 }

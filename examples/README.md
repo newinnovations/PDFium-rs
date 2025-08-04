@@ -26,10 +26,11 @@ Run with: `cargo run --example import_pages`
   - *string*-based page specification
   - *index*-based page specification
 
-## Extract text from documents
+## Handling text inside documents
 
-File: `extract_text.rs`
+File: `text_extract_search.rs`
 
-Run with: `cargo run --example extract_text`
+Run with: `cargo run --example text_extract_search`
 
 - Demonstrates extracting text from PDF documents
+- Demonstrates text search functionality within a PDF document

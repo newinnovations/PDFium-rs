@@ -28,9 +28,9 @@ use crate::{
     c_api::{i32_to_bool_result, i32_to_result},
     error::{PdfiumError, PdfiumResult},
     lib,
-    page::text::search::PdfiumSearchFlags,
+    page::text::search::{PdfiumSearchFlags, PdfiumSearchIterator},
     pdfium_types::{Handle, TextPageHandle, FPDF_TEXTPAGE, FS_MATRIX, FS_RECTF},
-    PdfiumPageLink, PdfiumPageObject, PdfiumRect, PdfiumSearch,
+    PdfiumPageLink, PdfiumPageObject, PdfiumRect,
 };
 
 /// # Rust interface to FPDF_TEXTPAGE
@@ -104,13 +104,15 @@ impl PdfiumTextPage {
     /// * findwhat    -   A unicode match pattern.
     /// * flags       -   Option flags.
     /// * start_index -   Start from this character. -1 for end of the page.
-    pub fn find_start(
+    pub fn find(
         &self,
         findwhat: &str,
         flags: PdfiumSearchFlags,
         start_index: i32,
-    ) -> PdfiumResult<PdfiumSearch> {
-        lib().FPDFText_FindStart(self, findwhat, flags.bits() as c_ulong, start_index)
+    ) -> PdfiumSearchIterator {
+        PdfiumSearchIterator {
+            inner: lib().FPDFText_FindStart(self, findwhat, flags.bits() as c_ulong, start_index),
+        }
     }
 
     /// Function: FPDFText_GetBoundedText
@@ -602,5 +604,23 @@ mod tests {
 
         let full_text = text.full();
         fs::write("groningen-page-1-full.txt", full_text).unwrap();
+    }
+
+    #[test]
+    fn test_search() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let text = page.text().unwrap();
+        let search = text.find("amsterdam", PdfiumSearchFlags::empty(), 0);
+        assert_eq!(search.count(), 0);
+        let search = text.find("groningen", PdfiumSearchFlags::empty(), 0);
+        assert_eq!(search.count(), 5);
+        let search = text.find("Groningen", PdfiumSearchFlags::MATCH_CASE, 0);
+        assert_eq!(search.count(), 5);
+        let search = text.find("Groningen", PdfiumSearchFlags::MATCH_CASE, 0);
+        for result in search {
+            let part = text.extract(result.index(), result.count());
+            assert_eq!(part, "Groningen");
+        }
     }
 }

@@ -126,7 +126,7 @@ pub(crate) fn dl<'a, T>(
     }
 }
 
-pub fn _i32_to_bool(i: i32) -> bool {
+pub fn i32_to_bool(i: i32) -> bool {
     i != 0
 }
 

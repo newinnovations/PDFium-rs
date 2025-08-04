@@ -7261,8 +7261,8 @@ impl Pdfium {
     ///          Whether a match is found.
     /// ```
     #[inline]
-    pub fn FPDFText_FindNext(&self, handle: &PdfiumSearch) -> PdfiumResult<()> {
-        to_result(unsafe { (self.fn_FPDFText_FindNext)(handle.into()) })
+    pub fn FPDFText_FindNext(&self, handle: &PdfiumSearch) -> i32 {
+        unsafe { (self.fn_FPDFText_FindNext)(handle.into()) }
     }
 
     /// C documentation for FPDFText_FindPrev:
@@ -7277,8 +7277,8 @@ impl Pdfium {
     ///          Whether a match is found.
     /// ```
     #[inline]
-    pub fn FPDFText_FindPrev(&self, handle: &PdfiumSearch) -> PdfiumResult<()> {
-        to_result(unsafe { (self.fn_FPDFText_FindPrev)(handle.into()) })
+    pub fn FPDFText_FindPrev(&self, handle: &PdfiumSearch) -> i32 {
+        unsafe { (self.fn_FPDFText_FindPrev)(handle.into()) }
     }
 
     /// C documentation for FPDFText_FindStart:
