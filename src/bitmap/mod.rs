@@ -212,17 +212,14 @@ mod tests {
         let scale = height as f32 / bounds.height();
         let width = (bounds.width() * scale) as i32;
         let matrix = PdfiumMatrix::new_scale(scale);
-        let bitmap = page
-            .render_with_matrix(
-                width,
-                height,
-                PdfiumBitmapFormat::Bgra,
-                Some(PdfiumColor::WHITE),
-                &matrix,
-                PdfiumRenderFlags::empty(),
-                None,
-            )
-            .unwrap();
+        let config = PdfiumRenderConfig::new()
+            .with_size(width, height)
+            .with_format(PdfiumBitmapFormat::Bgra)
+            .with_background(PdfiumColor::WHITE)
+            .with_matrix(matrix);
+        let bitmap = page.render(&config).unwrap();
+        assert_eq!(bitmap.width(), width);
+        assert_eq!(bitmap.height(), height);
         bitmap
             .save("groningen-page-2.png", image::ImageFormat::Png)
             .unwrap();

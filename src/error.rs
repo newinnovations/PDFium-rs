@@ -73,6 +73,9 @@ pub enum PdfiumError {
 
     /// An error indicating that an interior nul byte was found in a string.
     NulError,
+
+    /// An invalid or unclear render configuration was provided
+    InvalidConfiguration(String),
 }
 
 impl From<std::io::Error> for PdfiumError {

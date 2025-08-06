@@ -46,21 +46,10 @@ pub fn example_export_pages_to_images() -> PdfiumResult<()> {
         // Render the current page as a bitmap image
         // This is where the PDF content gets converted to a raster image
         //
-        // Parameters breakdown:
-        // - 1080: Target height in pixels
-        //   * The width will be calculated automatically to maintain aspect ratio
-        //
-        // - PdfiumBitmapFormat::Bgra: Pixel format specification
-        //   * BGRA = Blue, Green, Red, Alpha (transparency) channels
-        //   * Each channel uses 8 bits, resulting in 32 bits per pixel
-        //   * This format is commonly used and well-supported by image libraries
-        //
-        // - PdfiumRenderFlags::empty(): Rendering options/flags
-        //   * empty() means use default rendering settings
-        //   * Other options include: REVERSE_BYTE_ORDER, ANNOTATIONS, LCD_TEXT, etc.
-        //   * Multiple flags can be combined
-        let bitmap =
-            page?.render_at_height(1080, PdfiumBitmapFormat::Bgra, PdfiumRenderFlags::empty())?;
+        // In the configuration we only specify the height in pixels. The width will be calculated
+        // automatically to maintain aspect ratio.
+        let config = PdfiumRenderConfig::new().with_height(1080);
+        let bitmap = page?.render(&config)?;
 
         // Verify that the bitmap was rendered at the requested height
         // This assertion ensures the rendering process worked as expected

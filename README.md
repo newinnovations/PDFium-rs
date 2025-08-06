@@ -30,7 +30,7 @@ While existing PDFium bindings for Rust are available, this crate takes a differ
 
 ### Thread-Safe Static Access
 
-This library uses a modern, static, and thread-safe initialization pattern with `parking_lot::ReentrantMutex`. On first use, it checks for the availability of the PDFium dynamic library on your system or in a specified directory, and stores the library reference statically for the application's lifetime. This prevents deadlocks when used multiple times in the same thread and eliminates the need for complex library management.
+This library uses a modern, static, and thread-safe initialization pattern with `parking_lot::ReentrantMutex`. On first use, it checks for the availability of the PDFium dynamic library on your system or in a specified directory, and stores the library reference statically for the application's lifetime. This eliminates the need for complex library management and prevents deadlocks when used multiple times in the same thread.
 
 ### No Lifetime Complexity
 
@@ -61,12 +61,8 @@ impl App {
     }
     pub fn render_to_file(&self, filename: &str, index: i32) -> PdfiumResult<()> {
         let page = self.doc.page(index)?;
-        let bitmap = page
-            .render_at_height(
-                1080,
-                PdfiumBitmapFormat::Bgra,
-                PdfiumRenderFlags::empty(),
-            )?;
+        let config = PdfiumRenderConfig::new().with_height(1080);
+        let bitmap = page.render(&config).unwrap();
         bitmap.save(filename, image::ImageFormat::Png)
     }
 }
@@ -89,12 +85,8 @@ use pdfium::*;
 let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
 let page = document.page(0).unwrap();
 drop(document); // Demonstrate that the page can be used after the document is dropped.
-let bitmap = page
-    .render_at_height(
-        1080,
-        PdfiumBitmapFormat::Bgra,
-        PdfiumRenderFlags::empty(),
-    ).unwrap();
+let config = PdfiumRenderConfig::new().with_height(1080);
+let bitmap = page.render(&config).unwrap();
 bitmap.save("groningen-drop-demo.jpg", image::ImageFormat::Jpeg);
 ```
 
