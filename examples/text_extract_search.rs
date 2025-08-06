@@ -42,6 +42,37 @@ pub fn example_extract_text() -> PdfiumResult<()> {
         println!() // Empty line for separation between pages
     }
 
+    // Expected output:
+    //
+    // Page 1
+    // ------
+    //
+    // Page 2
+    // ------
+    // Ruskin
+    // House.
+    // 156. Charing
+    // Cross Road.
+    // London
+    // George Allen.
+    //
+    // Page 3
+    // ------
+    //
+    // Page 4
+    // ------
+    // I
+    // Chapter I.
+    // T is a truth universally acknowledged, that a single man in possession of a good
+    // fortune must be in want of a wife.
+    // However little known the feelings or views of such a man may be on his first
+    // entering a neighbourhood, this truth is so well fixed in the minds of the surrounding
+    // families, that he is considered as the rightful property of some one or other of their
+    // daughters.
+    // “My dear Mr. Bennet,” said his lady to him one day, “have you heard that
+    // Netherfield Park is let at last?”
+    // ...
+
     Ok(())
 }
 

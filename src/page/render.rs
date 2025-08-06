@@ -117,39 +117,38 @@ impl PdfiumRenderFlags {
 /// ```rust
 /// use pdfium::*;
 ///
-/// // Render at specific width, height calculated automatically, include
-/// // annotations
+/// // Render at specific width, height calculated automatically, grayscale,
+/// // reset flags (default is ANNOT and LCD_TEXT)
 /// let config = PdfiumRenderConfig::new()
 ///     .with_width(800)
-///     .with_format(PdfiumBitmapFormat::Bgra)
-///     .with_flags(PdfiumRenderFlags::ANNOT);
+///     .with_format(PdfiumBitmapFormat::Gray)
+///     .with_flags(PdfiumRenderFlags::empty());
 ///
-/// // Render with custom scaling and clipping
+/// // Render with custom scaling and pan
 /// let config = PdfiumRenderConfig::new()
 ///     .with_size(1920, 1080)
-///     .with_scale(2.0)
-///     .with_clipping(PdfiumRect::new(0.0, 0.0, 400.0, 300.0));
+///     .with_pan(900.0, -200.0);
 /// ```
 #[derive(Debug, Clone)]
 pub struct PdfiumRenderConfig {
     /// Target width in pixels. If None, calculated from height and aspect ratio.
-    pub width: Option<i32>,
+    width: Option<i32>,
     /// Target height in pixels. If None, calculated from width and aspect ratio.
-    pub height: Option<i32>,
+    height: Option<i32>,
     /// The pixel format for the rendered bitmap (BGRA, RGB, etc.).
-    pub format: PdfiumBitmapFormat,
+    format: PdfiumBitmapFormat,
     /// Background color for the bitmap. If None, background is transparent.
-    pub background: Option<PdfiumColor>,
+    background: Option<PdfiumColor>,
     /// Bitflags controlling various rendering behaviors and optimizations.
-    pub flags: PdfiumRenderFlags,
+    flags: PdfiumRenderFlags,
     /// Scaling factor. If None and both width/height specified, calculated automatically.
-    pub scale: Option<f32>,
+    scale: Option<f32>,
     /// Translation offset (pan_x, pan_y) in bitmap coordinates.
-    pub pan: Option<(f32, f32)>,
+    pan: Option<(f32, f32)>,
     /// Custom transformation matrix. Takes precedence over scale and pan if specified.
-    pub matrix: Option<PdfiumMatrix>,
+    matrix: Option<PdfiumMatrix>,
     /// Clipping rectangle to restrict rendering to a specific area of the page.
-    pub clipping: Option<PdfiumRect>,
+    clipping: Option<PdfiumRect>,
 }
 
 impl Default for PdfiumRenderConfig {
@@ -171,7 +170,9 @@ impl Default for PdfiumRenderConfig {
 impl PdfiumRenderConfig {
     /// Creates a new render configuration with default values.
     ///
-    /// Default configuration uses BGRA format with white background and no special flags.
+    /// Default configuration uses BGRA format with white background,
+    /// ANNOT + LCD_TEXT flags and no clipping.
+    ///
     /// You must specify at least width or height before rendering.
     pub fn new() -> Self {
         Self::default()
@@ -218,7 +219,7 @@ impl PdfiumRenderConfig {
     ///
     /// Different formats have different memory requirements and compatibility:
     /// - BGRA: 32-bit with alpha, most common for display
-    /// - RGB: 24-bit without alpha, smaller memory footprint
+    /// - BGR: 24-bit without alpha, smaller memory footprint
     /// - Gray: 8-bit grayscale, smallest memory usage
     pub fn with_format(mut self, format: PdfiumBitmapFormat) -> Self {
         self.format = format;
@@ -305,7 +306,7 @@ impl PdfiumRenderConfig {
     /// Sets a custom transformation matrix for advanced rendering control.
     ///
     /// The matrix transforms from page coordinates to bitmap coordinates.
-    /// When specified, scale and pan parameters are ignored.
+    /// When specified, scale and pan parameters are not allowed.
     ///
     /// # Arguments
     /// * `matrix` - The transformation matrix to apply
@@ -326,7 +327,7 @@ impl PdfiumRenderConfig {
             ));
         }
 
-        // Check for positive dimensions
+        // Check for positive dimensions for width
         if let Some(w) = self.width {
             if w <= 0 {
                 return Err(PdfiumError::InvalidConfiguration(
@@ -335,6 +336,7 @@ impl PdfiumRenderConfig {
             }
         }
 
+        // Check for positive dimensions for height
         if let Some(h) = self.height {
             if h <= 0 {
                 return Err(PdfiumError::InvalidConfiguration(
@@ -731,19 +733,34 @@ mod tests {
         let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
         let page = document.page(0).unwrap();
 
-        // Test BGRA format
+        // Test grayscale format
         let config = PdfiumRenderConfig::new()
-            .with_width(400)
-            .with_format(PdfiumBitmapFormat::Bgra);
+            .with_width(1000)
+            .with_format(PdfiumBitmapFormat::Gray);
         let result = page.render(&config);
         assert!(result.is_ok());
+        result
+            .unwrap()
+            .save("groningen-gray.jpg", image::ImageFormat::Jpeg)
+            .unwrap();
 
-        // Test RGB format (assuming it exists)
-        // let config = PdfiumRenderConfig::new()
-        //     .with_width(400)
-        //     .with_format(PdfiumBitmapFormat::Rgb);
-        // let result = page.render(&config);
-        // assert!(result.is_ok());
+        // Test bgr format
+        let config = PdfiumRenderConfig::new()
+            .with_width(1000)
+            .with_format(PdfiumBitmapFormat::Bgr);
+        let result = page.render(&config);
+        assert!(result.is_ok());
+        result
+            .unwrap()
+            .save("groningen-bgr.jpg", image::ImageFormat::Jpeg)
+            .unwrap();
+
+        // Test invalid format
+        let config = PdfiumRenderConfig::new()
+            .with_width(1000)
+            .with_format(PdfiumBitmapFormat::Unknown);
+        let result = page.render(&config);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -769,7 +786,6 @@ mod tests {
             .with_width(1920)
             .with_format(PdfiumBitmapFormat::Bgra)
             .with_background(PdfiumColor::new(240, 240, 240, 255))
-            .with_flags(PdfiumRenderFlags::ANNOT | PdfiumRenderFlags::LCD_TEXT)
             .add_flags(PdfiumRenderFlags::PRINTING);
 
         assert_eq!(config.width, Some(1920));

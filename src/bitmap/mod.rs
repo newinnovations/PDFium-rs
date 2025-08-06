@@ -107,9 +107,17 @@ impl PdfiumBitmap {
                 .chunks_exact(4)
                 .flat_map(|pixel| [pixel[2], pixel[1], pixel[0], pixel[3]]) // B,G,R,A -> R,G,B,A
                 .collect()),
+            PdfiumBitmapFormat::Bgr => Ok(self
+                .as_raw_bytes(&lib)
+                .chunks_exact(3)
+                .flat_map(|pixel| [pixel[2], pixel[1], pixel[0], 255]) // B,G,R,A -> R,G,B,A
+                .collect()),
+            PdfiumBitmapFormat::Gray => Ok(self
+                .as_raw_bytes(&lib)
+                .chunks_exact(1)
+                .flat_map(|pixel| [pixel[0], pixel[0], pixel[0], 255]) // B,G,R,A -> R,G,B,A
+                .collect()),
             PdfiumBitmapFormat::Unknown
-            | PdfiumBitmapFormat::Gray
-            | PdfiumBitmapFormat::Bgr
             | PdfiumBitmapFormat::Bgrx
             | PdfiumBitmapFormat::BgraPremul => Err(PdfiumError::UnsupportedImageFormat),
         }
