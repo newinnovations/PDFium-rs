@@ -108,32 +108,52 @@ impl PdfiumRenderFlags {
 
 /// Configuration for PDF page rendering operations.
 ///
-/// This struct provides a flexible way to configure how PDF pages are rendered
-/// to bitmaps, allowing control over dimensions, appearance, and performance
-/// characteristics of the rendering process.
+/// Controls how PDF pages are rendered to bitmaps, including dimensions,
+/// appearance, image format and performance characteristics.
+///
+/// ## Parameter Rules
+///
+/// The configuration handles dimensions and scaling in two distinct modes:
+///
+/// ### Auto-scaling mode (width OR height specified)
+/// - Provide only `width` or only `height`
+/// - The missing dimension is calculated automatically using the page's aspect ratio
+/// - Scaling is determined automatically to fully fit the page into the bitmap
+/// - **Error**: Do not provide a `scale` or `matrix` in this mode
+///
+/// ### Manual scaling mode (both width AND height specified)
+/// - Provide both `width` and `height`
+/// - You must also provide either `scale` OR `matrix`
+/// - **Error**: Providing neither scaling instructions will cause an error
+///
+/// ## PDFium Integration
+///
+/// All parameters are passed directly to PDFium, except for the automatic
+/// dimension and scaling calculations described above.
 ///
 /// # Examples
 ///
 /// ```rust
 /// use pdfium::*;
 ///
-/// // Render at specific width, height calculated automatically, grayscale,
-/// // reset flags (default is ANNOT and LCD_TEXT)
+/// // Auto-scaling at specified width (height calculated automatically), grayscale,
+/// // and reset the rendering flags (default is ANNOT and LCD_TEXT)
 /// let config = PdfiumRenderConfig::new()
 ///     .with_width(800)
 ///     .with_format(PdfiumBitmapFormat::Gray)
 ///     .with_flags(PdfiumRenderFlags::empty());
 ///
-/// // Render with custom scaling and pan
+/// // Manual scaling and panning
 /// let config = PdfiumRenderConfig::new()
 ///     .with_size(1920, 1080)
+///     .with_scale(2.5)
 ///     .with_pan(900.0, -200.0);
 /// ```
 #[derive(Debug, Clone)]
 pub struct PdfiumRenderConfig {
-    /// Target width in pixels. If None, calculated from height and aspect ratio.
+    /// Target width in pixels. If None, calculated from height maintaining aspect ratio.
     width: Option<i32>,
-    /// Target height in pixels. If None, calculated from width and aspect ratio.
+    /// Target height in pixels. If None, calculated from width maintaining aspect ratio.
     height: Option<i32>,
     /// The pixel format for the rendered bitmap (BGRA, RGB, etc.).
     format: PdfiumBitmapFormat,
@@ -141,11 +161,11 @@ pub struct PdfiumRenderConfig {
     background: Option<PdfiumColor>,
     /// Bitflags controlling various rendering behaviors and optimizations.
     flags: PdfiumRenderFlags,
-    /// Scaling factor. If None and both width/height specified, calculated automatically.
+    /// Scaling factor.
     scale: Option<f32>,
     /// Translation offset (pan_x, pan_y) in bitmap coordinates.
     pan: Option<(f32, f32)>,
-    /// Custom transformation matrix. Takes precedence over scale and pan if specified.
+    /// Custom transformation matrix. Cannot be combined with scale or pan.
     matrix: Option<PdfiumMatrix>,
     /// Clipping rectangle to restrict rendering to a specific area of the page.
     clipping: Option<PdfiumRect>,
@@ -170,8 +190,8 @@ impl Default for PdfiumRenderConfig {
 impl PdfiumRenderConfig {
     /// Creates a new render configuration with default values.
     ///
-    /// Default configuration uses BGRA format with white background,
-    /// ANNOT + LCD_TEXT flags and no clipping.
+    /// Default configuration uses BGRA format with a white background,
+    /// the ANNOT and LCD_TEXT rendering flags and no clipping.
     ///
     /// You must specify at least width or height before rendering.
     pub fn new() -> Self {
@@ -192,10 +212,10 @@ impl PdfiumRenderConfig {
         self
     }
 
-    /// Sets the target width. Height will be calculated automatically to preserve aspect ratio.
+    /// Sets the target width.
     ///
-    /// This is the most common way to specify dimensions when you want to maintain
-    /// the original page proportions.
+    /// If `height` is not provided, it will be calculated automatically according to
+    /// the aspect ratio. In that case also the required scale factor will be calculated.
     ///
     /// # Arguments
     /// * `width` - Target bitmap width in pixels (must be > 0)
@@ -204,9 +224,10 @@ impl PdfiumRenderConfig {
         self
     }
 
-    /// Sets the target height. Width will be calculated automatically to preserve aspect ratio.
+    /// Sets the target height.
     ///
-    /// Useful when you have height constraints but want to maintain proportions.
+    /// If `width` is not provided, it will be calculated automatically according to
+    /// the aspect ratio. In that case also the required scale factor will be calculated.
     ///
     /// # Arguments
     /// * `height` - Target bitmap height in pixels (must be > 0)
@@ -258,6 +279,9 @@ impl PdfiumRenderConfig {
     /// Adds additional flags to the existing configuration.
     ///
     /// This is useful when you want to add flags without replacing existing ones.
+    ///
+    /// # Arguments
+    /// * `flags` - Combination of PdfiumRenderFlags to add
     pub fn add_flags(mut self, flags: PdfiumRenderFlags) -> Self {
         self.flags |= flags;
         self
@@ -265,7 +289,7 @@ impl PdfiumRenderConfig {
 
     /// Sets a clipping rectangle to render only a portion of the page.
     ///
-    /// The rectangle is specified in page coordinates (points), not bitmap pixels.
+    /// The rectangle is specified in bitmap pixels.
     ///
     /// # Arguments
     /// * `rect` - The clipping rectangle in page coordinate system
@@ -275,9 +299,6 @@ impl PdfiumRenderConfig {
     }
 
     /// Sets the scaling factor for the rendered bitmap.
-    ///
-    /// Scale of 1.0 means 72 DPI (1 point = 1 pixel).
-    /// Scale of 2.0 means 144 DPI, etc.
     ///
     /// Cannot be used with custom transformation matrices.
     ///
@@ -305,7 +326,6 @@ impl PdfiumRenderConfig {
 
     /// Sets a custom transformation matrix for advanced rendering control.
     ///
-    /// The matrix transforms from page coordinates to bitmap coordinates.
     /// When specified, scale and pan parameters are not allowed.
     ///
     /// # Arguments
@@ -419,17 +439,16 @@ impl PdfiumPage {
         };
 
         // Set up clipping rectangle (default to full bitmap if not specified)
-        let clipping = config.clipping.unwrap_or(PdfiumRect::new(
-            0.0,
-            0.0,
-            bitmap.width() as f32,
-            bitmap.height() as f32,
-        ));
+        let clipping =
+            config
+                .clipping
+                .unwrap_or(PdfiumRect::new(0.0, 0.0, width as f32, height as f32));
 
-        // Convert to PDFium types and render
+        // Convert to PDFium types ...
         let clipping: FS_RECTF = (&clipping).into();
         let matrix: FS_MATRIX = (&matrix).into();
 
+        // ... and render
         lib().FPDF_RenderPageBitmapWithMatrix(
             &bitmap,
             self,
@@ -512,8 +531,7 @@ impl PdfiumPage {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{document::PdfiumDocument, PdfiumColor};
+    use crate::*;
 
     #[test]
     fn test_render_at_height() {
@@ -533,6 +551,24 @@ mod tests {
         let bitmap = page.render(&config).unwrap();
         assert_eq!(bitmap.width(), 1920);
         assert_eq!(bitmap.height(), 2716);
+    }
+
+    #[test]
+    fn test_render_color_scale_pan() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let config = PdfiumRenderConfig::new()
+            .with_background(PdfiumColor::BLUE)
+            .with_width(800)
+            .with_height(600)
+            .with_scale(1.5)
+            .with_pan(400.0, 300.0);
+        let bitmap = page.render(&config).unwrap();
+        assert_eq!(bitmap.width(), 800);
+        assert_eq!(bitmap.height(), 600);
+        bitmap
+            .save("groningen-color-scale-pan.jpg", image::ImageFormat::Jpeg)
+            .unwrap();
     }
 
     #[test]
@@ -704,18 +740,6 @@ mod tests {
         assert!(config.flags.contains(PdfiumRenderFlags::ANNOT));
         assert!(config.flags.contains(PdfiumRenderFlags::LCD_TEXT));
         assert!(config.flags.contains(PdfiumRenderFlags::GRAYSCALE));
-    }
-
-    #[test]
-    fn test_pan_with_scale() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        let page = document.page(0).unwrap();
-        let config = PdfiumRenderConfig::new()
-            .with_size(800, 600)
-            .with_scale(1.5)
-            .with_pan(50.0, -25.0);
-        let result = page.render(&config);
-        assert!(result.is_ok());
     }
 
     #[test]

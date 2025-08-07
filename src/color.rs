@@ -31,8 +31,24 @@ pub struct PdfiumColor {
 }
 
 impl PdfiumColor {
+    /// Constant for the color white (#ffffff)
     pub const WHITE: PdfiumColor = PdfiumColor::new(255, 255, 255, 255);
+    /// Constant for the color black (#000000)
     pub const BLACK: PdfiumColor = PdfiumColor::new(0, 0, 0, 255);
+
+    /// Constant for the color red (#ff0000)
+    pub const RED: PdfiumColor = PdfiumColor::new(255, 0, 0, 255);
+    /// Constant for the color green (#00ff00)
+    pub const GREEN: PdfiumColor = PdfiumColor::new(0, 128, 0, 255);
+    /// Constant for the color blue (#0000ff)
+    pub const BLUE: PdfiumColor = PdfiumColor::new(0, 0, 255, 255);
+
+    /// Constant for the color yellow (#ffff00)
+    pub const YELLOW: PdfiumColor = PdfiumColor::new(255, 255, 0, 255);
+    /// Constant for the color magenta (#ff00ff)
+    pub const MAGENTA: PdfiumColor = PdfiumColor::new(255, 0, 255, 255);
+    /// Constant for the color cyan (#00ffff)
+    pub const CYAN: PdfiumColor = PdfiumColor::new(0, 255, 255, 255);
 
     /// Constructs a new [`PdfiumColor`] instance from the given components.
     pub const fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Self {

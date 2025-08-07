@@ -20,7 +20,6 @@
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::{
-    c_api::guard::PdfiumGuard,
     error::{PdfiumError, PdfiumResult},
     lib, pdfium_constants,
     pdfium_types::{BitmapHandle, Handle, FPDF_BITMAP},
@@ -90,7 +89,8 @@ impl PdfiumBitmap {
     /// Returns an immutable reference to the bitmap buffer backing this [`PdfiumBitmap`].
     ///
     /// This function does not attempt any color channel normalization.
-    pub fn as_raw_bytes<'a>(&self, lib: &'a PdfiumGuard) -> &'a [u8] {
+    pub fn as_raw_bytes<'a>(&self) -> &'a [u8] {
+        let lib = lib();
         let buffer = lib.FPDFBitmap_GetBuffer(self.handle.handle());
         let len = lib.FPDFBitmap_GetStride(self) * lib.FPDFBitmap_GetHeight(self);
         unsafe { std::slice::from_raw_parts(buffer as *const u8, len as usize) }
@@ -100,20 +100,19 @@ impl PdfiumBitmap {
     ///
     /// Normalizing all color channels into RGBA irrespective of the original pixel format.
     pub fn as_rgba_bytes(&self) -> PdfiumResult<Vec<u8>> {
-        let lib = lib();
         match self.format() {
             PdfiumBitmapFormat::Bgra => Ok(self
-                .as_raw_bytes(&lib)
+                .as_raw_bytes()
                 .chunks_exact(4)
                 .flat_map(|pixel| [pixel[2], pixel[1], pixel[0], pixel[3]]) // B,G,R,A -> R,G,B,A
                 .collect()),
             PdfiumBitmapFormat::Bgr => Ok(self
-                .as_raw_bytes(&lib)
+                .as_raw_bytes()
                 .chunks_exact(3)
                 .flat_map(|pixel| [pixel[2], pixel[1], pixel[0], 255]) // B,G,R,A -> R,G,B,A
                 .collect()),
             PdfiumBitmapFormat::Gray => Ok(self
-                .as_raw_bytes(&lib)
+                .as_raw_bytes()
                 .chunks_exact(1)
                 .flat_map(|pixel| [pixel[0], pixel[0], pixel[0], 255]) // B,G,R,A -> R,G,B,A
                 .collect()),
