@@ -56,7 +56,7 @@ impl PdfiumPage {
         self.owner = Some(owner);
     }
 
-    pub fn boundaries(&self) -> PdfiumPageBoundaries {
+    pub fn boundaries(&self) -> PdfiumPageBoundaries<'_> {
         PdfiumPageBoundaries::new(self)
     }
 
@@ -73,7 +73,7 @@ impl PdfiumPage {
     }
 
     /// Return an [`Iterator`] for the ojects in this [`PdfiumPage`].
-    pub fn objects(&self) -> PdfiumPageObjects {
+    pub fn objects(&self) -> PdfiumPageObjects<'_> {
         PdfiumPageObjects::new(self)
     }
 

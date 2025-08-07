@@ -288,7 +288,7 @@ impl PdfiumDocument {
     }
 
     /// Return an [`Iterator`] for the pages in this [`PdfiumDocument`].
-    pub fn pages(&self) -> PdfiumPages {
+    pub fn pages(&self) -> PdfiumPages<'_> {
         PdfiumPages::new(self)
     }
 }
