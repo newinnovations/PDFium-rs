@@ -29,181 +29,213 @@ pub use crate::c_api::pdfium_handle::Handle;
 #[repr(align(16))]
 #[derive(Debug, Copy, Clone)]
 pub struct max_align_t {
+    /// A field used by Clang to help enforce maximum alignment.
     pub __clang_max_align_nonce1: ::std::os::raw::c_longlong,
+    /// Padding field to ensure proper alignment and size.
     pub __bindgen_padding_0: u64,
+    /// Another field used by Clang to enforce maximum alignment.
     pub __clang_max_align_nonce2: u128,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API action pointer
 pub struct fpdf_action_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API annotation pointer
 pub struct fpdf_annotation_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API attachment pointer
 pub struct fpdf_attachment_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API availability pointer
 pub struct fpdf_avail_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API bitmap pointer
 pub struct fpdf_bitmap_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API bookmark pointer
 pub struct fpdf_bookmark_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API clippath pointer
 pub struct fpdf_clippath_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API destination pointer
 pub struct fpdf_dest_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API document pointer
 pub struct fpdf_document_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API font pointer
 pub struct fpdf_font_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API form pointer
 pub struct fpdf_form_handle_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API glyph path pointer
 pub struct fpdf_glyphpath_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API javascript action pointer
 pub struct fpdf_javascript_action_t {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API link pointer
 pub struct fpdf_link_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API page pointer
 pub struct fpdf_page_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API page link pointer
 pub struct fpdf_pagelink_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API page object pointer
 pub struct fpdf_pageobject_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API page object mark pointer
 pub struct fpdf_pageobjectmark_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API page range pointer
 pub struct fpdf_pagerange_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API path segment pointer
 pub struct fpdf_pathsegment_t {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API search pointer
 pub struct fpdf_schhandle_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API signature pointer
 pub struct fpdf_signature_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API struct element pointer
 pub struct fpdf_structelement_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API struct element attr pointer
 pub struct fpdf_structelement_attr_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API struct element attr value pointer
 pub struct fpdf_structelement_attr_value_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API struct tree pointer
 pub struct fpdf_structtree_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API text page pointer
 pub struct fpdf_textpage_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API widget pointer
 pub struct fpdf_widget_t__ {
     _unused: [u8; 0],
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// C-API xobject pointer
 pub struct fpdf_xobject_t__ {
     _unused: [u8; 0],
 }
@@ -243,11 +275,17 @@ pub struct FPDF_BSTR_ {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct _FS_MATRIX_ {
+    /// value `a` of the matrix
     pub a: f32,
+    /// value `b` of the matrix
     pub b: f32,
+    /// value `c` of the matrix
     pub c: f32,
+    /// value `d` of the matrix
     pub d: f32,
+    /// value `e` of the matrix
     pub e: f32,
+    /// value `f` of the matrix
     pub f: f32,
 }
 
@@ -269,7 +307,9 @@ pub struct _FS_RECTF_ {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FS_SIZEF_ {
+    /// `width` of the rectange
     pub width: f32,
+    /// `height` of the rectange
     pub height: f32,
 }
 
@@ -277,20 +317,31 @@ pub struct FS_SIZEF_ {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FS_POINTF_ {
+    /// `x` coordinate of the point
     pub x: f32,
+    /// `y` coordinate of the point
     pub y: f32,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// Structure containing four points
 pub struct _FS_QUADPOINTSF {
+    /// `x` coordinate of the first point
     pub x1: FS_FLOAT,
+    /// `y` coordinate of the first point
     pub y1: FS_FLOAT,
+    /// `x` coordinate of the second point
     pub x2: FS_FLOAT,
+    /// `y` coordinate of the second point
     pub y2: FS_FLOAT,
+    /// `x` coordinate of the third point
     pub x3: FS_FLOAT,
+    /// `y` coordinate of the third point
     pub y3: FS_FLOAT,
+    /// `x` coordinate of the fourth point
     pub x4: FS_FLOAT,
+    /// `y` coordinate of the fourth point
     pub y4: FS_FLOAT,
 }
 
@@ -540,14 +591,19 @@ pub struct FPDF_FILEHANDLER_ {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FPDF_COLORSCHEME_ {
+    /// Path fill color
     pub path_fill_color: FPDF_DWORD,
+    /// Path stroke color
     pub path_stroke_color: FPDF_DWORD,
+    /// Text fill color
     pub text_fill_color: FPDF_DWORD,
+    /// Text stroke color
     pub text_stroke_color: FPDF_DWORD,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// Javascript platform structure
 pub struct _IPDF_JsPlatform {
     /// Version number of the interface. Currently must be 2.
     pub version: ::std::os::raw::c_int,
@@ -898,6 +954,7 @@ pub struct _FPDF_SYSTEMTIME {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// Form fill information
 pub struct _FPDF_FORMFILLINFO {
     /// Version number of the interface.
     ///
@@ -1934,6 +1991,7 @@ pub struct _FX_DOWNLOADHINTS {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// Image object metadata
 pub struct FPDF_IMAGEOBJ_METADATA {
     /// The image width in pixels.
     pub width: ::std::os::raw::c_uint,
@@ -2007,12 +2065,15 @@ pub struct timespec {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct itimerspec {
+    /// timer interval
     pub it_interval: timespec,
+    /// timer value
     pub it_value: timespec,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// Signal event pointer
 pub struct sigevent {
     _unused: [u8; 0],
 }
@@ -2363,73 +2424,107 @@ pub struct FPDF_CharsetFontMap_ {
 pub type FPDF_TEXT_RENDERMODE = ::std::os::raw::c_int;
 
 /// PDF types - use incomplete types (never completed) to force API type safety.
+/// C-API action pointer type definition
 pub type FPDF_ACTION = *mut fpdf_action_t__;
 
+/// C-API annotation pointer type definition
 pub type FPDF_ANNOTATION = *mut fpdf_annotation_t__;
 
+/// C-API attachment pointer type definition
 pub type FPDF_ATTACHMENT = *mut fpdf_attachment_t__;
 
+/// C-API availability pointer type definition
 pub type FPDF_AVAIL = *mut fpdf_avail_t__;
 
+/// C-API bitmap pointer type definition
 pub type FPDF_BITMAP = *mut fpdf_bitmap_t__;
 
+/// C-API bookmark pointer type definition
 pub type FPDF_BOOKMARK = *mut fpdf_bookmark_t__;
 
+/// C-API clippath pointer type definition
 pub type FPDF_CLIPPATH = *mut fpdf_clippath_t__;
 
+/// C-API destination pointer type definition
 pub type FPDF_DEST = *mut fpdf_dest_t__;
 
+/// C-API document pointer type definition
 pub type FPDF_DOCUMENT = *mut fpdf_document_t__;
 
+/// C-API font pointer type definition
 pub type FPDF_FONT = *mut fpdf_font_t__;
 
+/// C-API form pointer type definition
 pub type FPDF_FORMHANDLE = *mut fpdf_form_handle_t__;
 
+/// C-API glyph path pointer type definition
 pub type FPDF_GLYPHPATH = *const fpdf_glyphpath_t__;
 
+/// C-API javascript action pointer type definition
 pub type FPDF_JAVASCRIPT_ACTION = *mut fpdf_javascript_action_t;
 
+/// C-API link pointer type definition
 pub type FPDF_LINK = *mut fpdf_link_t__;
 
+/// C-API page pointer type definition
 pub type FPDF_PAGE = *mut fpdf_page_t__;
 
+/// C-API page pointer type definition
 pub type FPDF_PAGELINK = *mut fpdf_pagelink_t__;
 
+/// C-API page pointer type definition
 pub type FPDF_PAGEOBJECT = *mut fpdf_pageobject_t__;
 
+/// C-API page pointer type definition
 pub type FPDF_PAGEOBJECTMARK = *mut fpdf_pageobjectmark_t__;
 
+/// C-API page pointer type definition
 pub type FPDF_PAGERANGE = *const fpdf_pagerange_t__;
 
+/// C-API path segment pointer type definition
 pub type FPDF_PATHSEGMENT = *const fpdf_pathsegment_t;
 
+/// C-API search pointer type definition
 pub type FPDF_SCHHANDLE = *mut fpdf_schhandle_t__;
 
+/// C-API signature pointer type definition
 pub type FPDF_SIGNATURE = *const fpdf_signature_t__;
 
+/// C-API skia canvas type definition
 pub type FPDF_SKIA_CANVAS = *mut ::std::os::raw::c_void;
 
+/// C-API struct element pointer type definition
 pub type FPDF_STRUCTELEMENT = *mut fpdf_structelement_t__;
 
+/// C-API struct element pointer type definition
 pub type FPDF_STRUCTELEMENT_ATTR = *const fpdf_structelement_attr_t__;
 
+/// C-API struct element pointer type definition
 pub type FPDF_STRUCTELEMENT_ATTR_VALUE = *const fpdf_structelement_attr_value_t__;
 
+/// C-API struct tree pointer type definition
 pub type FPDF_STRUCTTREE = *mut fpdf_structtree_t__;
 
+/// C-API text page pointer type definition
 pub type FPDF_TEXTPAGE = *mut fpdf_textpage_t__;
 
+/// C-API widget pointer type definition
 pub type FPDF_WIDGET = *mut fpdf_widget_t__;
 
+/// C-API xobject pointer type definition
 pub type FPDF_XOBJECT = *mut fpdf_xobject_t__;
 
 /// Basic data types
+/// Type mapping of a bool (c_int)
 pub type FPDF_BOOL = ::std::os::raw::c_int;
 
+/// Type mapping of a result = (c_int)
 pub type FPDF_RESULT = ::std::os::raw::c_int;
 
+/// Type mapping of a double word (c_ulong)
 pub type FPDF_DWORD = ::std::os::raw::c_ulong;
 
+/// Type mapping of a float (f32)
 pub type FS_FLOAT = f32;
 
 /// Duplex types
@@ -2523,11 +2618,14 @@ pub type FS_POINTF = FS_POINTF_;
 /// Const Pointer to FS_POINTF structure.
 pub type FS_LPCPOINTF = *const FS_POINTF;
 
+/// Structure containing four points
 pub type FS_QUADPOINTSF = _FS_QUADPOINTSF;
 
 /// Annotation enums.
+/// C-API annotation pointer type definition
 pub type FPDF_ANNOTATION_SUBTYPE = ::std::os::raw::c_int;
 
+/// Annotation appearance mode
 pub type FPDF_ANNOT_APPEARANCEMODE = ::std::os::raw::c_int;
 
 /// Dictionary value types.
@@ -2568,6 +2666,7 @@ pub type FPDF_FILEHANDLER = FPDF_FILEHANDLER_;
 /// ```
 pub type FPDF_COLORSCHEME = FPDF_COLORSCHEME_;
 
+/// Javascript platform structure
 pub type IPDF_JSPLATFORM = _IPDF_JsPlatform;
 
 /// Function signature for the callback function passed to the FFI_SetTimer
@@ -2588,8 +2687,10 @@ pub type TimerCallback =
 /// Declares of a struct type to the local system time.
 pub type FPDF_SYSTEMTIME = _FPDF_SYSTEMTIME;
 
+/// Form fill information
 pub type FPDF_FORMFILLINFO = _FPDF_FORMFILLINFO;
 
+/// Annotation color type
 pub type FPDFANNOT_COLORTYPE = ::std::os::raw::c_uint;
 
 /// Interface for checking whether sections of the file are available.
@@ -2608,12 +2709,16 @@ pub type FX_DOWNLOADHINTS = _FX_DOWNLOADHINTS;
 /// ```
 pub type FPDF_FILEIDTYPE = ::std::os::raw::c_uint;
 
+/// C time type
 pub type __time_t = ::std::os::raw::c_long;
 
+/// C syscall type
 pub type __syscall_slong_t = ::std::os::raw::c_long;
 
+/// C syscall type
 pub type __syscall_ulong_t = ::std::os::raw::c_ulong;
 
+/// C time type
 pub type time_t = __time_t;
 
 /// Interface for unsupported feature notifications.
@@ -2651,33 +2756,92 @@ pub type FPDF_SYSFONTINFO = _FPDF_SYSFONTINFO;
 /// ```
 pub type FPDF_CharsetFontMap = FPDF_CharsetFontMap_;
 
+/// Handle for the PDFium action pointer
 pub type ActionHandle = Handle<fpdf_action_t__>;
+
+/// Handle for the PDFium annotation pointer
 pub type AnnotationHandle = Handle<fpdf_annotation_t__>;
+
+/// Handle for the PDFium attachment pointer
 pub type AttachmentHandle = Handle<fpdf_attachment_t__>;
+
+/// Handle for the PDFium availability pointer
 pub type AvailabilityHandle = Handle<fpdf_avail_t__>;
+
+/// Handle for the PDFium bitmap pointer
 pub type BitmapHandle = Handle<fpdf_bitmap_t__>;
+
+/// Handle for the PDFium bookmark pointer
 pub type BookmarkHandle = Handle<fpdf_bookmark_t__>;
+
+/// Handle for the PDFium clippath pointer
 pub type ClipPathHandle = Handle<fpdf_clippath_t__>;
+
+/// Handle for the PDFium destination pointer
 pub type DestinationHandle = Handle<fpdf_dest_t__>;
+
+/// Handle for the PDFium document pointer
 pub type DocumentHandle = Handle<fpdf_document_t__>;
+
+/// Handle for the PDFium font pointer
 pub type FontHandle = Handle<fpdf_font_t__>;
+
+/// Handle for the PDFium form pointer
 pub type FormHandle = Handle<fpdf_form_handle_t__>;
+
+/// Handle for the PDFium glyph path pointer
 pub type GlyphPathHandle = Handle<fpdf_glyphpath_t__>;
+
+/// Handle for the PDFium javascript action pointer
 pub type JavascriptActionHandle = Handle<fpdf_javascript_action_t>;
+
+/// Handle for the PDFium link pointer
 pub type LinkHandle = Handle<fpdf_link_t__>;
+
+/// Handle for the PDFium page pointer
 pub type PageHandle = Handle<fpdf_page_t__>;
+
+/// Handle for the PDFium page link pointer
 pub type PageLinkHandle = Handle<fpdf_pagelink_t__>;
+
+/// Handle for the PDFium page object pointer
 pub type PageObjectHandle = Handle<fpdf_pageobject_t__>;
+
+/// Handle for the PDFium page object mark pointer
 pub type PageObjectMarkHandle = Handle<fpdf_pageobjectmark_t__>;
+
+/// Handle for the PDFium page range pointer
 pub type PageRangeHandle = Handle<fpdf_pagerange_t__>;
+
+/// Handle for the PDFium path segment pointer
 pub type PathSegmentHandle = Handle<fpdf_pathsegment_t>;
+
+/// Handle for the PDFium search pointer
 pub type SearchHandle = Handle<fpdf_schhandle_t__>;
+
+/// Handle for the PDFium signature pointer
 pub type SignatureHandle = Handle<fpdf_signature_t__>;
+
+/// Handle for the PDFium skia canvas
 pub type SkiaCanvasHandle = Handle<::std::os::raw::c_void>;
+
+/// Handle for the PDFium struct element pointer
 pub type StructElementHandle = Handle<fpdf_structelement_t__>;
+
+/// Handle for the PDFium struct element attr pointer
 pub type StructElementAttrHandle = Handle<fpdf_structelement_attr_t__>;
+
+/// Handle for the PDFium struct element attr value pointer
 pub type StructElementAttrValueHandle = Handle<fpdf_structelement_attr_value_t__>;
+
+/// Handle for the PDFium struct tree pointer
 pub type StructTreeHandle = Handle<fpdf_structtree_t__>;
+
+/// Handle for the PDFium text page pointer
 pub type TextPageHandle = Handle<fpdf_textpage_t__>;
+
+/// Handle for the PDFium widget pointer
 pub type WidgetHandle = Handle<fpdf_widget_t__>;
+
+/// Handle for the PDFium xobject pointer
 pub type XObjectHandle = Handle<fpdf_xobject_t__>;

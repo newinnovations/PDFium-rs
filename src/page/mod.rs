@@ -56,6 +56,7 @@ impl PdfiumPage {
         self.owner = Some(owner);
     }
 
+    /// Rust interface to the boundary boxes of a page
     pub fn boundaries(&self) -> PdfiumPageBoundaries<'_> {
         PdfiumPageBoundaries::new(self)
     }

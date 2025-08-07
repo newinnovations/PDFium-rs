@@ -53,7 +53,7 @@ pub struct PdfiumPageBoundaries<'a> {
 }
 
 impl<'a> PdfiumPageBoundaries<'a> {
-    pub fn new(page: &'a PdfiumPage) -> PdfiumPageBoundaries<'a> {
+    pub(crate) fn new(page: &'a PdfiumPage) -> PdfiumPageBoundaries<'a> {
         Self { page }
     }
 

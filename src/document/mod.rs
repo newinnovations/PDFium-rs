@@ -76,16 +76,19 @@ impl PdfiumDocument {
         }
     }
 
+    /// Creates a new empty [`PdfiumDocument`]
     pub fn new() -> PdfiumResult<Self> {
         let handle = try_lib()?.FPDF_CreateNewDocument();
         Self::new_from_handle(handle, None)
     }
 
+    /// Load a [`PdfiumDocument`] from a `Path`
     pub fn new_from_path<P: AsRef<Path>>(path: P, password: Option<&str>) -> PdfiumResult<Self> {
         let reader = File::open(path)?;
         Self::new_from_reader(reader, password)
     }
 
+    /// Load a [`PdfiumDocument`] using a reader implementing `Read` and `Seek`
     pub fn new_from_reader<R: Read + Seek + 'static>(
         reader: R,
         password: Option<&str>,

@@ -170,12 +170,18 @@ fn close_bitmap(bitmap: FPDF_BITMAP) {
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(i32)]
 pub enum PdfiumBitmapFormat {
+    /// Unknown bitmap format
     Unknown = pdfium_constants::FPDFBitmap_Unknown,
+    /// 8-bit grayscale
     Gray = pdfium_constants::FPDFBitmap_Gray,
+    /// 24-bit BGR (blue-green-red)
     Bgr = pdfium_constants::FPDFBitmap_BGR,
+    /// 32-bit BGR with unused alpha
     Bgrx = pdfium_constants::FPDFBitmap_BGRx,
     #[default]
+    /// 32-bit BGRA with alpha
     Bgra = pdfium_constants::FPDFBitmap_BGRA,
+    /// 32-bit BGRA with premultiplied alpha
     BgraPremul = pdfium_constants::FPDFBitmap_BGRA_Premul,
 }
 
