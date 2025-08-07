@@ -23,7 +23,7 @@ use super::{dl, Pdfium, PdfiumError};
 use libloading::Library;
 
 impl Pdfium {
-    pub fn new(lib: Library) -> Result<Self, PdfiumError> {
+    pub(crate) fn new(lib: Library) -> Result<Self, PdfiumError> {
         Ok(Self {
             fn_FORM_CanRedo: *dl(&lib, "FORM_CanRedo")?,
             fn_FORM_CanUndo: *dl(&lib, "FORM_CanUndo")?,
