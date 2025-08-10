@@ -167,7 +167,7 @@ pub struct PdfiumRenderConfig {
     pan: Option<(f32, f32)>,
     /// Custom transformation matrix. Cannot be combined with scale or pan.
     matrix: Option<PdfiumMatrix>,
-    /// Clipping rectangle to restrict rendering to a specific area of the page.
+    /// Clipping rectangle to restrict rendering to a specific area of the bitmap.
     clipping: Option<PdfiumRect>,
 }
 
@@ -190,15 +190,18 @@ impl Default for PdfiumRenderConfig {
 impl PdfiumRenderConfig {
     /// Creates a new render configuration with default values.
     ///
-    /// Default configuration uses BGRA format with a white background,
-    /// the ANNOT and LCD_TEXT rendering flags and no clipping.
+    /// Default configuration uses BGRA format with a white background, the
+    /// [`PdfiumRenderFlags::ANNOT`] and [`PdfiumRenderFlags::LCD_TEXT`] rendering
+    /// flags and no clipping.
     ///
     /// You must specify at least width or height before rendering.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Sets exact width and height in pixels.
+    /// Sets width and height of the bitmap in pixels.
+    ///
+    /// Short for `.with_width(width).with_height(height)`
     ///
     /// When both dimensions are specified, you must also provide either a scale
     /// factor or a transformation matrix to define how the page maps to the bitmap.
@@ -212,10 +215,11 @@ impl PdfiumRenderConfig {
         self
     }
 
-    /// Sets the target width.
+    /// Sets the bitmap width.
     ///
-    /// If `height` is not provided, it will be calculated automatically according to
-    /// the aspect ratio. In that case also the required scale factor will be calculated.
+    /// If `height` is not provided, it will be calculated automatically according to the
+    /// aspect ratio of the page. In that case also the required scale factor will be
+    /// calculated.
     ///
     /// # Arguments
     /// * `width` - Target bitmap width in pixels (must be > 0)
@@ -224,10 +228,11 @@ impl PdfiumRenderConfig {
         self
     }
 
-    /// Sets the target height.
+    /// Sets the bitmap height.
     ///
-    /// If `width` is not provided, it will be calculated automatically according to
-    /// the aspect ratio. In that case also the required scale factor will be calculated.
+    /// If `width` is not provided, it will be calculated automatically according to the
+    /// aspect ratio of the page. In that case also the required scale factor will be
+    /// calculated.
     ///
     /// # Arguments
     /// * `height` - Target bitmap height in pixels (must be > 0)
@@ -239,9 +244,9 @@ impl PdfiumRenderConfig {
     /// Sets the pixel format for the rendered bitmap.
     ///
     /// Different formats have different memory requirements and compatibility:
-    /// - BGRA: 32-bit with alpha, most common for display
-    /// - BGR: 24-bit without alpha, smaller memory footprint
-    /// - Gray: 8-bit grayscale, smallest memory usage
+    /// - [`PdfiumBitmapFormat::Bgra`]: 32-bit with alpha, most common for display
+    /// - [`PdfiumBitmapFormat::Bgr`]: : 24-bit without alpha, smaller memory footprint
+    /// - [`PdfiumBitmapFormat::Gray`]: : 8-bit grayscale, smallest memory usage
     pub fn with_format(mut self, format: PdfiumBitmapFormat) -> Self {
         self.format = format;
         self
@@ -267,7 +272,7 @@ impl PdfiumRenderConfig {
     /// Sets the rendering flags to control various behaviors.
     ///
     /// You can combine multiple flags using the bitwise OR operator (|).
-    /// Default flags are `PdfiumRenderFlags::ANNOT` and `PdfiumRenderFlags::LCD_TEXT`
+    /// Default flags are [`PdfiumRenderFlags::ANNOT`] and [`PdfiumRenderFlags::LCD_TEXT`]
     ///
     /// # Arguments
     /// * `flags` - Combination of PdfiumRenderFlags
@@ -287,12 +292,13 @@ impl PdfiumRenderConfig {
         self
     }
 
-    /// Sets a clipping rectangle to render only a portion of the page.
+    /// Sets a clipping rectangle to render only a portion of the bitmap.
     ///
-    /// The rectangle is specified in bitmap pixels.
+    /// The rectangle is specified in bitmap pixels. Default is to render the
+    /// entire bitmap.
     ///
     /// # Arguments
-    /// * `rect` - The clipping rectangle in page coordinate system
+    /// * `rect` - The clipping rectangle in bitmap pixels
     pub fn with_clipping(mut self, rect: PdfiumRect) -> Self {
         self.clipping = Some(rect);
         self
