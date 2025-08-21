@@ -245,8 +245,8 @@ impl PdfiumRenderConfig {
     ///
     /// Different formats have different memory requirements and compatibility:
     /// - [`PdfiumBitmapFormat::Bgra`]: 32-bit with alpha, most common for display
-    /// - [`PdfiumBitmapFormat::Bgr`]: : 24-bit without alpha, smaller memory footprint
-    /// - [`PdfiumBitmapFormat::Gray`]: : 8-bit grayscale, smallest memory usage
+    /// - [`PdfiumBitmapFormat::Bgr`]: 24-bit without alpha, smaller memory footprint
+    /// - [`PdfiumBitmapFormat::Gray`]: 8-bit grayscale, smallest memory usage
     pub fn with_format(mut self, format: PdfiumBitmapFormat) -> Self {
         self.format = format;
         self

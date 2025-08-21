@@ -17,7 +17,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::{error::PdfiumResult, lib, page::PdfiumPage, PdfiumRect};
+use crate::{error::PdfiumResult, lib, page::PdfiumPage, pdfium_types::FS_RECTF, PdfiumRect};
 
 /// Rust interface to the boundary boxes of a page
 ///
@@ -150,6 +150,20 @@ impl<'a> PdfiumPageBoundaries<'a> {
             &mut rect.top,
         )?;
         Ok(rect)
+    }
+
+    /// Get the bounding box of the page.
+    ///
+    /// This is the intersection between its media box and its crop box.
+    pub fn bounding_box(&self) -> PdfiumResult<PdfiumRect> {
+        let mut rect = FS_RECTF {
+            left: 0.0,
+            top: 0.0,
+            right: 0.0,
+            bottom: 0.0,
+        };
+        lib().FPDF_GetPageBoundingBox(self.page, &mut rect)?;
+        Ok(rect.into())
     }
 
     /// Gets the default boundary for use by PDF viewers

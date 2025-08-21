@@ -29,6 +29,7 @@ use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
     page::{boundaries::PdfiumPageBoundaries, object::objects::PdfiumPageObjects},
+    pdfium_constants::FALSE,
     pdfium_types::{Handle, PageHandle, FPDF_PAGE},
     PdfiumDocument, PdfiumPageObject, PdfiumTextPage,
 };
@@ -83,6 +84,59 @@ impl PdfiumPage {
     /// Contains information about all characters in a page.
     pub fn text(&self) -> PdfiumResult<PdfiumTextPage> {
         lib().FPDFText_LoadPage(self)
+    }
+
+    /// Get the rotation of this [`PdfiumPage`].
+    ///
+    /// Returns one of the following indicating the page rotation:
+    /// 0 - No rotation.
+    /// 1 - Rotated 90 degrees clockwise.
+    /// 2 - Rotated 180 degrees clockwise.
+    /// 3 - Rotated 270 degrees clockwise.
+    pub fn rotation(&self) -> i32 {
+        lib().FPDFPage_GetRotation(self)
+    }
+
+    /// Set rotation for this [`PdfiumPage`].
+    ///
+    /// rotate - the rotation value, one of:
+    /// 0 - No rotation.
+    /// 1 - Rotated 90 degrees clockwise.
+    /// 2 - Rotated 180 degrees clockwise.
+    /// 3 - Rotated 270 degrees clockwise.
+    pub fn set_rotation(&self, rotate: i32) {
+        lib().FPDFPage_SetRotation(self, rotate)
+    }
+
+    /// Get page height.
+    ///
+    /// Return value:
+    /// * Page height (excluding non-displayable area) measured in points.
+    ///   One point is 1/72 inch (around 0.3528 mm)
+    ///
+    /// Comments:
+    /// * Changing the rotation of |page| affects the return value.
+    pub fn height(&self) -> f32 {
+        lib().FPDF_GetPageHeightF(self)
+    }
+
+    /// Get page width.
+    ///
+    /// Return value:
+    /// * Page width (excluding non-displayable area) measured in points.
+    ///   One point is 1/72 inch (around 0.3528 mm).
+    ///
+    /// Comments:
+    /// * Changing the rotation of |page| affects the return value.
+    pub fn width(&self) -> f32 {
+        lib().FPDF_GetPageWidthF(self)
+    }
+
+    /// Checks if this [`PdfiumPage`] contains transparency.
+    ///
+    /// Returns true if this contains transparency.
+    pub fn has_transparency(&self) -> bool {
+        lib().FPDFPage_HasTransparency(self) != FALSE
     }
 }
 
