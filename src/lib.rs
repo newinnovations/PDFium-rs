@@ -86,6 +86,7 @@ pub use page::text::search::PdfiumSearch;
 pub use page::text::search::PdfiumSearchFlags;
 pub use page::text::PdfiumTextPage;
 pub use page::PdfiumPage;
+pub use page::PdfiumRotation;
 pub use path_segment::PdfiumPathSegment;
 pub use rect::PdfiumRect;
 pub use signature::PdfiumSignature;

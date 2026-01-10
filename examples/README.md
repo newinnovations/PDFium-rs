@@ -8,13 +8,13 @@ PDFium-rs requires the PDFium dynamic library to be available:
 
 See the main `README.md` how to obtain and install for your system.
 
-## Export pages to images
+## Render pages to images
 
-File: `export_pages.rs`
+File: `render_pages.rs`
 
-Run with: `cargo run --example export_pages`
+Run with: `cargo run --example render_pages`
 
-- Exports all pages from a PDF document as individual JPEG images.
+- Renders all pages from a PDF document as individual JPEG images.
 
 ## Import pages from another document
 
@@ -34,3 +34,12 @@ Run with: `cargo run --example text_extract_search`
 
 - Demonstrates extracting text from PDF documents
 - Demonstrates text search functionality within a PDF document
+
+## Rotating pages
+
+File: `rotations.rs`
+
+Run with: `cargo run --example rotations`
+
+- Demonstrates rotating pages in the document
+- Demonstrates specifying rotation parameters to render operations

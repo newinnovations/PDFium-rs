@@ -57,9 +57,19 @@ impl PdfiumRect {
     pub fn new_from_lbrt(value: (f32, f32, f32, f32)) -> Self {
         Self {
             left: value.0,
-            top: value.3,
-            right: value.2,
             bottom: value.1,
+            right: value.2,
+            top: value.3,
+        }
+    }
+
+    /// Creates a new transposed [`PdfiumRect`]
+    pub fn transpose(&self) -> Self {
+        Self {
+            left: self.bottom,
+            bottom: self.left,
+            right: self.top,
+            top: self.right,
         }
     }
 

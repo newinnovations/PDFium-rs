@@ -21,7 +21,7 @@ use crate::{
     lib, pdfium_constants,
     pdfium_types::{FS_MATRIX, FS_RECTF},
     PdfiumBitmap, PdfiumBitmapFormat, PdfiumColor, PdfiumError, PdfiumMatrix, PdfiumPage,
-    PdfiumRect, PdfiumResult,
+    PdfiumRect, PdfiumResult, PdfiumRotation,
 };
 
 use bitflags::bitflags;
@@ -118,6 +118,7 @@ impl PdfiumRenderFlags {
 /// ### Auto-scaling mode (width OR height specified)
 /// - Provide only `width` or only `height`
 /// - The missing dimension is calculated automatically using the page's aspect ratio
+///   and taking into account and if specied the rotation
 /// - Scaling is determined automatically to fully fit the page into the bitmap
 /// - **Error**: Do not provide a `scale` or `matrix` in this mode
 ///
@@ -165,7 +166,9 @@ pub struct PdfiumRenderConfig {
     scale: Option<f32>,
     /// Translation offset (pan_x, pan_y) in bitmap coordinates.
     pan: Option<(f32, f32)>,
-    /// Custom transformation matrix. Cannot be combined with scale or pan.
+    /// Rotation in degrees
+    rotation: PdfiumRotation,
+    /// Custom transformation matrix. Cannot be combined with scale, pan or rotation.
     matrix: Option<PdfiumMatrix>,
     /// Clipping rectangle to restrict rendering to a specific area of the bitmap.
     clipping: Option<PdfiumRect>,
@@ -181,6 +184,7 @@ impl Default for PdfiumRenderConfig {
             flags: PdfiumRenderFlags::ANNOT | PdfiumRenderFlags::LCD_TEXT,
             scale: None,
             pan: None,
+            rotation: PdfiumRotation::None,
             matrix: None,
             clipping: None,
         }
@@ -330,6 +334,17 @@ impl PdfiumRenderConfig {
         self
     }
 
+    /// Sets the rotation value for the rendered bitmap.
+    ///
+    /// Cannot be used with custom transformation matrices.
+    ///
+    /// # Arguments
+    /// * `rotation` - Rotation in degrees
+    pub fn with_rotation(mut self, rotation: PdfiumRotation) -> Self {
+        self.rotation = rotation;
+        self
+    }
+
     /// Sets a custom transformation matrix for advanced rendering control.
     ///
     /// When specified, scale and pan parameters are not allowed.
@@ -393,6 +408,12 @@ impl PdfiumRenderConfig {
             ));
         }
 
+        if self.matrix.is_some() && self.rotation != PdfiumRotation::None {
+            return Err(PdfiumError::InvalidConfiguration(
+                "Cannot specify both matrix and rotation parameters".to_string(),
+            ));
+        }
+
         // Check for dimension/transformation compatibility
         if self.width.is_some()
             && self.height.is_some()
@@ -435,6 +456,25 @@ impl PdfiumPage {
 
         // Calculate final dimensions and transformation matrix
         let (width, height, matrix) = self.calculate_render_parameters(config)?;
+
+        let matrix = match config.rotation {
+            PdfiumRotation::None => matrix,
+            PdfiumRotation::Cw90 => {
+                PdfiumMatrix::new_scale_pan(1.0, width as f32, 0.0)
+                    * PdfiumMatrix::rotation(PdfiumRotation::Cw270)
+                    * matrix
+            }
+            PdfiumRotation::Cw180 => {
+                PdfiumMatrix::new_scale_pan(1.0, width as f32, height as f32)
+                    * PdfiumMatrix::rotation(PdfiumRotation::Cw180)
+                    * matrix
+            }
+            PdfiumRotation::Cw270 => {
+                PdfiumMatrix::new_scale_pan(1.0, 0.0, height as f32)
+                    * PdfiumMatrix::rotation(PdfiumRotation::Cw90)
+                    * matrix
+            }
+        };
 
         // Create the target bitmap
         let bitmap = PdfiumBitmap::empty(width, height, config.format)?;
@@ -489,6 +529,11 @@ impl PdfiumPage {
                     ));
                 }
                 let bounds = self.boundaries().default()?;
+                let bounds = if (self.rotation() + config.rotation).needs_transpose() {
+                    bounds.transpose()
+                } else {
+                    bounds
+                };
                 let scale = h as f32 / bounds.height();
                 let w = (bounds.width() * scale) as i32;
                 let m = PdfiumMatrix::new_scale_opt_pan(scale, config.pan);
@@ -502,6 +547,11 @@ impl PdfiumPage {
                     ));
                 }
                 let bounds = self.boundaries().default()?;
+                let bounds = if (self.rotation() + config.rotation).needs_transpose() {
+                    bounds.transpose()
+                } else {
+                    bounds
+                };
                 let scale = w as f32 / bounds.width();
                 let h = (bounds.height() * scale) as i32;
                 let m = PdfiumMatrix::new_scale_opt_pan(scale, config.pan);
@@ -629,6 +679,19 @@ mod tests {
             .with_size(800, 600)
             .with_matrix(matrix)
             .with_pan(10.0, 20.0);
+        let result = page.render(&config);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_invalid_config_matrix_and_rotation() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let matrix = PdfiumMatrix::identity();
+        let config = PdfiumRenderConfig::new()
+            .with_size(800, 600)
+            .with_matrix(matrix)
+            .with_rotation(PdfiumRotation::Cw90);
         let result = page.render(&config);
         assert!(result.is_err());
     }

@@ -34,6 +34,46 @@ use crate::{
     PdfiumDocument, PdfiumPageObject, PdfiumTextPage,
 };
 
+/// Rotation transformation that can be applied to a [`Page`] and during rendering
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
+pub enum PdfiumRotation {
+    /// No rotation
+    None = 0,
+    /// 90° clockwise
+    Cw90 = 1,
+    /// 180° clockwise
+    Cw180 = 2,
+    /// 270° clockwise (90° counterclockwise)
+    Cw270 = 3,
+}
+
+impl PdfiumRotation {
+    /// Checks if rotation is 90°/270° and height/width needs to be flipped
+    pub fn needs_transpose(&self) -> bool {
+        *self == PdfiumRotation::Cw90 || *self == PdfiumRotation::Cw270
+    }
+}
+
+impl From<i32> for PdfiumRotation {
+    fn from(value: i32) -> Self {
+        match value % 4 {
+            1 => Self::Cw90,
+            2 => Self::Cw180,
+            3 => Self::Cw270,
+            _ => Self::None,
+        }
+    }
+}
+
+impl std::ops::Add for PdfiumRotation {
+    type Output = PdfiumRotation;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::Output::from(self as i32 + rhs as i32)
+    }
+}
+
 /// # Rust interface to FPDF_PAGE
 #[derive(Debug, Clone)]
 pub struct PdfiumPage {
@@ -88,24 +128,16 @@ impl PdfiumPage {
 
     /// Get the rotation of this [`PdfiumPage`].
     ///
-    /// Returns one of the following indicating the page rotation:
-    /// 0 - No rotation.
-    /// 1 - Rotated 90 degrees clockwise.
-    /// 2 - Rotated 180 degrees clockwise.
-    /// 3 - Rotated 270 degrees clockwise.
-    pub fn rotation(&self) -> i32 {
-        lib().FPDFPage_GetRotation(self)
+    /// Returns a [`PdfiumRotation`] indicating the page rotation
+    pub fn rotation(&self) -> PdfiumRotation {
+        PdfiumRotation::from(lib().FPDFPage_GetRotation(self))
     }
 
     /// Set rotation for this [`PdfiumPage`].
     ///
-    /// rotate - the rotation value, one of:
-    /// 0 - No rotation.
-    /// 1 - Rotated 90 degrees clockwise.
-    /// 2 - Rotated 180 degrees clockwise.
-    /// 3 - Rotated 270 degrees clockwise.
-    pub fn set_rotation(&self, rotate: i32) {
-        lib().FPDFPage_SetRotation(self, rotate)
+    /// rotate - the rotation value as [`PdfiumRotation`]
+    pub fn set_rotation(&self, rotate: PdfiumRotation) {
+        lib().FPDFPage_SetRotation(self, rotate as i32)
     }
 
     /// Get page height.
@@ -132,6 +164,30 @@ impl PdfiumPage {
         lib().FPDF_GetPageWidthF(self)
     }
 
+    /// Check for landscape orientation.
+    ///
+    /// Return value:
+    /// * `true` if width is larger than height, otherwise `false`
+    ///
+    /// Comments:
+    /// * Square is neither landscape nor portrait
+    /// * Changing the rotation of the page affects the return value.
+    pub fn is_landscape(&self) -> bool {
+        self.width() > self.height()
+    }
+
+    /// Check for portrait orientation.
+    ///
+    /// Return value:
+    /// * `true` if width is smaller than height, otherwise `false`
+    ///
+    /// Comments:
+    /// * Square is neither landscape nor portrait
+    /// * Changing the rotation of the page affects the return value.
+    pub fn is_portrait(&self) -> bool {
+        self.width() < self.height()
+    }
+
     /// Checks if this [`PdfiumPage`] contains transparency.
     ///
     /// Returns true if this contains transparency.
@@ -154,7 +210,23 @@ fn close_page(page: FPDF_PAGE) {
 
 #[cfg(test)]
 mod tests {
-    use crate::document::PdfiumDocument;
+    use crate::{PdfiumDocument, PdfiumRotation};
+
+    #[test]
+    fn test_rotations() {
+        assert_eq!(
+            PdfiumRotation::Cw90 + PdfiumRotation::Cw90,
+            PdfiumRotation::Cw180
+        );
+        assert_eq!(
+            PdfiumRotation::Cw90 + PdfiumRotation::Cw270,
+            PdfiumRotation::None
+        );
+        assert_eq!(
+            PdfiumRotation::Cw270 + PdfiumRotation::Cw270,
+            PdfiumRotation::Cw180
+        );
+    }
 
     #[test]
     fn test_sequential_page_access() {
