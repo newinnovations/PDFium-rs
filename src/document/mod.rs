@@ -341,8 +341,8 @@ mod tests {
     #[test]
     fn test_doc_save() {
         let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
-        document.save_to_path("groningen_copy.pdf", None).unwrap();
-        let document = PdfiumDocument::new_from_path("groningen_copy.pdf", None).unwrap();
+        document.save_to_path("groningen-copy.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("groningen-copy.pdf", None).unwrap();
         let page_count = document.page_count();
         assert_eq!(page_count, 2);
     }

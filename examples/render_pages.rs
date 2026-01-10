@@ -23,13 +23,13 @@ use pdfium::*;
 
 /// Exports all pages from a PDF document as individual JPEG images.
 ///
-/// This function demonstrates how to:
+/// This example demonstrates how to:
 /// - Load a PDF document from disk
 /// - Iterate through all pages in the document
 /// - Render each page as a bitmap with specific dimensions and format
 /// - Save each rendered page as a separate image file
 ///
-/// The function uses proper error handling with Result types, allowing
+/// The example uses proper error handling with Result types, allowing
 /// errors to propagate up the call stack rather than panicking.
 pub fn example_export_pages_to_images() -> PdfiumResult<()> {
     // Load the PDF document from the specified file path
