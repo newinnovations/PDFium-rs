@@ -4,7 +4,7 @@
 # PDFium-rs library on older Rust versions. Rust 1.80 is the minimum
 # version required for this project.
 
-FROM rust:1.85-slim
+FROM rust:1.87-slim
 
 WORKDIR /app
 
