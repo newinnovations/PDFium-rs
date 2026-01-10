@@ -55,7 +55,7 @@ jobs:
         run: |
           cargo test
 
-      - name: Test build on Rust 1.80
+      - name: Test build on Rust 1.85
         if: runner.os == 'Linux'
         run: |
           docker build -t pdfium-rs-test .
