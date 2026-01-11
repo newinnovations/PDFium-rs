@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -26,12 +26,12 @@ pub mod render;
 pub mod text;
 
 use crate::{
+    PdfiumDocument, PdfiumPageObject, PdfiumTextPage,
     error::{PdfiumError, PdfiumResult},
     lib,
     page::{boundaries::PdfiumPageBoundaries, object::objects::PdfiumPageObjects},
     pdfium_constants::FALSE,
-    pdfium_types::{Handle, PageHandle, FPDF_PAGE},
-    PdfiumDocument, PdfiumPageObject, PdfiumTextPage,
+    pdfium_types::{FPDF_PAGE, Handle, PageHandle},
 };
 
 /// Rotation transformation that can be applied to a [`Page`] and during rendering

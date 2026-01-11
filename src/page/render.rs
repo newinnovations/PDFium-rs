@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -18,10 +18,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    lib, pdfium_constants,
-    pdfium_types::{FS_MATRIX, FS_RECTF},
     PdfiumBitmap, PdfiumBitmapFormat, PdfiumColor, PdfiumError, PdfiumMatrix, PdfiumPage,
-    PdfiumRect, PdfiumResult, PdfiumRotation,
+    PdfiumRect, PdfiumResult, PdfiumRotation, lib, pdfium_constants,
+    pdfium_types::{FS_MATRIX, FS_RECTF},
 };
 
 use bitflags::bitflags;

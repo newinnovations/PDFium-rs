@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -20,7 +20,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use crate::{c_api::pdfium::to_result, pdfium_types::*, Pdfium, PdfiumResult};
+use crate::{Pdfium, PdfiumResult, c_api::pdfium::to_result, pdfium_types::*};
 
 // These functions are internal to the crate
 impl Pdfium {

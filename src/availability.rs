@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -20,7 +20,7 @@
 use crate::{
     error::{PdfiumError, PdfiumResult},
     lib,
-    pdfium_types::{AvailabilityHandle, Handle, FPDF_AVAIL},
+    pdfium_types::{AvailabilityHandle, FPDF_AVAIL, Handle},
 };
 
 /// # Rust interface to FPDF_AVAIL

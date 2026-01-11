@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -33,8 +33,8 @@ use crate::{
     document::{reader::PdfiumReader, writer::PdfiumWriter},
     error::{PdfiumError, PdfiumResult},
     lib,
-    page::{pages::PdfiumPages, PdfiumPage},
-    pdfium_types::{DocumentHandle, Handle, FPDF_DOCUMENT},
+    page::{PdfiumPage, pages::PdfiumPages},
+    pdfium_types::{DocumentHandle, FPDF_DOCUMENT, Handle},
     try_lib,
 };
 

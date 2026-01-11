@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -18,9 +18,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use parking_lot::{ReentrantMutex, ReentrantMutexGuard};
-use std::sync::{atomic::AtomicBool, LazyLock, Mutex, OnceLock};
+use std::sync::{LazyLock, Mutex, OnceLock, atomic::AtomicBool};
 
-use crate::{c_api::pdfium_bindings::Pdfium, error::PdfiumResult, PdfiumError};
+use crate::{PdfiumError, c_api::pdfium_bindings::Pdfium, error::PdfiumResult};
 
 static PDFIUM: OnceLock<ReentrantMutex<PdfiumResult<Box<Pdfium>>>> = OnceLock::new();
 

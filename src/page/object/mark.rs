@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -19,7 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
-    pdfium_types::{Handle, PageObjectMarkHandle, FPDF_PAGEOBJECTMARK},
+    pdfium_types::{FPDF_PAGEOBJECTMARK, Handle, PageObjectMarkHandle},
 };
 
 /// # Rust interface to FPDF_PAGEOBJECTMARK

@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -20,10 +20,11 @@
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::{
+    PdfiumColor,
     error::{PdfiumError, PdfiumResult},
     lib, pdfium_constants,
-    pdfium_types::{BitmapHandle, Handle, FPDF_BITMAP},
-    try_lib, PdfiumColor,
+    pdfium_types::{BitmapHandle, FPDF_BITMAP, Handle},
+    try_lib,
 };
 
 /// Rust interface to FPDF_BITMAP

@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -19,7 +19,7 @@
 
 use std::{cell::OnceCell, ffi::CString, os::raw::c_ulong, ptr::null};
 
-use crate::{lib, PdfiumDocument, PdfiumPage, PdfiumResult};
+use crate::{PdfiumDocument, PdfiumPage, PdfiumResult, lib};
 
 /// Iterator for [`PdfiumPage`]
 pub struct PdfiumPages<'a> {

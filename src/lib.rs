@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -65,8 +65,8 @@ pub use c_api::pdfium_types;
 pub use clip_path::PdfiumClipPath;
 pub use color::PdfiumColor;
 pub use destination::PdfiumDestination;
-pub use document::reader::PdfiumReader;
 pub use document::PdfiumDocument;
+pub use document::reader::PdfiumReader;
 pub use error::PdfiumError;
 pub use error::PdfiumResult;
 pub use font::PdfiumFont;
@@ -75,18 +75,18 @@ pub use glyph_path::PdfiumGlyphPath;
 pub use javascript_action::PdfiumJavascriptAction;
 pub use link::PdfiumLink;
 pub use matrix::PdfiumMatrix;
+pub use page::PdfiumPage;
+pub use page::PdfiumRotation;
 pub use page::boundaries::PdfiumPageBoundaries;
 pub use page::link::PdfiumPageLink;
-pub use page::object::mark::PdfiumPageObjectMark;
 pub use page::object::PdfiumPageObject;
+pub use page::object::mark::PdfiumPageObjectMark;
 pub use page::range::PdfiumPageRange;
 pub use page::render::PdfiumRenderConfig;
 pub use page::render::PdfiumRenderFlags;
+pub use page::text::PdfiumTextPage;
 pub use page::text::search::PdfiumSearch;
 pub use page::text::search::PdfiumSearchFlags;
-pub use page::text::PdfiumTextPage;
-pub use page::PdfiumPage;
-pub use page::PdfiumRotation;
 pub use path_segment::PdfiumPathSegment;
 pub use rect::PdfiumRect;
 pub use signature::PdfiumSignature;

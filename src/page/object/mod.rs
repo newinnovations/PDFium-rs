@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -23,6 +23,7 @@ pub mod objects;
 use std::{ffi::CString, os::raw::c_ulong};
 
 use crate::{
+    PdfiumClipPath, PdfiumPage, PdfiumPageObjectMark,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_constants::{
@@ -30,9 +31,8 @@ use crate::{
         FPDF_PAGEOBJ_TEXT, FPDF_PAGEOBJ_UNKNOWN,
     },
     pdfium_types::{
-        Handle, PageObjectHandle, FPDF_BOOL, FPDF_PAGEOBJECT, FS_MATRIX, FS_QUADPOINTSF,
+        FPDF_BOOL, FPDF_PAGEOBJECT, FS_MATRIX, FS_QUADPOINTSF, Handle, PageObjectHandle,
     },
-    PdfiumClipPath, PdfiumPage, PdfiumPageObjectMark,
 };
 
 /// # Rust interface to FPDF_PAGEOBJECT

@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -26,13 +26,12 @@ use std::os::raw::{c_char, c_long, c_ulong, c_ushort, c_void};
 use std::ptr::null_mut;
 
 use crate::{
-    pdfium_types::*, Pdfium, PdfiumAction, PdfiumAnnotation, PdfiumAttachment, PdfiumAvailability,
-    PdfiumBitmap, PdfiumBookmark, PdfiumClipPath, PdfiumDestination, PdfiumDocument, PdfiumError,
-    PdfiumFont, PdfiumForm, PdfiumGlyphPath, PdfiumJavascriptAction, PdfiumLink, PdfiumPage,
-    PdfiumPageLink, PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment,
-    PdfiumReader, PdfiumResult, PdfiumSearch, PdfiumSignature, PdfiumStructElement,
-    PdfiumStructElementAttr, PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumTextPage,
-    PdfiumXObject,
+    Pdfium, PdfiumAction, PdfiumAnnotation, PdfiumAttachment, PdfiumAvailability, PdfiumBitmap,
+    PdfiumBookmark, PdfiumClipPath, PdfiumDestination, PdfiumDocument, PdfiumError, PdfiumFont,
+    PdfiumForm, PdfiumGlyphPath, PdfiumJavascriptAction, PdfiumLink, PdfiumPage, PdfiumPageLink,
+    PdfiumPageObject, PdfiumPageObjectMark, PdfiumPageRange, PdfiumPathSegment, PdfiumReader,
+    PdfiumResult, PdfiumSearch, PdfiumSignature, PdfiumStructElement, PdfiumStructElementAttr,
+    PdfiumStructElementAttrValue, PdfiumStructTree, PdfiumTextPage, PdfiumXObject, pdfium_types::*,
 };
 
 /// This is the memory-safe wrapper around PDFium's C API. All raw C pointers and manual

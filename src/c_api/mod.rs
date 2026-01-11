@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -34,12 +34,12 @@ use std::{
 use libloading::{Library, Symbol};
 
 use crate::{
+    PdfiumError, PdfiumResult,
     c_api::pdfium_bindings::Pdfium,
     pdfium_constants::{
         FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_AGG, FPDF_RENDERER_TYPE_FPDF_RENDERERTYPE_SKIA,
     },
     pdfium_types::FPDF_LIBRARY_CONFIG,
-    PdfiumError, PdfiumResult,
 };
 
 impl Pdfium {

@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -25,12 +25,12 @@ use std::{
 };
 
 use crate::{
+    PdfiumPageLink, PdfiumPageObject, PdfiumRect,
     c_api::{i32_to_bool_result, i32_to_result},
     error::{PdfiumError, PdfiumResult},
     lib,
     page::text::search::{PdfiumSearchFlags, PdfiumSearchIterator},
-    pdfium_types::{Handle, TextPageHandle, FPDF_TEXTPAGE, FS_MATRIX, FS_RECTF},
-    PdfiumPageLink, PdfiumPageObject, PdfiumRect,
+    pdfium_types::{FPDF_TEXTPAGE, FS_MATRIX, FS_RECTF, Handle, TextPageHandle},
 };
 
 /// # Rust interface to FPDF_TEXTPAGE

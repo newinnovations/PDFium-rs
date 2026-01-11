@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -24,7 +24,7 @@ use std::{
     slice,
 };
 
-use crate::{pdfium_types::FPDF_FILEWRITE, PdfiumResult};
+use crate::{PdfiumResult, pdfium_types::FPDF_FILEWRITE};
 
 /// Enables Rust based writers (implementing `Write` + `Seek`) with PDFium.
 #[repr(C)]

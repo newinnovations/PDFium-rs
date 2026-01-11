@@ -1,6 +1,6 @@
 // PDFium-rs -- Modern Rust interface to PDFium, the PDF library from Google
 //
-// Copyright (c) 2025 Martin van der Werff <github (at) newinnovations.nl>
+// Copyright (c) 2025-2026 Martin van der Werff <github (at) newinnovations.nl>
 //
 // This file is part of PDFium-rs.
 //
@@ -21,7 +21,7 @@ use crate::{
     c_api::i32_to_bool,
     error::{PdfiumError, PdfiumResult},
     lib, pdfium_constants,
-    pdfium_types::{Handle, SearchHandle, FPDF_SCHHANDLE},
+    pdfium_types::{FPDF_SCHHANDLE, Handle, SearchHandle},
 };
 
 use bitflags::bitflags;
