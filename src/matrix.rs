@@ -60,6 +60,18 @@ impl PdfiumMatrix {
         }
     }
 
+    /// Creates a new [`PdfiumMatrix`] with the given `pan` values.
+    pub const fn new_pan(pan_x: f32, pan_y: f32) -> Self {
+        Self {
+            a: 1.0,
+            b: 0.0,
+            c: 0.0,
+            d: 1.0,
+            e: pan_x,
+            f: pan_y,
+        }
+    }
+
     /// Creates a new [`PdfiumMatrix`] with the given `scale` and optional `pan` value.
     pub const fn new_scale_opt_pan(scale: f32, pan: Option<(f32, f32)>) -> Self {
         if let Some((pan_x, pan_y)) = pan {

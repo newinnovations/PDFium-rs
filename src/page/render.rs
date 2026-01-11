@@ -460,19 +460,19 @@ impl PdfiumPage {
         let matrix = match config.rotation {
             PdfiumRotation::None => matrix,
             PdfiumRotation::Cw90 => {
-                PdfiumMatrix::new_scale_pan(1.0, width as f32, 0.0)
-                    * PdfiumMatrix::rotation(PdfiumRotation::Cw270)
+                PdfiumMatrix::new_pan(width as f32, 0.0)
                     * matrix
+                    * PdfiumMatrix::rotation(PdfiumRotation::Cw270)
             }
             PdfiumRotation::Cw180 => {
-                PdfiumMatrix::new_scale_pan(1.0, width as f32, height as f32)
-                    * PdfiumMatrix::rotation(PdfiumRotation::Cw180)
+                PdfiumMatrix::new_pan(width as f32, height as f32)
                     * matrix
+                    * PdfiumMatrix::rotation(PdfiumRotation::Cw180)
             }
             PdfiumRotation::Cw270 => {
-                PdfiumMatrix::new_scale_pan(1.0, 0.0, height as f32)
-                    * PdfiumMatrix::rotation(PdfiumRotation::Cw90)
+                PdfiumMatrix::new_pan(0.0, height as f32)
                     * matrix
+                    * PdfiumMatrix::rotation(PdfiumRotation::Cw90)
             }
         };
 
