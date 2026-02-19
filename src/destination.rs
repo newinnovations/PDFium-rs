@@ -18,7 +18,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    document::PdfiumDocument,
     error::{PdfiumError, PdfiumResult},
+    lib,
     pdfium_types::{DestinationHandle, FPDF_DEST, Handle},
 };
 
@@ -37,6 +39,25 @@ impl PdfiumDestination {
                 handle: Handle::new(handle, None), // TODO: check close is not needed
             })
         }
+    }
+
+    /// Returns the zero-based page index this destination points to,
+    /// or `None` on failure.
+    pub fn get_index(&self, document: &PdfiumDocument) -> Option<i32> {
+        let val = lib().FPDFDest_GetDestPageIndex(document, self);
+        if val >= 0 { Some(val) } else { None }
+    }
+
+    /// Returns `(view_mode, view_pos)` for this destination.
+    ///
+    /// `view_mode` is a `PDFDEST_VIEW_*` constant; `view_pos` contains 0–4
+    /// floats whose meaning depends on `view_mode`.
+    pub fn get_view(&self) -> (u64, Vec<f32>) {
+        let mut n_params: u64 = 0;
+        let mut params = [0f32; 4];
+        let mode = lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);
+        let pos = params[..n_params as usize].to_vec();
+        (mode, pos)
     }
 }
 

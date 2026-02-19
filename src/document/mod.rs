@@ -21,7 +21,7 @@ pub mod reader;
 pub mod writer;
 
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     ffi::CString,
     fmt::Debug,
     fs::File,
@@ -32,12 +32,12 @@ use std::{
 };
 
 use crate::{
-    PdfiumBookmark,
+    PdfiumAttachment, PdfiumBookmark, PdfiumXObject,
     document::{reader::PdfiumReader, writer::PdfiumWriter},
     error::{PdfiumError, PdfiumResult},
     lib,
     page::{PdfiumPage, pages::PdfiumPages},
-    pdfium_types::{DocumentHandle, FPDF_DOCUMENT, Handle},
+    pdfium_types::{DocumentHandle, FPDF_DOCUMENT, FPDF_FILEIDTYPE, FS_SIZEF, Handle},
     try_lib,
 };
 
@@ -337,6 +337,161 @@ impl PdfiumDocument {
             bm = next_bm;
         }
         Ok(())
+    }
+
+    /// Returns the type of form contained in this [`PdfiumDocument`] (`FORMTYPE_*` constant).
+    pub fn get_form_type(&self) -> i32 {
+        lib().FPDF_GetFormType(self)
+    }
+
+    /// Returns the page mode of this [`PdfiumDocument`] (`PAGEMODE_*` constant).
+    pub fn get_page_mode(&self) -> i32 {
+        lib().FPDFDoc_GetPageMode(self)
+    }
+
+    /// Returns whether this [`PdfiumDocument`] is a tagged PDF.
+    pub fn is_tagged(&self) -> bool {
+        lib().FPDFCatalog_IsTagged(self).is_ok()
+    }
+
+    /// Returns the unique file identifier from the PDF's trailer dictionary.
+    ///
+    /// `id_type` is either `FPDF_FILEIDTYPE_FILEIDTYPE_PERMANENT` or
+    /// `FPDF_FILEIDTYPE_FILEIDTYPE_CHANGING`.
+    pub fn get_identifier(&self, id_type: FPDF_FILEIDTYPE) -> Vec<u8> {
+        let lib = lib();
+        let n_bytes = lib.FPDF_GetFileIdentifier(self, id_type, None, 0) as usize;
+        if n_bytes <= 2 {
+            return Vec::new();
+        }
+        let mut buffer = vec![0u8; n_bytes];
+        lib.FPDF_GetFileIdentifier(self, id_type, Some(&mut buffer), n_bytes as u64);
+        buffer.truncate(n_bytes - 2);
+        buffer
+    }
+
+    /// Returns the PDF version of this [`PdfiumDocument`] (e.g. 14 for PDF 1.4),
+    /// or `None` if the document is new or the version could not be determined.
+    pub fn get_version(&self) -> Option<i32> {
+        let mut version = 0i32;
+        lib().FPDF_GetFileVersion(self, &mut version).ok()?;
+        Some(version)
+    }
+
+    /// Returns the value of a metadata key from this [`PdfiumDocument`].
+    /// Returns an empty string if the key is not present.
+    pub fn get_metadata_value(&self, key: &str) -> PdfiumResult<String> {
+        let lib = lib();
+        let tag = CString::new(key).map_err(|_| PdfiumError::NulError)?;
+        let buf_len = lib.FPDF_GetMetaText(self, &tag, None, 0);
+        if buf_len == 0 {
+            return Ok(String::new());
+        }
+        let mut buffer = vec![0u16; buf_len as usize / 2];
+        let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
+        lib.FPDF_GetMetaText(self, &tag, Some(u8_slice), buf_len);
+        Ok(String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
+            .map_err(|_| PdfiumError::StringEncodingError)?)
+    }
+
+    /// Standard PDF metadata keys.
+    pub const METADATA_KEYS: &'static [&'static str] = &[
+        "Title",
+        "Author",
+        "Subject",
+        "Keywords",
+        "Creator",
+        "Producer",
+        "CreationDate",
+        "ModDate",
+    ];
+
+    /// Returns all metadata from this [`PdfiumDocument`] as a `HashMap`.
+    ///
+    /// If `skip_empty` is `true`, keys with empty values are omitted.
+    pub fn get_metadata_dict(&self, skip_empty: bool) -> PdfiumResult<HashMap<String, String>> {
+        let mut map = HashMap::new();
+        for &key in Self::METADATA_KEYS {
+            let value = self.get_metadata_value(key)?;
+            if !skip_empty || !value.is_empty() {
+                map.insert(key.to_string(), value);
+            }
+        }
+        Ok(map)
+    }
+
+    /// Returns the number of embedded files in this [`PdfiumDocument`].
+    pub fn count_attachments(&self) -> i32 {
+        lib().FPDFDoc_GetAttachmentCount(self)
+    }
+
+    /// Returns the [`PdfiumAttachment`] at the given zero-based index.
+    pub fn get_attachment(&self, index: i32) -> PdfiumResult<PdfiumAttachment> {
+        lib().FPDFDoc_GetAttachment(self, index)
+    }
+
+    /// Adds a new attachment with the given name to this [`PdfiumDocument`].
+    pub fn new_attachment(&self, name: &str) -> PdfiumResult<PdfiumAttachment> {
+        lib().FPDFDoc_AddAttachment(self, name)
+    }
+
+    /// Removes the attachment at the given zero-based index from this [`PdfiumDocument`].
+    /// Following attachments shift one slot to the left.
+    pub fn del_attachment(&self, index: i32) -> PdfiumResult<()> {
+        lib().FPDFDoc_DeleteAttachment(self, index)
+    }
+
+    /// Inserts a new empty page into this [`PdfiumDocument`].
+    ///
+    /// If `index` is `None` or beyond the last page, the page is appended.
+    pub fn new_page(
+        &self,
+        width: f64,
+        height: f64,
+        index: Option<i32>,
+    ) -> PdfiumResult<PdfiumPage> {
+        let index = index.unwrap_or_else(|| self.page_count());
+        lib().FPDFPage_New(self, index, width, height)
+    }
+
+    /// Removes the page at the given zero-based index from this [`PdfiumDocument`].
+    pub fn del_page(&self, index: i32) {
+        lib().FPDFPage_Delete(self, index);
+    }
+
+    /// Returns the size `(width, height)` in PDF canvas units of the page at the given
+    /// zero-based index.
+    pub fn get_page_size(&self, index: i32) -> PdfiumResult<(f32, f32)> {
+        let mut size = FS_SIZEF {
+            width: 0.0,
+            height: 0.0,
+        };
+        lib().FPDF_GetPageSizeByIndexF(self, index, &mut size)?;
+        Ok((size.width, size.height))
+    }
+
+    /// Returns the label string of the page at the given zero-based index.
+    pub fn get_page_label(&self, index: i32) -> PdfiumResult<String> {
+        let lib = lib();
+        let buf_len = lib.FPDF_GetPageLabel(self, index, None, 0);
+        if buf_len == 0 {
+            return Ok(String::new());
+        }
+        let mut buffer = vec![0u16; buf_len as usize / 2];
+        let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
+        lib.FPDF_GetPageLabel(self, index, Some(u8_slice), buf_len);
+        Ok(String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
+            .map_err(|_| PdfiumError::StringEncodingError)?)
+    }
+
+    /// Captures the page at the given zero-based index as a [`PdfiumXObject`] attached to
+    /// `dest_doc`'s resources.
+    pub fn page_as_xobject(
+        &self,
+        index: i32,
+        dest_doc: &PdfiumDocument,
+    ) -> PdfiumResult<PdfiumXObject> {
+        lib().FPDF_NewXObjectFromPage(dest_doc, self, index)
     }
 
     /// Iterate through the bookmarks in the document's table of contents (TOC).

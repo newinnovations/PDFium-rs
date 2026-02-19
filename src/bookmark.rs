@@ -18,6 +18,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumDestination,
+    document::PdfiumDocument,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{BookmarkHandle, FPDF_BOOKMARK, Handle},
@@ -81,6 +83,11 @@ impl PdfiumBookmark {
 
     pub(crate) fn set_level(&mut self, level: u32) {
         self.level = Some(level);
+    }
+
+    /// Returns the destination associated with this [`PdfiumBookmark`]
+    pub fn get_dest(&self, document: &PdfiumDocument) -> PdfiumResult<PdfiumDestination> {
+        lib().FPDFBookmark_GetDest(document, self)
     }
 }
 
