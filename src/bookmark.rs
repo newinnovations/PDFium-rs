@@ -19,6 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
+    lib,
     pdfium_types::{BookmarkHandle, FPDF_BOOKMARK, Handle},
 };
 
@@ -26,6 +27,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumBookmark {
     handle: BookmarkHandle,
+    level: Option<u32>,
 }
 
 impl PdfiumBookmark {
@@ -35,8 +37,50 @@ impl PdfiumBookmark {
         } else {
             Ok(Self {
                 handle: Handle::new(handle, None), // TODO: check close is not needed
+                level: None,
             })
         }
+    }
+
+    pub(crate) fn null() -> Self {
+        Self {
+            handle: Handle::new(std::ptr::null_mut(), None),
+            level: None,
+        }
+    }
+
+    pub(crate) fn is_null(&self) -> bool {
+        self.handle.handle().is_null()
+    }
+
+    /// The bookmark's title string.
+    pub fn title(&self) -> PdfiumResult<String> {
+        let lib = lib();
+        let buf_len = lib.FPDFBookmark_GetTitle(&self, None, 0);
+        if buf_len == 0 {
+            Ok(String::new())
+        } else {
+            let mut buffer = vec![0u16; buf_len as usize / 2];
+            // Safety: The alignment of u8 is less than or equal to u16, so this is safe.
+            let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
+            lib.FPDFBookmark_GetTitle(&self, Some(u8_slice), buf_len);
+            Ok(String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
+                .map_err(|_| PdfiumError::StringEncodingError)?)
+        }
+    }
+
+    /// Signed number of child bookmarks that would be visible if the bookmark were open (i.e. recursively counting children of open children).
+    pub fn count(&self) -> i32 {
+        lib().FPDFBookmark_GetCount(&self)
+    }
+
+    /// The bookmark's nesting level (0 = top-level).
+    pub fn level(&self) -> Option<u32> {
+        self.level
+    }
+
+    pub(crate) fn set_level(&mut self, level: u32) {
+        self.level = Some(level);
     }
 }
 

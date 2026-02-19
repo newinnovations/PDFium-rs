@@ -21,6 +21,7 @@ pub mod reader;
 pub mod writer;
 
 use std::{
+    collections::HashSet,
     ffi::CString,
     fmt::Debug,
     fs::File,
@@ -31,6 +32,7 @@ use std::{
 };
 
 use crate::{
+    PdfiumBookmark,
     document::{reader::PdfiumReader, writer::PdfiumWriter},
     error::{PdfiumError, PdfiumResult},
     lib,
@@ -306,6 +308,43 @@ impl PdfiumDocument {
     /// ```
     pub fn import_pages(&self, dest_doc: &Self, page_range: &str, index: i32) -> PdfiumResult<()> {
         lib().FPDF_ImportPages(self, dest_doc, &CString::from_str(page_range)?, index)
+    }
+
+    /// Helper function for recursively traversing the table of contents.
+    fn get_toc_helper(
+        &self,
+        max_depth: u32,
+        level: u32,
+        parent: PdfiumBookmark,
+        result: &mut Vec<PdfiumBookmark>,
+        seen: &mut HashSet<crate::pdfium_types::FPDF_BOOKMARK>,
+    ) -> PdfiumResult<()> {
+        let lib = lib();
+        let mut bm = lib.FPDFBookmark_GetFirstChild(self, &parent)?;
+        while !bm.is_null() {
+            let ptr = crate::pdfium_types::FPDF_BOOKMARK::from(&bm);
+            if seen.contains(&ptr) {
+                return Err(PdfiumError::CircularReferenceError);
+            }
+            seen.insert(ptr);
+            bm.set_level(level);
+            let next_bm = lib.FPDFBookmark_GetNextSibling(self, &bm)?;
+            let bm_dup = bm.clone();
+            result.push(bm);
+            if level < max_depth - 1 {
+                self.get_toc_helper(max_depth, level + 1, bm_dup, result, seen)?;
+            }
+            bm = next_bm;
+        }
+        Ok(())
+    }
+
+    /// Iterate through the bookmarks in the document's table of contents (TOC).
+    pub fn get_toc(&self, max_depth: u32) -> PdfiumResult<Vec<PdfiumBookmark>> {
+        let mut result = Vec::new();
+        let mut seen = HashSet::new();
+        self.get_toc_helper(max_depth, 0, PdfiumBookmark::null(), &mut result, &mut seen)?;
+        Ok(result)
     }
 }
 
