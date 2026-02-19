@@ -27,6 +27,7 @@ use std::{
     io::{Cursor, Read, Seek, Write},
     path::Path,
     rc::Rc,
+    str::FromStr,
 };
 
 use crate::{
@@ -293,6 +294,18 @@ impl PdfiumDocument {
     /// Return an [`Iterator`] for the pages in this [`PdfiumDocument`].
     pub fn pages(&self) -> PdfiumPages<'_> {
         PdfiumPages::new(self)
+    }
+
+    /// Imports pages from this [`PdfiumDocument`] into another [`PdfiumDocument`].
+    ///
+    /// # Examples
+    /// ```ignore
+    /// let document = PdfiumDocument::new_from_path("input.pdf", None)?;
+    /// let dest_document = PdfiumDocument::new_from_path("output.pdf", None)?;
+    /// document.import_pages(&dest_document, "1,3,5-7", 0)?;
+    /// ```
+    pub fn import_pages(&self, dest_doc: &Self, page_range: &str, index: i32) -> PdfiumResult<()> {
+        lib().FPDF_ImportPages(self, dest_doc, &CString::from_str(page_range)?, index)
     }
 }
 
