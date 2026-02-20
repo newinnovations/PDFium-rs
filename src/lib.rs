@@ -79,6 +79,7 @@ pub use page::PdfiumPage;
 pub use page::PdfiumRotation;
 pub use page::boundaries::PdfiumPageBoundaries;
 pub use page::link::PdfiumPageLink;
+pub use page::object::ObjectType;
 pub use page::object::PdfiumPageObject;
 pub use page::object::mark::PdfiumPageObjectMark;
 pub use page::range::PdfiumPageRange;
