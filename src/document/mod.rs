@@ -320,21 +320,32 @@ impl PdfiumDocument {
         seen: &mut HashSet<crate::pdfium_types::FPDF_BOOKMARK>,
     ) -> PdfiumResult<()> {
         let lib = lib();
-        let mut bm = lib.FPDFBookmark_GetFirstChild(self, &parent)?;
-        while !bm.is_null() {
+        let mut bm = match lib.FPDFBookmark_GetFirstChild(self, &parent) {
+            Ok(bm) => bm,
+            Err(PdfiumError::NullHandle) => return Ok(()),
+            Err(e) => return Err(e),
+        };
+        loop {
             let ptr = crate::pdfium_types::FPDF_BOOKMARK::from(&bm);
             if seen.contains(&ptr) {
                 return Err(PdfiumError::CircularReferenceError);
             }
             seen.insert(ptr);
             bm.set_level(level);
-            let next_bm = lib.FPDFBookmark_GetNextSibling(self, &bm)?;
+            let next_bm = match lib.FPDFBookmark_GetNextSibling(self, &bm) {
+                Ok(next) => Some(next),
+                Err(PdfiumError::NullHandle) => None,
+                Err(e) => return Err(e),
+            };
             let bm_dup = bm.clone();
             result.push(bm);
             if level < max_depth - 1 {
                 self.get_toc_helper(max_depth, level + 1, bm_dup, result, seen)?;
             }
-            bm = next_bm;
+            match next_bm {
+                Some(next) => bm = next,
+                None => break,
+            }
         }
         Ok(())
     }
@@ -543,6 +554,214 @@ mod tests {
 
         let page_count = pages.count();
         assert_eq!(page_count, 2);
+    }
+
+    #[test]
+    fn test_toc_empty_for_document_without_bookmarks() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let toc = document.toc(10).unwrap();
+        assert!(toc.is_empty());
+    }
+
+    #[test]
+    fn test_toc_depth_1_returns_only_top_level() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(1).unwrap();
+        assert_eq!(toc.len(), 5);
+        for bm in &toc {
+            assert_eq!(bm.level(), Some(0));
+        }
+    }
+
+    #[test]
+    fn test_toc_depth_2_count_and_max_level() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(2).unwrap();
+        assert_eq!(toc.len(), 17);
+        for bm in &toc {
+            assert!(bm.level().unwrap_or(u32::MAX) <= 1);
+        }
+    }
+
+    #[test]
+    fn test_toc_depth_3_count_and_max_level() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        assert_eq!(toc.len(), 65);
+        for bm in &toc {
+            assert!(bm.level().unwrap_or(u32::MAX) <= 2);
+        }
+    }
+
+    #[test]
+    fn test_toc_full_depth_count() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(10).unwrap();
+        assert_eq!(toc.len(), 101);
+    }
+
+    #[test]
+    fn test_toc_top_level_titles_and_order() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(1).unwrap();
+        let titles: Vec<String> = toc.iter().map(|bm| bm.title().unwrap()).collect();
+        assert_eq!(
+            titles,
+            vec![
+                "Section 1",
+                "Section 2",
+                "Section 3",
+                "Section 4",
+                "Section 5"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_toc_section3_direct_children() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(2).unwrap();
+        let s3_children: Vec<String> = toc
+            .iter()
+            .filter(|bm| bm.level() == Some(1) && bm.title().unwrap().starts_with("Section 3."))
+            .map(|bm| bm.title().unwrap())
+            .collect();
+        assert_eq!(
+            s3_children,
+            vec![
+                "Section 3.1",
+                "Section 3.2",
+                "Section 3.3",
+                "Section 3.4",
+                "Section 3.5"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_toc_section32_grandchildren() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let s32_children: Vec<String> = toc
+            .iter()
+            .filter(|bm| bm.level() == Some(2) && bm.title().unwrap().starts_with("Section 3.2."))
+            .map(|bm| bm.title().unwrap())
+            .collect();
+        assert_eq!(s32_children.len(), 12);
+        for (i, title) in s32_children.iter().enumerate() {
+            assert_eq!(*title, format!("Section 3.2.{}", i + 1));
+        }
+    }
+
+    #[test]
+    fn test_toc_level_assignment_correctness() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        for bm in &toc {
+            let title = bm.title().unwrap();
+            let level = bm.level().unwrap();
+            let dots = title.chars().filter(|c| *c == '.').count();
+            let expected_level = dots as u32;
+            assert_eq!(
+                level, expected_level,
+                "{title}: expected level {expected_level}, got {level}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_toc_preorder_traversal_order() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let pos = |name: &str| {
+            toc.iter()
+                .position(|bm| bm.title().unwrap() == name)
+                .unwrap()
+        };
+        let s3 = pos("Section 3");
+        let s31 = pos("Section 3.1");
+        let s32 = pos("Section 3.2");
+        let s321 = pos("Section 3.2.1");
+        let s4 = pos("Section 4");
+        assert!(s3 < s31, "Section 3 before Section 3.1");
+        assert!(s31 < s32, "Section 3.1 before Section 3.2");
+        assert!(s32 < s321, "Section 3.2 before Section 3.2.1");
+        assert!(s321 < s4, "Section 3.2.1 before Section 4");
+    }
+
+    #[test]
+    fn test_bookmark_count_leaf_is_zero() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let leaf = |name: &str| toc.iter().find(|bm| bm.title().unwrap() == name).unwrap();
+        assert_eq!(leaf("Section 1").count(), 0);
+        assert_eq!(leaf("Section 2").count(), 0);
+        assert_eq!(leaf("Section 4").count(), 0);
+        assert_eq!(leaf("Section 3.1").count(), 0);
+        assert_eq!(leaf("Section 3.2.1").count(), 0);
+    }
+
+    #[test]
+    fn test_bookmark_count_negative_for_closed_parent() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let bm = |name: &str| toc.iter().find(|b| b.title().unwrap() == name).unwrap();
+        assert_eq!(bm("Section 3").count(), -5);
+        assert_eq!(bm("Section 5").count(), -7);
+        assert_eq!(bm("Section 3.2").count(), -12);
+        assert_eq!(bm("Section 3.3").count(), -6);
+        assert_eq!(bm("Section 3.4").count(), -2);
+    }
+
+    #[test]
+    fn test_bookmark_dest_page_index() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let page_of = |name: &str| {
+            let bm = toc.iter().find(|b| b.title().unwrap() == name).unwrap();
+            bm.dest(&document).unwrap().index(&document)
+        };
+        assert_eq!(page_of("Section 1"), Some(0));
+        assert_eq!(page_of("Section 2"), Some(0));
+        assert_eq!(page_of("Section 3"), Some(0));
+        assert_eq!(page_of("Section 3.2.10"), Some(0));
+        assert_eq!(page_of("Section 3.2.11"), Some(1));
+        assert_eq!(page_of("Section 3.2.12"), Some(1));
+    }
+
+    #[test]
+    fn test_bookmark_title_direct() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(1).unwrap();
+        assert_eq!(toc[0].title().unwrap(), "Section 1");
+        assert_eq!(toc[1].title().unwrap(), "Section 2");
+        assert_eq!(toc[2].title().unwrap(), "Section 3");
+        assert_eq!(toc[3].title().unwrap(), "Section 4");
+        assert_eq!(toc[4].title().unwrap(), "Section 5");
+    }
+
+    #[test]
+    fn test_bookmark_level_unset_before_toc() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(2).unwrap();
+        for bm in &toc {
+            assert!(
+                bm.level().is_some(),
+                "level must be set after toc() traversal"
+            );
+        }
+    }
+
+    #[test]
+    fn test_toc_depth_saturation() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc4 = document.toc(4).unwrap();
+        let toc10 = document.toc(10).unwrap();
+        assert_eq!(
+            toc4.len(),
+            toc10.len(),
+            "depth 4 and 10 should return the same entries (max depth is 3)"
+        );
     }
 
     #[test]

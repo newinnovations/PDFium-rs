@@ -51,6 +51,7 @@ impl PdfiumBookmark {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn is_null(&self) -> bool {
         self.handle.handle().is_null()
     }
