@@ -43,7 +43,7 @@ impl PdfiumDestination {
 
     /// Returns the zero-based page index this destination points to,
     /// or `None` on failure.
-    pub fn get_index(&self, document: &PdfiumDocument) -> Option<i32> {
+    pub fn index(&self, document: &PdfiumDocument) -> Option<i32> {
         let val = lib().FPDFDest_GetDestPageIndex(document, self);
         if val >= 0 { Some(val) } else { None }
     }
@@ -52,7 +52,7 @@ impl PdfiumDestination {
     ///
     /// `view_mode` is a `PDFDEST_VIEW_*` constant; `view_pos` contains 0–4
     /// floats whose meaning depends on `view_mode`.
-    pub fn get_view(&self) -> (u64, Vec<f32>) {
+    pub fn view(&self) -> (u64, Vec<f32>) {
         let mut n_params: u64 = 0;
         let mut params = [0f32; 4];
         let mode = lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);

@@ -298,16 +298,16 @@ impl PdfiumDocument {
         PdfiumPages::new(self)
     }
 
-    /// Imports pages from this [`PdfiumDocument`] into another [`PdfiumDocument`].
+    /// Imports pages from another [`PdfiumDocument`] into this [`PdfiumDocument`].
     ///
     /// # Examples
     /// ```ignore
-    /// let document = PdfiumDocument::new_from_path("input.pdf", None)?;
     /// let dest_document = PdfiumDocument::new_from_path("output.pdf", None)?;
-    /// document.import_pages(&dest_document, "1,3,5-7", 0)?;
+    /// let src_document = PdfiumDocument::new_from_path("input.pdf", None)?;
+    /// dest_document.import_pages(&src_document, "1,3,5-7", 0)?;
     /// ```
-    pub fn import_pages(&self, dest_doc: &Self, page_range: &str, index: i32) -> PdfiumResult<()> {
-        lib().FPDF_ImportPages(self, dest_doc, &CString::from_str(page_range)?, index)
+    pub fn import_pages(&self, src_doc: &Self, page_range: &str, index: i32) -> PdfiumResult<()> {
+        lib().FPDF_ImportPages(self, src_doc, &CString::from_str(page_range)?, index)
     }
 
     /// Helper function for recursively traversing the table of contents.
@@ -340,12 +340,12 @@ impl PdfiumDocument {
     }
 
     /// Returns the type of form contained in this [`PdfiumDocument`] (`FORMTYPE_*` constant).
-    pub fn get_form_type(&self) -> i32 {
+    pub fn form_type(&self) -> i32 {
         lib().FPDF_GetFormType(self)
     }
 
     /// Returns the page mode of this [`PdfiumDocument`] (`PAGEMODE_*` constant).
-    pub fn get_page_mode(&self) -> i32 {
+    pub fn page_mode(&self) -> i32 {
         lib().FPDFDoc_GetPageMode(self)
     }
 
@@ -358,7 +358,7 @@ impl PdfiumDocument {
     ///
     /// `id_type` is either `FPDF_FILEIDTYPE_FILEIDTYPE_PERMANENT` or
     /// `FPDF_FILEIDTYPE_FILEIDTYPE_CHANGING`.
-    pub fn get_identifier(&self, id_type: FPDF_FILEIDTYPE) -> Vec<u8> {
+    pub fn identifier(&self, id_type: FPDF_FILEIDTYPE) -> Vec<u8> {
         let lib = lib();
         let n_bytes = lib.FPDF_GetFileIdentifier(self, id_type, None, 0) as usize;
         if n_bytes <= 2 {
@@ -372,7 +372,7 @@ impl PdfiumDocument {
 
     /// Returns the PDF version of this [`PdfiumDocument`] (e.g. 14 for PDF 1.4),
     /// or `None` if the document is new or the version could not be determined.
-    pub fn get_version(&self) -> Option<i32> {
+    pub fn version(&self) -> Option<i32> {
         let mut version = 0i32;
         lib().FPDF_GetFileVersion(self, &mut version).ok()?;
         Some(version)
@@ -380,7 +380,7 @@ impl PdfiumDocument {
 
     /// Returns the value of a metadata key from this [`PdfiumDocument`].
     /// Returns an empty string if the key is not present.
-    pub fn get_metadata_value(&self, key: &str) -> PdfiumResult<String> {
+    pub fn metadata_value(&self, key: &str) -> PdfiumResult<String> {
         let lib = lib();
         let tag = CString::new(key).map_err(|_| PdfiumError::NulError)?;
         let buf_len = lib.FPDF_GetMetaText(self, &tag, None, 0);
@@ -390,8 +390,8 @@ impl PdfiumDocument {
         let mut buffer = vec![0u16; buf_len as usize / 2];
         let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
         lib.FPDF_GetMetaText(self, &tag, Some(u8_slice), buf_len);
-        Ok(String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
-            .map_err(|_| PdfiumError::StringEncodingError)?)
+        String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
+            .map_err(|_| PdfiumError::StringEncodingError)
     }
 
     /// Standard PDF metadata keys.
@@ -409,10 +409,10 @@ impl PdfiumDocument {
     /// Returns all metadata from this [`PdfiumDocument`] as a `HashMap`.
     ///
     /// If `skip_empty` is `true`, keys with empty values are omitted.
-    pub fn get_metadata_dict(&self, skip_empty: bool) -> PdfiumResult<HashMap<String, String>> {
+    pub fn metadata_dict(&self, skip_empty: bool) -> PdfiumResult<HashMap<String, String>> {
         let mut map = HashMap::new();
         for &key in Self::METADATA_KEYS {
-            let value = self.get_metadata_value(key)?;
+            let value = self.metadata_value(key)?;
             if !skip_empty || !value.is_empty() {
                 map.insert(key.to_string(), value);
             }
@@ -426,7 +426,7 @@ impl PdfiumDocument {
     }
 
     /// Returns the [`PdfiumAttachment`] at the given zero-based index.
-    pub fn get_attachment(&self, index: i32) -> PdfiumResult<PdfiumAttachment> {
+    pub fn attachment(&self, index: i32) -> PdfiumResult<PdfiumAttachment> {
         lib().FPDFDoc_GetAttachment(self, index)
     }
 
@@ -461,7 +461,7 @@ impl PdfiumDocument {
 
     /// Returns the size `(width, height)` in PDF canvas units of the page at the given
     /// zero-based index.
-    pub fn get_page_size(&self, index: i32) -> PdfiumResult<(f32, f32)> {
+    pub fn page_size(&self, index: i32) -> PdfiumResult<(f32, f32)> {
         let mut size = FS_SIZEF {
             width: 0.0,
             height: 0.0,
@@ -471,7 +471,7 @@ impl PdfiumDocument {
     }
 
     /// Returns the label string of the page at the given zero-based index.
-    pub fn get_page_label(&self, index: i32) -> PdfiumResult<String> {
+    pub fn page_label(&self, index: i32) -> PdfiumResult<String> {
         let lib = lib();
         let buf_len = lib.FPDF_GetPageLabel(self, index, None, 0);
         if buf_len == 0 {
@@ -480,8 +480,8 @@ impl PdfiumDocument {
         let mut buffer = vec![0u16; buf_len as usize / 2];
         let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
         lib.FPDF_GetPageLabel(self, index, Some(u8_slice), buf_len);
-        Ok(String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
-            .map_err(|_| PdfiumError::StringEncodingError)?)
+        String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
+            .map_err(|_| PdfiumError::StringEncodingError)
     }
 
     /// Captures the page at the given zero-based index as a [`PdfiumXObject`] attached to
@@ -495,7 +495,7 @@ impl PdfiumDocument {
     }
 
     /// Iterate through the bookmarks in the document's table of contents (TOC).
-    pub fn get_toc(&self, max_depth: u32) -> PdfiumResult<Vec<PdfiumBookmark>> {
+    pub fn toc(&self, max_depth: u32) -> PdfiumResult<Vec<PdfiumBookmark>> {
         let mut result = Vec::new();
         let mut seen = HashSet::new();
         self.get_toc_helper(max_depth, 0, PdfiumBookmark::null(), &mut result, &mut seen)?;

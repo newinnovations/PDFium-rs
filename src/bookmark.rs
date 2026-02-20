@@ -58,14 +58,14 @@ impl PdfiumBookmark {
     /// The bookmark's title string.
     pub fn title(&self) -> PdfiumResult<String> {
         let lib = lib();
-        let buf_len = lib.FPDFBookmark_GetTitle(&self, None, 0);
+        let buf_len = lib.FPDFBookmark_GetTitle(self, None, 0);
         if buf_len == 0 {
             Ok(String::new())
         } else {
             let mut buffer = vec![0u16; buf_len as usize / 2];
             // Safety: The alignment of u8 is less than or equal to u16, so this is safe.
             let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
-            lib.FPDFBookmark_GetTitle(&self, Some(u8_slice), buf_len);
+            lib.FPDFBookmark_GetTitle(self, Some(u8_slice), buf_len);
             Ok(String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
                 .map_err(|_| PdfiumError::StringEncodingError)?)
         }
@@ -73,7 +73,7 @@ impl PdfiumBookmark {
 
     /// Signed number of child bookmarks that would be visible if the bookmark were open (i.e. recursively counting children of open children).
     pub fn count(&self) -> i32 {
-        lib().FPDFBookmark_GetCount(&self)
+        lib().FPDFBookmark_GetCount(self)
     }
 
     /// The bookmark's nesting level (0 = top-level).
@@ -86,7 +86,7 @@ impl PdfiumBookmark {
     }
 
     /// Returns the destination associated with this [`PdfiumBookmark`]
-    pub fn get_dest(&self, document: &PdfiumDocument) -> PdfiumResult<PdfiumDestination> {
+    pub fn dest(&self, document: &PdfiumDocument) -> PdfiumResult<PdfiumDestination> {
         lib().FPDFBookmark_GetDest(document, self)
     }
 }
