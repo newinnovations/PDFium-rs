@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  version-check:
+    name: Version Consistency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          # Extract version from Cargo.toml
+          cargo_version=$(grep -E '^\s*version\s*=\s*"[^"]*"' Cargo.toml | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+          # Extract version from README.md
+          readme_version=$(grep -E 'pdfium\s*=\s*"[^"]*"' README.md | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+          echo "Cargo.toml version: $cargo_version"
+          echo "README.md version:  $readme_version"
+
+          if [[ "$cargo_version" != "$readme_version" ]]; then
+            echo "::error::Version mismatch detected!"
+            echo "::error::Cargo.toml has version $cargo_version but README.md has version $readme_version"
+            echo "::error::Please update the pdfium version in README.md to match Cargo.toml"
+            exit 1
+          fi
+
+          echo "✓ Versions match!"
+
+  formatting:
+    name: Code Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check code formatting
+        run: cargo fmt --check
+
+  clippy:
+    name: Clippy Lints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Get PDFium for Ubuntu
+        shell: bash
+        run: |
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz
+          tar xf pdfium-linux-x64.tgz --strip-components=1 lib/libpdfium.so
+          rm -f pdfium-linux-x64.tgz
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Get PDFium for Ubuntu
+        shell: bash
+        run: |
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz
+          tar xf pdfium-linux-x64.tgz --strip-components=1 lib/libpdfium.so
+          rm -f pdfium-linux-x64.tgz
+
+      - name: Run tests
+        run: cargo test --all-features
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Get PDFium for Ubuntu
+        shell: bash
+        run: |
+          wget https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-x64.tgz
+          tar xf pdfium-linux-x64.tgz --strip-components=1 lib/libpdfium.so
+          rm -f pdfium-linux-x64.tgz
+
+      - name: Check documentation
+        run: cargo doc --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
