@@ -34,7 +34,7 @@ use crate::{
     pdfium_types::{FPDF_PAGE, Handle, PageHandle},
 };
 
-/// Rotation transformation that can be applied to a [`Page`] and during rendering
+/// Rotation transformation that can be applied to a [`PdfiumPage`] and during rendering
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PdfiumRotation {
