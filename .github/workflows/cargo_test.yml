@@ -1,6 +1,9 @@
 name: Run cargo unittests
+
 on:
   push:
+  pull_request:
+
 jobs:
   build:
     name: Tests
