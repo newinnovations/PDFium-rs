@@ -116,7 +116,7 @@ check_tests() {
 # Function to check documentation
 check_docs() {
     # Check if docs can be built without warnings
-    if ! cargo doc --all-features --no-deps > /dev/null 2>&1; then
+    if ! RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps > /dev/null 2>&1; then
         echo -e "   ${RED}✗ Documentation build failed!${NC}"
         echo -e "   ${YELLOW}Please fix documentation issues by running: cargo doc --all-features --no-deps${NC}"
         return 1
