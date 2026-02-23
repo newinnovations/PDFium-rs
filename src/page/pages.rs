@@ -19,7 +19,10 @@
 
 use std::{cell::OnceCell, ffi::CString, os::raw::c_ulong, ptr::null};
 
-use crate::{PdfiumDocument, PdfiumPage, PdfiumResult, lib};
+use crate::{
+    PdfiumDocument, PdfiumError, PdfiumPage, PdfiumResult, PdfiumXObject, lib,
+    pdfium_types::FS_SIZEF,
+};
 
 /// Iterator for [`PdfiumPage`]
 pub struct PdfiumPages<'a> {
@@ -97,6 +100,36 @@ impl<'a> PdfiumPages<'a> {
                 lib().FPDF_ImportPagesByIndex(self.doc.into(), src_doc.into(), null(), 0, index)
             }
         }
+    }
+
+    /// Returns the size `(width, height)` in PDF canvas units.
+    pub fn page_size(&self) -> PdfiumResult<(f32, f32)> {
+        let mut size = FS_SIZEF {
+            width: 0.0,
+            height: 0.0,
+        };
+        lib().FPDF_GetPageSizeByIndexF(self.doc, self.current_page, &mut size)?;
+        Ok((size.width, size.height))
+    }
+
+    /// Returns the label string of the page.
+    pub fn page_label(&self) -> PdfiumResult<String> {
+        let lib = lib();
+        let buf_len = lib.FPDF_GetPageLabel(self.doc, self.current_page, None, 0);
+        if buf_len == 0 {
+            return Ok(String::new());
+        }
+        let mut buffer = vec![0u16; buf_len as usize / 2];
+        let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
+        lib.FPDF_GetPageLabel(self.doc, self.current_page, Some(u8_slice), buf_len);
+        String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
+            .map_err(|_| PdfiumError::StringEncodingError)
+    }
+
+    /// Captures the page as a [`PdfiumXObject`] attached to
+    /// `dest_doc`'s resources.
+    pub fn page_as_xobject(&self, dest_doc: &PdfiumDocument) -> PdfiumResult<PdfiumXObject> {
+        lib().FPDF_NewXObjectFromPage(dest_doc, self.doc, self.current_page)
     }
 }
 

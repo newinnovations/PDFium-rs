@@ -30,6 +30,44 @@ pub struct PdfiumDestination {
     handle: DestinationHandle,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
+pub enum PdfiumDestinationView {
+    #[default]
+    Unknown,
+    /// X, Y, Zoom
+    #[allow(clippy::upper_case_acronyms)] // PDFium uses uppercase acronyms
+    XYZ(f32, f32, f32),
+    /// Fits the page within the window.
+    Fit,
+    /// Fits the horizontal width of the page at the top of the window.
+    ///
+    /// Parameters:
+    /// * (top_y) - The y coordinate of the top of the window.
+    FitH(f32),
+    /// Fits the vertical height of the page at the left of the window.
+    ///
+    /// Parameters:
+    /// * (left_x) - The x coordinate of the left of the window.
+    FitV(f32),
+    /// Fits a specific rectangle
+    ///
+    /// Parameters:
+    /// * (left, bottom, right, top) - The coordinates of the rectangle.
+    FitR(f32, f32, f32, f32),
+    /// Fits the page bounding box
+    FitB,
+    /// Fits the horizontal width of the page bounding box at the top of the window.
+    ///
+    /// Parameters:
+    /// * (top_y) - The y coordinate of the top of the page bounding box.
+    FitBH(f32),
+    /// Fits the vertical height of the page bounding box at the left of the window.
+    ///
+    /// Parameters:
+    /// * (left_x) - The x coordinate of the left of the page bounding box.
+    FitBV(f32),
+}
+
 impl PdfiumDestination {
     pub(crate) fn new_from_handle(handle: FPDF_DEST) -> PdfiumResult<Self> {
         if handle.is_null() {
@@ -48,16 +86,35 @@ impl PdfiumDestination {
         if val >= 0 { Some(val) } else { None }
     }
 
-    /// Returns `(view_mode, view_pos)` for this destination.
-    ///
-    /// `view_mode` is a `PDFDEST_VIEW_*` constant; `view_pos` contains 0–4
-    /// floats whose meaning depends on `view_mode`.
-    pub fn view(&self) -> (u64, Vec<f32>) {
+    /// Returns the view for this destination.
+    pub fn view(&self) -> PdfiumDestinationView {
         let mut n_params: u64 = 0;
         let mut params = [0f32; 4];
         let mode = lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);
         let pos = params[..n_params as usize].to_vec();
-        (mode, pos)
+        // Safety: pos is a slice of length n_params, so it is safe to directly access the elements
+        match mode {
+            0 => PdfiumDestinationView::Unknown,
+            1 => PdfiumDestinationView::XYZ(
+                unsafe { *pos.get_unchecked(0) },
+                unsafe { *pos.get_unchecked(1) },
+                unsafe { *pos.get_unchecked(2) },
+            ),
+            2 => PdfiumDestinationView::Fit,
+            3 => PdfiumDestinationView::FitH(unsafe { *pos.get_unchecked(0) }),
+            4 => PdfiumDestinationView::FitV(unsafe { *pos.get_unchecked(0) }),
+            5 => PdfiumDestinationView::FitR(
+                unsafe { *pos.get_unchecked(0) },
+                unsafe { *pos.get_unchecked(1) },
+                unsafe { *pos.get_unchecked(2) },
+                unsafe { *pos.get_unchecked(3) },
+            ),
+            6 => PdfiumDestinationView::FitB,
+            7 => PdfiumDestinationView::FitBH(unsafe { *pos.get_unchecked(0) }),
+            8 => PdfiumDestinationView::FitBV(unsafe { *pos.get_unchecked(0) }),
+            // Impossible view mode enum variant to reach
+            _ => unreachable!("Unknown destination view mode {}", mode),
+        }
     }
 }
 
