@@ -18,9 +18,30 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumDestination, PdfiumDocument,
     error::{PdfiumError, PdfiumResult},
+    lib,
     pdfium_types::{ActionHandle, FPDF_ACTION, Handle},
 };
+
+/// Action type returned by FPDFAction_GetType
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PdfiumActionType {
+    /// Unsupported action type.
+    #[default]
+    Unsupported,
+    /// Go to a destination within current document.
+    Goto,
+    /// Go to a destination within another document.
+    RemoteGoto,
+    /// URI, including web pages and other Internet resources.
+    #[allow(clippy::upper_case_acronyms)] // PDFium API uses uppercase URI
+    URI,
+    /// Launch an application or open a file.
+    Launch,
+    /// Go to a destination in an embedded file.
+    EmbeddedGoto,
+}
 
 /// # Rust interface to FPDF_ACTION
 #[derive(Debug, Clone)]
@@ -36,6 +57,47 @@ impl PdfiumAction {
             Ok(Self {
                 handle: Handle::new(handle, None), // TODO: check close is not needed
             })
+        }
+    }
+
+    /// Returns the type of this action.
+    pub fn r#type(&self) -> PdfiumActionType {
+        match lib().FPDFAction_GetType(self) {
+            0 => PdfiumActionType::Unsupported,
+            1 => PdfiumActionType::Goto,
+            2 => PdfiumActionType::RemoteGoto,
+            3 => PdfiumActionType::URI,
+            4 => PdfiumActionType::Launch,
+            5 => PdfiumActionType::EmbeddedGoto,
+            _ => PdfiumActionType::Unsupported,
+        }
+    }
+
+    /// Returns the destination associated with this action, if any.
+    ///
+    /// Returns an error if the action is not a Goto or RemoteGoto action.
+    ///
+    /// Note: In the case of [PdfiumActionType::RemoteGoto], you must first call [PdfiumAction::file_path()],
+    /// then load the document at that path, then pass the document handle from that document as
+    /// |document| to [PdfiumAction::dest()].
+    pub fn dest(&self, document: &PdfiumDocument) -> PdfiumResult<PdfiumDestination> {
+        lib().FPDFAction_GetDest(document, self)
+    }
+
+    /// Returns the file path associated with this action, if any.
+    ///
+    /// Returns an error if the action is not a RemoteGoto or Launch action.
+    pub fn file_path(&self) -> PdfiumResult<String> {
+        let lib = lib();
+        let buf_len = lib.FPDFAction_GetFilePath(self, None, 0);
+        if buf_len == 0 {
+            Ok(String::new())
+        } else {
+            let mut buffer = vec![0u8; buf_len as usize];
+            // Note from the library: Regardless of the platform, the buffer is always in UTF-8 encoding.
+            lib.FPDFAction_GetFilePath(self, Some(&mut buffer), buf_len);
+            Ok(String::from_utf8(buffer[..buf_len as usize - 1].to_vec())
+                .map_err(|_| PdfiumError::StringEncodingError)?)
         }
     }
 }

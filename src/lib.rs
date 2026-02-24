@@ -48,7 +48,7 @@ mod struct_element_attr_value;
 mod struct_tree;
 mod xobject;
 
-pub use action::PdfiumAction;
+pub use action::{PdfiumAction, PdfiumActionType};
 pub use annotation::PdfiumAnnotation;
 pub use attachment::PdfiumAttachment;
 pub use availability::PdfiumAvailability;
