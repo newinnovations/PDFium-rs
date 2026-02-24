@@ -404,19 +404,21 @@ impl PdfiumDocument {
         let lib = lib();
         let tag = CString::new(key).map_err(|_| PdfiumError::NulError)?;
         let buf_len = lib.FPDF_GetMetaText(self, &tag, None, 0);
-        if buf_len == 0 {
+        if buf_len < 2 {
+            // We need at least two bytes for a UTF-16 null terminator
             return Ok(String::new());
         }
-        let mut buffer = vec![0u16; buf_len as usize / 2];
-        // Safety: Converting &mut [u16] to &mut [u8] is safe because:
-        // 1. Alignment: u8 (align=1) has stricter alignment than u16 (align=2), so the middle slice
-        //    covers the entire buffer and prefix/suffix are empty.
-        // 2. Validity: All bit patterns are valid for both u16 and u8, so reinterpreting
-        //    u16 bytes as u8s cannot produce invalid values.
-        let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
-        lib.FPDF_GetMetaText(self, &tag, Some(u8_slice), buf_len);
-        String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
-            .map_err(|_| PdfiumError::StringEncodingError)
+        let mut buffer = vec![0u8; buf_len as usize];
+        // Safety: buffer is valid and large enough, no need to check the returned byte length
+        lib.FPDF_GetMetaText(self, &tag, Some(&mut buffer), buf_len);
+
+        // The buffer contains UTF-16LE encoded data, but the last two bytes are always a null terminator.
+        let utf16_codes: Vec<_> = buffer[..buffer.len().saturating_sub(2)]
+            .chunks_exact(2)
+            .map(|pair| u16::from_le_bytes([pair[0], pair[1]])) // Convert bytes to u16
+            .collect();
+
+        String::from_utf16(&utf16_codes).map_err(|_| PdfiumError::StringEncodingError)
     }
 
     /// Standard PDF metadata keys.

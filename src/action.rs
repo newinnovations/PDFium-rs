@@ -95,9 +95,14 @@ impl PdfiumAction {
         } else {
             let mut buffer = vec![0u8; buf_len as usize];
             // Note from the library: Regardless of the platform, the buffer is always in UTF-8 encoding.
-            lib.FPDFAction_GetFilePath(self, Some(&mut buffer), buf_len);
-            Ok(String::from_utf8(buffer[..buf_len as usize - 1].to_vec())
-                .map_err(|_| PdfiumError::StringEncodingError)?)
+            let actual_len = lib.FPDFAction_GetFilePath(self, Some(&mut buffer), buf_len);
+            if actual_len == 0 {
+                // PDFium returns 0 on error
+                return Err(PdfiumError::InvalidEnumValue);
+            }
+            let content_len = (actual_len as usize).saturating_sub(1);
+            buffer.truncate(content_len);
+            Ok(String::from_utf8(buffer).map_err(|_| PdfiumError::StringEncodingError)?)
         }
     }
 }
