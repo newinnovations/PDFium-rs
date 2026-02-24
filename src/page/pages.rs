@@ -120,6 +120,11 @@ impl<'a> PdfiumPages<'a> {
             return Ok(String::new());
         }
         let mut buffer = vec![0u16; buf_len as usize / 2];
+        // Safety: Converting &mut [u16] to &mut [u8] is safe because:
+        // 1. Alignment: u8 (align=1) has stricter alignment than u16 (align=2), so the middle slice
+        //    covers the entire buffer and prefix/suffix are empty.
+        // 2. Validity: All bit patterns are valid for both u16 and u8, so reinterpreting
+        //    u16 bytes as u8s cannot produce invalid values.
         let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
         lib.FPDF_GetPageLabel(self.doc, self.current_page, Some(u8_slice), buf_len);
         String::from_utf16(&buffer[..buf_len as usize / 2 - 1])

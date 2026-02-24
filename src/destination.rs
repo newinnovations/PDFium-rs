@@ -88,30 +88,21 @@ impl PdfiumDestination {
 
     /// Returns the view for this destination.
     pub fn view(&self) -> PdfiumDestinationView {
-        let mut n_params: u64 = 0;
-        let mut params = [0f32; 4];
-        let mode = lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);
-        let pos = params[..n_params as usize].to_vec();
-        // Safety: pos is a slice of length n_params, so it is safe to directly access the elements
+        let mut n_params: u64 = 0; // The value is indeed not used, because the number of parameters is determined by the view mode, not dynamically returned
+        let mut params = [0f32; 4]; // Safety: Maximum number of parameters for any destination view is 4, so no out-of-bounds access possible
+        let mode: u64 = lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);
+        // PDFium guarantees that the number of parameters stays consistent with the view mode, so we
+        // can safely index into the params array.
         match mode {
             0 => PdfiumDestinationView::Unknown,
-            1 => PdfiumDestinationView::XYZ(
-                unsafe { *pos.get_unchecked(0) },
-                unsafe { *pos.get_unchecked(1) },
-                unsafe { *pos.get_unchecked(2) },
-            ),
+            1 => PdfiumDestinationView::XYZ(params[0], params[1], params[2]),
             2 => PdfiumDestinationView::Fit,
-            3 => PdfiumDestinationView::FitH(unsafe { *pos.get_unchecked(0) }),
-            4 => PdfiumDestinationView::FitV(unsafe { *pos.get_unchecked(0) }),
-            5 => PdfiumDestinationView::FitR(
-                unsafe { *pos.get_unchecked(0) },
-                unsafe { *pos.get_unchecked(1) },
-                unsafe { *pos.get_unchecked(2) },
-                unsafe { *pos.get_unchecked(3) },
-            ),
+            3 => PdfiumDestinationView::FitH(params[0]),
+            4 => PdfiumDestinationView::FitV(params[0]),
+            5 => PdfiumDestinationView::FitR(params[0], params[1], params[2], params[3]),
             6 => PdfiumDestinationView::FitB,
-            7 => PdfiumDestinationView::FitBH(unsafe { *pos.get_unchecked(0) }),
-            8 => PdfiumDestinationView::FitBV(unsafe { *pos.get_unchecked(0) }),
+            7 => PdfiumDestinationView::FitBH(params[0]),
+            8 => PdfiumDestinationView::FitBV(params[0]),
             // Impossible view mode enum variant to reach
             _ => unreachable!("Unknown destination view mode {}", mode),
         }

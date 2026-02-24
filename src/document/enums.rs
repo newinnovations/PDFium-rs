@@ -1,4 +1,4 @@
-use crate::pdfium_types::FPDF_FILEIDTYPE;
+use crate::{PdfiumError, pdfium_types::FPDF_FILEIDTYPE};
 
 /// Form types as returned by FPDF_GetFormType
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
@@ -13,6 +13,20 @@ pub enum PdfiumFormType {
     XFAFull = 2,
     /// Forms are specified using the XFAF subset of XFA spec
     XFAForeground = 3,
+}
+
+impl TryFrom<i32> for PdfiumFormType {
+    type Error = PdfiumError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(PdfiumFormType::None),
+            1 => Ok(PdfiumFormType::AcroForm),
+            2 => Ok(PdfiumFormType::XFAFull),
+            3 => Ok(PdfiumFormType::XFAForeground),
+            _ => Err(PdfiumError::InvalidEnumValue),
+        }
+    }
 }
 
 /// Page modes as returned by FPDFDoc_GetPageMode
@@ -34,6 +48,23 @@ pub enum PdfiumPageMode {
     UseOC = 4,
     /// Attachments panel visible.
     UseAttachments = 5,
+}
+
+impl TryFrom<i32> for PdfiumPageMode {
+    type Error = PdfiumError;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            -1 => Ok(PdfiumPageMode::Unknown),
+            0 => Ok(PdfiumPageMode::UseNone),
+            1 => Ok(PdfiumPageMode::UseOutlines),
+            2 => Ok(PdfiumPageMode::UseThumbs),
+            3 => Ok(PdfiumPageMode::UseFullscreen),
+            4 => Ok(PdfiumPageMode::UseOC),
+            5 => Ok(PdfiumPageMode::UseAttachments),
+            _ => Err(PdfiumError::InvalidEnumValue),
+        }
+    }
 }
 
 /// The file identifier entry type. See section 14.4 "File Identifiers" of the

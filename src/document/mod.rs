@@ -360,14 +360,15 @@ impl PdfiumDocument {
 
     /// Returns the type of form contained in this [`PdfiumDocument`].
     pub fn form_type(&self) -> PdfiumFormType {
-        // Safety: FPDF_GetFormType always returns a valid i32 value, which is safe for transmutation
-        unsafe { std::mem::transmute(lib().FPDF_GetFormType(self)) }
+        lib().FPDF_GetFormType(self).try_into().unwrap_or_default()
     }
 
     /// Returns the page mode of this [`PdfiumDocument`] (`PAGEMODE_*` constant).
     pub fn page_mode(&self) -> PdfiumPageMode {
-        // Safety: FPDFDoc_GetPageMode always returns a valid i32 value, which is safe for transmutation
-        unsafe { std::mem::transmute(lib().FPDFDoc_GetPageMode(self)) }
+        lib()
+            .FPDFDoc_GetPageMode(self)
+            .try_into()
+            .unwrap_or_default()
     }
 
     /// Returns whether this [`PdfiumDocument`] is a tagged PDF.
@@ -407,6 +408,11 @@ impl PdfiumDocument {
             return Ok(String::new());
         }
         let mut buffer = vec![0u16; buf_len as usize / 2];
+        // Safety: Converting &mut [u16] to &mut [u8] is safe because:
+        // 1. Alignment: u8 (align=1) has stricter alignment than u16 (align=2), so the middle slice
+        //    covers the entire buffer and prefix/suffix are empty.
+        // 2. Validity: All bit patterns are valid for both u16 and u8, so reinterpreting
+        //    u16 bytes as u8s cannot produce invalid values.
         let (_prefix, u8_slice, _suffix) = unsafe { buffer.align_to_mut::<u8>() };
         lib.FPDF_GetMetaText(self, &tag, Some(u8_slice), buf_len);
         String::from_utf16(&buffer[..buf_len as usize / 2 - 1])
