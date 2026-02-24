@@ -88,9 +88,10 @@ impl PdfiumDestination {
 
     /// Returns the view for this destination.
     pub fn view(&self) -> PdfiumDestinationView {
-        let mut n_params: u64 = 0; // The value is indeed not used, because the number of parameters is determined by the view mode, not dynamically returned
+        let mut n_params: std::os::raw::c_ulong = 0; // The value is indeed not used, because the number of parameters is determined by the view mode, not dynamically returned
         let mut params = [0f32; 4]; // Safety: Maximum number of parameters for any destination view is 4, so no out-of-bounds access possible
-        let mode: u64 = lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);
+        let mode: std::os::raw::c_ulong =
+            lib().FPDFDest_GetView(self, &mut n_params, &mut params[0]);
         // PDFium guarantees that the number of parameters stays consistent with the view mode, so we
         // can safely index into the params array.
         match mode {

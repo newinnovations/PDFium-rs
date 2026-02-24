@@ -380,13 +380,13 @@ impl PdfiumDocument {
     pub fn identifier(&self, id_type: PdfiumFileIdType) -> Vec<u8> {
         let id_type = id_type.into();
         let lib = lib();
-        let n_bytes = lib.FPDF_GetFileIdentifier(self, id_type, None, 0) as usize;
+        let n_bytes = lib.FPDF_GetFileIdentifier(self, id_type, None, 0);
         if n_bytes <= 2 {
             return Vec::new();
         }
-        let mut buffer = vec![0u8; n_bytes];
-        lib.FPDF_GetFileIdentifier(self, id_type, Some(&mut buffer), n_bytes as u64);
-        buffer.truncate(n_bytes - 2);
+        let mut buffer = vec![0u8; n_bytes as usize];
+        lib.FPDF_GetFileIdentifier(self, id_type, Some(&mut buffer), n_bytes);
+        buffer.truncate((n_bytes as usize).saturating_sub(2));
         buffer
     }
 
