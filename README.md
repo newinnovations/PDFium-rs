@@ -274,6 +274,7 @@ The idomatic abstraction is focused on a subset of PDFium's functionality. While
 
 - Document loading and basic properties
 - Page rendering with customizable parameters
+- Bookmarks and navigation
 - Bitmap handling and export
 - Thread-safe access patterns
 - Full safe C API access
@@ -285,7 +286,6 @@ The idomatic abstraction is focused on a subset of PDFium's functionality. While
 - Annotation handling
 - Additional rendering options
 - Security and encryption support
-- Bookmarks and navigation
 
 ## Requirements
 

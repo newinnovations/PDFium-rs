@@ -18,7 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    PdfiumDestination,
+    PdfiumAction, PdfiumDestination,
     document::PdfiumDocument,
     error::{PdfiumError, PdfiumResult},
     lib,
@@ -93,6 +93,30 @@ impl PdfiumBookmark {
     /// Returns the destination associated with this [`PdfiumBookmark`]
     pub fn dest(&self, document: &PdfiumDocument) -> PdfiumResult<PdfiumDestination> {
         lib().FPDFBookmark_GetDest(document, self)
+    }
+
+    /// Get the first child of the current [`PdfiumBookmark`].
+    /// Returns `None` if the bookmark has no children.
+    pub fn first_child(&self, document: &PdfiumDocument) -> Option<PdfiumBookmark> {
+        // The original C++ API returns a null pointer if there is no first child.
+        // We convert this to an Option<PdfiumBookmark> for Rust safety.
+        lib().FPDFBookmark_GetFirstChild(document, self).ok()
+    }
+
+    /// Get the next sibling of the current [`PdfiumBookmark`].
+    /// Returns `None` if the bookmark has no next sibling.
+    pub fn next_sibling(&self, document: &PdfiumDocument) -> Option<PdfiumBookmark> {
+        // The original C++ API returns a null pointer if there is no next sibling.
+        // We convert this to an Option<PdfiumBookmark> for Rust safety.
+        lib().FPDFBookmark_GetNextSibling(document, self).ok()
+    }
+
+    /// Returns the action associated with this [`PdfiumBookmark`].
+    /// Returns `None` if the bookmark has no action and you should check [`PdfiumBookmark::dest()`] instead.
+    pub fn action(&self) -> Option<PdfiumAction> {
+        // The original C++ API returns a null pointer if there is no action.
+        // We convert this to an Option<PdfiumAction> for Rust safety.
+        lib().FPDFBookmark_GetAction(self).ok()
     }
 }
 
