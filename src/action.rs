@@ -122,6 +122,8 @@ impl PdfiumAction {
         if actual_len == 0 {
             return Err(PdfiumError::InvokationFailed);
         }
+        let content_len = (actual_len as usize).saturating_sub(1);
+        buffer.truncate(content_len); // Truncate the last null terminator before we returns
         Ok(buffer)
     }
 }
