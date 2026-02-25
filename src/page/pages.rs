@@ -116,12 +116,11 @@ impl<'a> PdfiumPages<'a> {
     pub fn page_label(&self) -> PdfiumResult<String> {
         let lib = lib();
         let buf_len = lib.FPDF_GetPageLabel(self.doc, self.current_page, None, 0);
-        if buf_len < 2 {
-            // We need at least two bytes for a UTF-16 null terminator
-            return Ok(String::new());
+        if buf_len == 0 {
+            return Err(PdfiumError::InvokationFailed);
         }
         let mut buffer = vec![0u8; buf_len as usize];
-        // Safety: buffer is valid and large enough, no need to check the returned byte length
+        // The returned byte count is ignored since the buffer is sized from the first call.
         lib.FPDF_GetPageLabel(self.doc, self.current_page, Some(&mut buffer), buf_len);
 
         // The buffer contains UTF-16LE encoded data, but the last two bytes are always a null terminator.
@@ -130,7 +129,7 @@ impl<'a> PdfiumPages<'a> {
             .map(|pair| u16::from_le_bytes([pair[0], pair[1]])) // Convert bytes to u16
             .collect();
 
-        String::from_utf16(&utf16_codes).map_err(|_| PdfiumError::StringEncodingError)
+        Ok(String::from_utf16_lossy(&utf16_codes))
     }
 
     /// Captures the page as a [`PdfiumXObject`] attached to

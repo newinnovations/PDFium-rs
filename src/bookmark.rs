@@ -60,13 +60,13 @@ impl PdfiumBookmark {
     pub fn title(&self) -> PdfiumResult<String> {
         let lib = lib();
         let buf_len = lib.FPDFBookmark_GetTitle(self, None, 0);
-        if buf_len < 2 {
-            // We need at least two bytes for a UTF-16 null terminator
-            return Ok(String::new());
+        if buf_len == 0 {
+            return Err(PdfiumError::InvokationFailed);
         }
         let mut buffer = vec![0u8; buf_len as usize];
         // Note from the library: Regardless of the platform, the buffer is always in UTF-16LE encoding.
-        // Safety: buffer is valid and large enough, no need to check the returned byte length
+        //
+        // The returned byte count is ignored since the buffer is sized from the first call.
         lib.FPDFBookmark_GetTitle(self, Some(&mut buffer), buf_len);
 
         // The buffer contains UTF-16LE encoded data, but the last two bytes are always a null terminator.
@@ -75,7 +75,7 @@ impl PdfiumBookmark {
             .map(|pair| u16::from_le_bytes([pair[0], pair[1]])) // Convert bytes to u16
             .collect();
 
-        String::from_utf16(&utf16_codes).map_err(|_| PdfiumError::StringEncodingError)
+        Ok(String::from_utf16_lossy(&utf16_codes))
     }
 
     /// Signed number of child bookmarks that would be visible if the bookmark were open (i.e. recursively counting children of open children).

@@ -91,19 +91,38 @@ impl PdfiumAction {
         let lib = lib();
         let buf_len = lib.FPDFAction_GetFilePath(self, None, 0);
         if buf_len == 0 {
-            Ok(String::new())
-        } else {
-            let mut buffer = vec![0u8; buf_len as usize];
-            // Note from the library: Regardless of the platform, the buffer is always in UTF-8 encoding.
-            let actual_len = lib.FPDFAction_GetFilePath(self, Some(&mut buffer), buf_len);
-            if actual_len == 0 {
-                // PDFium returns 0 on error
-                return Err(PdfiumError::InvalidEnumValue);
-            }
-            let content_len = (actual_len as usize).saturating_sub(1);
-            buffer.truncate(content_len);
-            Ok(String::from_utf8(buffer).map_err(|_| PdfiumError::StringEncodingError)?)
+            // Same as the length checking below
+            return Err(PdfiumError::InvokationFailed);
         }
+        let mut buffer = vec![0u8; buf_len as usize];
+        // Note from the library: Regardless of the platform, the buffer is always in UTF-8 encoding.
+        let actual_len = lib.FPDFAction_GetFilePath(self, Some(&mut buffer), buf_len);
+        if actual_len == 0 {
+            // PDFium returns 0 on error
+            return Err(PdfiumError::InvokationFailed);
+        }
+        let content_len = (actual_len as usize).saturating_sub(1);
+        buffer.truncate(content_len);
+        Ok(String::from_utf8_lossy(&buffer).into_owned())
+    }
+
+    /// Returns the URI Path of the action, in raw bytes.
+    ///
+    /// Note: the returned raw bytes represents a String, but we do not know what encoding the PDF
+    /// file adopts. If you believe the String is encoded in UTF-8, you can simply call
+    /// String::from_utf8() to convert the raw bytes into a String.
+    pub fn uri_path(&self, doc: &PdfiumDocument) -> PdfiumResult<Vec<u8>> {
+        let lib = lib();
+        let buf_len = lib.FPDFAction_GetURIPath(doc, self, None, 0);
+        if buf_len == 0 {
+            return Err(PdfiumError::InvokationFailed);
+        }
+        let mut buffer = vec![0u8; buf_len as usize];
+        let actual_len = lib.FPDFAction_GetURIPath(doc, self, Some(&mut buffer), buf_len);
+        if actual_len == 0 {
+            return Err(PdfiumError::InvokationFailed);
+        }
+        Ok(buffer)
     }
 }
 
