@@ -64,7 +64,7 @@ pub use c_api::pdfium_constants;
 pub use c_api::pdfium_types;
 pub use clip_path::PdfiumClipPath;
 pub use color::PdfiumColor;
-pub use destination::PdfiumDestination;
+pub use destination::{PdfiumDestination, PdfiumDestinationView};
 pub use document::PdfiumDocument;
 pub use document::reader::PdfiumReader;
 pub use error::PdfiumError;
