@@ -77,9 +77,6 @@ pub enum PdfiumError {
     /// An invalid or unclear render configuration was provided
     InvalidConfiguration(String),
 
-    /// An error occurred when encoding or decoding a string
-    StringEncodingError,
-
     /// A circular reference was detected
     CircularReferenceError,
 

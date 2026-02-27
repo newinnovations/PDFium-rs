@@ -30,8 +30,10 @@ pub struct PdfiumDestination {
     handle: DestinationHandle,
 }
 
+/// The enum determines how the PDF viewer would change the view after the destination is reached
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 pub enum PdfiumDestinationView {
+    /// Unknown view variant
     #[default]
     Unknown,
     /// X, Y, Zoom

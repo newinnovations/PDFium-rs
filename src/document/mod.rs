@@ -377,17 +377,17 @@ impl PdfiumDocument {
     }
 
     /// Returns the unique file identifier from the PDF's trailer dictionary.
-    pub fn identifier(&self, id_type: PdfiumFileIdType) -> Vec<u8> {
+    pub fn identifier(&self, id_type: PdfiumFileIdType) -> PdfiumResult<Vec<u8>> {
         let id_type = id_type.into();
         let lib = lib();
         let n_bytes = lib.FPDF_GetFileIdentifier(self, id_type, None, 0);
-        if n_bytes <= 2 {
-            return Vec::new();
+        if n_bytes == 0 {
+            return PdfiumResult::Err(PdfiumError::InvokationFailed);
         }
         let mut buffer = vec![0u8; n_bytes as usize];
         lib.FPDF_GetFileIdentifier(self, id_type, Some(&mut buffer), n_bytes);
         buffer.truncate((n_bytes as usize).saturating_sub(2));
-        buffer
+        Ok(buffer)
     }
 
     /// Returns the PDF version of this [`PdfiumDocument`] (e.g. 14 for PDF 1.4),
@@ -404,12 +404,11 @@ impl PdfiumDocument {
         let lib = lib();
         let tag = CString::new(key).map_err(|_| PdfiumError::NulError)?;
         let buf_len = lib.FPDF_GetMetaText(self, &tag, None, 0);
-        if buf_len < 2 {
+        if buf_len == 0 {
             // We need at least two bytes for a UTF-16 null terminator
-            return Ok(String::new());
+            return PdfiumResult::Err(PdfiumError::InvokationFailed);
         }
         let mut buffer = vec![0u8; buf_len as usize];
-        // Safety: buffer is valid and large enough, no need to check the returned byte length
         lib.FPDF_GetMetaText(self, &tag, Some(&mut buffer), buf_len);
 
         // The buffer contains UTF-16LE encoded data, but the last two bytes are always a null terminator.
@@ -418,7 +417,7 @@ impl PdfiumDocument {
             .map(|pair| u16::from_le_bytes([pair[0], pair[1]])) // Convert bytes to u16
             .collect();
 
-        String::from_utf16(&utf16_codes).map_err(|_| PdfiumError::StringEncodingError)
+        Ok(String::from_utf16_lossy(&utf16_codes))
     }
 
     /// Standard PDF metadata keys.
