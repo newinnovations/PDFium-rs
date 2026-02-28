@@ -17,26 +17,37 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+pub mod enums;
 pub mod reader;
 pub mod writer;
 
 use std::{
+    collections::{HashMap, HashSet},
     ffi::CString,
     fmt::Debug,
     fs::File,
     io::{Cursor, Read, Seek, Write},
     path::Path,
     rc::Rc,
+    str::FromStr,
 };
 
 use crate::{
-    document::{reader::PdfiumReader, writer::PdfiumWriter},
+    PdfiumAttachment, PdfiumBookmark,
+    document::{
+        enums::{PdfiumFormType, PdfiumPageMode},
+        reader::PdfiumReader,
+        writer::PdfiumWriter,
+    },
     error::{PdfiumError, PdfiumResult},
     lib,
     page::{PdfiumPage, pages::PdfiumPages},
     pdfium_types::{DocumentHandle, FPDF_DOCUMENT, Handle},
     try_lib,
 };
+
+// Re-export enums for convenience
+pub use enums::*;
 
 /// Rust interface to FPDF_DOCUMENT
 #[derive(Clone)]
@@ -294,6 +305,193 @@ impl PdfiumDocument {
     pub fn pages(&self) -> PdfiumPages<'_> {
         PdfiumPages::new(self)
     }
+
+    /// Imports pages from another [`PdfiumDocument`] into this [`PdfiumDocument`].
+    ///
+    /// # Examples
+    /// ```ignore
+    /// let dest_document = PdfiumDocument::new_from_path("output.pdf", None)?;
+    /// let src_document = PdfiumDocument::new_from_path("input.pdf", None)?;
+    /// dest_document.import_pages(&src_document, "1,3,5-7", 0)?;
+    /// ```
+    pub fn import_pages(&self, src_doc: &Self, page_range: &str, index: i32) -> PdfiumResult<()> {
+        lib().FPDF_ImportPages(self, src_doc, &CString::from_str(page_range)?, index)
+    }
+
+    /// Helper function for recursively traversing the table of contents.
+    fn get_toc_helper(
+        &self,
+        max_depth: u32,
+        level: u32,
+        parent: PdfiumBookmark,
+        result: &mut Vec<PdfiumBookmark>,
+        seen: &mut HashSet<crate::pdfium_types::FPDF_BOOKMARK>,
+    ) -> PdfiumResult<()> {
+        let lib = lib();
+        let mut bm = match lib.FPDFBookmark_GetFirstChild(self, &parent) {
+            Ok(bm) => bm,
+            Err(PdfiumError::NullHandle) => return Ok(()),
+            Err(e) => return Err(e),
+        };
+        loop {
+            let ptr = crate::pdfium_types::FPDF_BOOKMARK::from(&bm);
+            if seen.contains(&ptr) {
+                return Err(PdfiumError::CircularReferenceError);
+            }
+            seen.insert(ptr);
+            bm.set_level(level);
+            let next_bm = match lib.FPDFBookmark_GetNextSibling(self, &bm) {
+                Ok(next) => Some(next),
+                Err(PdfiumError::NullHandle) => None,
+                Err(e) => return Err(e),
+            };
+            let bm_dup = bm.clone();
+            result.push(bm);
+            if level < max_depth - 1 {
+                self.get_toc_helper(max_depth, level + 1, bm_dup, result, seen)?;
+            }
+            match next_bm {
+                Some(next) => bm = next,
+                None => break,
+            }
+        }
+        Ok(())
+    }
+
+    /// Returns the type of form contained in this [`PdfiumDocument`].
+    pub fn form_type(&self) -> PdfiumFormType {
+        lib().FPDF_GetFormType(self).try_into().unwrap_or_default()
+    }
+
+    /// Returns the page mode of this [`PdfiumDocument`] (`PAGEMODE_*` constant).
+    pub fn page_mode(&self) -> PdfiumPageMode {
+        lib()
+            .FPDFDoc_GetPageMode(self)
+            .try_into()
+            .unwrap_or_default()
+    }
+
+    /// Returns whether this [`PdfiumDocument`] is a tagged PDF.
+    pub fn is_tagged(&self) -> bool {
+        lib().FPDFCatalog_IsTagged(self).is_ok()
+    }
+
+    /// Returns the unique file identifier from the PDF's trailer dictionary.
+    pub fn identifier(&self, id_type: PdfiumFileIdType) -> PdfiumResult<Vec<u8>> {
+        let id_type = id_type.into();
+        let lib = lib();
+        let n_bytes = lib.FPDF_GetFileIdentifier(self, id_type, None, 0);
+        if n_bytes == 0 {
+            return PdfiumResult::Err(PdfiumError::InvokationFailed);
+        }
+        let mut buffer = vec![0u8; n_bytes as usize];
+        lib.FPDF_GetFileIdentifier(self, id_type, Some(&mut buffer), n_bytes);
+        buffer.truncate((n_bytes as usize).saturating_sub(2));
+        Ok(buffer)
+    }
+
+    /// Returns the PDF version of this [`PdfiumDocument`] (e.g. 14 for PDF 1.4),
+    /// or `None` if the document is new or the version could not be determined.
+    pub fn version(&self) -> Option<i32> {
+        let mut version = 0i32;
+        lib().FPDF_GetFileVersion(self, &mut version).ok()?;
+        Some(version)
+    }
+
+    /// Returns the value of a metadata key from this [`PdfiumDocument`].
+    /// Returns an empty string if the key is not present.
+    pub fn metadata_value(&self, key: &str) -> PdfiumResult<String> {
+        let lib = lib();
+        let tag = CString::new(key).map_err(|_| PdfiumError::NulError)?;
+        let buf_len = lib.FPDF_GetMetaText(self, &tag, None, 0);
+        if buf_len == 0 {
+            // We need at least two bytes for a UTF-16 null terminator
+            return PdfiumResult::Err(PdfiumError::InvokationFailed);
+        }
+        let mut buffer = vec![0u8; buf_len as usize];
+        lib.FPDF_GetMetaText(self, &tag, Some(&mut buffer), buf_len);
+
+        // The buffer contains UTF-16LE encoded data, but the last two bytes are always a null terminator.
+        let utf16_codes: Vec<_> = buffer[..buffer.len().saturating_sub(2)]
+            .chunks_exact(2)
+            .map(|pair| u16::from_le_bytes([pair[0], pair[1]])) // Convert bytes to u16
+            .collect();
+
+        Ok(String::from_utf16_lossy(&utf16_codes))
+    }
+
+    /// Standard PDF metadata keys.
+    pub const METADATA_KEYS: &'static [&'static str] = &[
+        "Title",
+        "Author",
+        "Subject",
+        "Keywords",
+        "Creator",
+        "Producer",
+        "CreationDate",
+        "ModDate",
+    ];
+
+    /// Returns all metadata from this [`PdfiumDocument`] as a `HashMap`.
+    ///
+    /// If `skip_empty` is `true`, keys with empty values are omitted.
+    pub fn metadata_dict(&self, skip_empty: bool) -> PdfiumResult<HashMap<String, String>> {
+        let mut map = HashMap::new();
+        for &key in Self::METADATA_KEYS {
+            let value = self.metadata_value(key)?;
+            if !skip_empty || !value.is_empty() {
+                map.insert(key.to_string(), value);
+            }
+        }
+        Ok(map)
+    }
+
+    /// Returns the number of embedded files in this [`PdfiumDocument`].
+    pub fn count_attachments(&self) -> i32 {
+        lib().FPDFDoc_GetAttachmentCount(self)
+    }
+
+    /// Returns the [`PdfiumAttachment`] at the given zero-based index.
+    pub fn attachment(&self, index: i32) -> PdfiumResult<PdfiumAttachment> {
+        lib().FPDFDoc_GetAttachment(self, index)
+    }
+
+    /// Adds a new attachment with the given name to this [`PdfiumDocument`].
+    pub fn new_attachment(&self, name: &str) -> PdfiumResult<PdfiumAttachment> {
+        lib().FPDFDoc_AddAttachment(self, name)
+    }
+
+    /// Removes the attachment at the given zero-based index from this [`PdfiumDocument`].
+    /// Following attachments shift one slot to the left.
+    pub fn del_attachment(&self, index: i32) -> PdfiumResult<()> {
+        lib().FPDFDoc_DeleteAttachment(self, index)
+    }
+
+    /// Inserts a new empty page into this [`PdfiumDocument`].
+    ///
+    /// If `index` is `None` or beyond the last page, the page is appended.
+    pub fn new_page(
+        &self,
+        width: f64,
+        height: f64,
+        index: Option<i32>,
+    ) -> PdfiumResult<PdfiumPage> {
+        let index = index.unwrap_or_else(|| self.page_count());
+        lib().FPDFPage_New(self, index, width, height)
+    }
+
+    /// Removes the page at the given zero-based index from this [`PdfiumDocument`].
+    pub fn del_page(&self, index: i32) {
+        lib().FPDFPage_Delete(self, index);
+    }
+
+    /// Iterate through the bookmarks in the document's table of contents (TOC).
+    pub fn toc(&self, max_depth: u32) -> PdfiumResult<Vec<PdfiumBookmark>> {
+        let mut result = Vec::new();
+        let mut seen = HashSet::new();
+        self.get_toc_helper(max_depth, 0, PdfiumBookmark::null(), &mut result, &mut seen)?;
+        Ok(result)
+    }
 }
 
 impl From<&PdfiumDocument> for FPDF_DOCUMENT {
@@ -336,6 +534,214 @@ mod tests {
 
         let page_count = pages.count();
         assert_eq!(page_count, 2);
+    }
+
+    #[test]
+    fn test_toc_empty_for_document_without_bookmarks() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let toc = document.toc(10).unwrap();
+        assert!(toc.is_empty());
+    }
+
+    #[test]
+    fn test_toc_depth_1_returns_only_top_level() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(1).unwrap();
+        assert_eq!(toc.len(), 5);
+        for bm in &toc {
+            assert_eq!(bm.level(), Some(0));
+        }
+    }
+
+    #[test]
+    fn test_toc_depth_2_count_and_max_level() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(2).unwrap();
+        assert_eq!(toc.len(), 17);
+        for bm in &toc {
+            assert!(bm.level().unwrap_or(u32::MAX) <= 1);
+        }
+    }
+
+    #[test]
+    fn test_toc_depth_3_count_and_max_level() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        assert_eq!(toc.len(), 65);
+        for bm in &toc {
+            assert!(bm.level().unwrap_or(u32::MAX) <= 2);
+        }
+    }
+
+    #[test]
+    fn test_toc_full_depth_count() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(10).unwrap();
+        assert_eq!(toc.len(), 101);
+    }
+
+    #[test]
+    fn test_toc_top_level_titles_and_order() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(1).unwrap();
+        let titles: Vec<String> = toc.iter().map(|bm| bm.title().unwrap()).collect();
+        assert_eq!(
+            titles,
+            vec![
+                "Section 1",
+                "Section 2",
+                "Section 3",
+                "Section 4",
+                "Section 5"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_toc_section3_direct_children() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(2).unwrap();
+        let s3_children: Vec<String> = toc
+            .iter()
+            .filter(|bm| bm.level() == Some(1) && bm.title().unwrap().starts_with("Section 3."))
+            .map(|bm| bm.title().unwrap())
+            .collect();
+        assert_eq!(
+            s3_children,
+            vec![
+                "Section 3.1",
+                "Section 3.2",
+                "Section 3.3",
+                "Section 3.4",
+                "Section 3.5"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_toc_section32_grandchildren() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let s32_children: Vec<String> = toc
+            .iter()
+            .filter(|bm| bm.level() == Some(2) && bm.title().unwrap().starts_with("Section 3.2."))
+            .map(|bm| bm.title().unwrap())
+            .collect();
+        assert_eq!(s32_children.len(), 12);
+        for (i, title) in s32_children.iter().enumerate() {
+            assert_eq!(*title, format!("Section 3.2.{}", i + 1));
+        }
+    }
+
+    #[test]
+    fn test_toc_level_assignment_correctness() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        for bm in &toc {
+            let title = bm.title().unwrap();
+            let level = bm.level().unwrap();
+            let dots = title.chars().filter(|c| *c == '.').count();
+            let expected_level = dots as u32;
+            assert_eq!(
+                level, expected_level,
+                "{title}: expected level {expected_level}, got {level}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_toc_preorder_traversal_order() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let pos = |name: &str| {
+            toc.iter()
+                .position(|bm| bm.title().unwrap() == name)
+                .unwrap()
+        };
+        let s3 = pos("Section 3");
+        let s31 = pos("Section 3.1");
+        let s32 = pos("Section 3.2");
+        let s321 = pos("Section 3.2.1");
+        let s4 = pos("Section 4");
+        assert!(s3 < s31, "Section 3 before Section 3.1");
+        assert!(s31 < s32, "Section 3.1 before Section 3.2");
+        assert!(s32 < s321, "Section 3.2 before Section 3.2.1");
+        assert!(s321 < s4, "Section 3.2.1 before Section 4");
+    }
+
+    #[test]
+    fn test_bookmark_count_leaf_is_zero() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let leaf = |name: &str| toc.iter().find(|bm| bm.title().unwrap() == name).unwrap();
+        assert_eq!(leaf("Section 1").count(), 0);
+        assert_eq!(leaf("Section 2").count(), 0);
+        assert_eq!(leaf("Section 4").count(), 0);
+        assert_eq!(leaf("Section 3.1").count(), 0);
+        assert_eq!(leaf("Section 3.2.1").count(), 0);
+    }
+
+    #[test]
+    fn test_bookmark_count_negative_for_closed_parent() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let bm = |name: &str| toc.iter().find(|b| b.title().unwrap() == name).unwrap();
+        assert_eq!(bm("Section 3").count(), -5);
+        assert_eq!(bm("Section 5").count(), -7);
+        assert_eq!(bm("Section 3.2").count(), -12);
+        assert_eq!(bm("Section 3.3").count(), -6);
+        assert_eq!(bm("Section 3.4").count(), -2);
+    }
+
+    #[test]
+    fn test_bookmark_dest_page_index() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(3).unwrap();
+        let page_of = |name: &str| {
+            let bm = toc.iter().find(|b| b.title().unwrap() == name).unwrap();
+            bm.dest(&document).unwrap().index(&document)
+        };
+        assert_eq!(page_of("Section 1"), Some(0));
+        assert_eq!(page_of("Section 2"), Some(0));
+        assert_eq!(page_of("Section 3"), Some(0));
+        assert_eq!(page_of("Section 3.2.10"), Some(0));
+        assert_eq!(page_of("Section 3.2.11"), Some(1));
+        assert_eq!(page_of("Section 3.2.12"), Some(1));
+    }
+
+    #[test]
+    fn test_bookmark_title_direct() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(1).unwrap();
+        assert_eq!(toc[0].title().unwrap(), "Section 1");
+        assert_eq!(toc[1].title().unwrap(), "Section 2");
+        assert_eq!(toc[2].title().unwrap(), "Section 3");
+        assert_eq!(toc[3].title().unwrap(), "Section 4");
+        assert_eq!(toc[4].title().unwrap(), "Section 5");
+    }
+
+    #[test]
+    fn test_bookmark_level_unset_before_toc() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc = document.toc(2).unwrap();
+        for bm in &toc {
+            assert!(
+                bm.level().is_some(),
+                "level must be set after toc() traversal"
+            );
+        }
+    }
+
+    #[test]
+    fn test_toc_depth_saturation() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let toc4 = document.toc(4).unwrap();
+        let toc10 = document.toc(10).unwrap();
+        assert_eq!(
+            toc4.len(),
+            toc10.len(),
+            "depth 4 and 10 should return the same entries (max depth is 3)"
+        );
     }
 
     #[test]

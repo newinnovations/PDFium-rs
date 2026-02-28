@@ -520,14 +520,21 @@ fn close_page_object(_page_object: FPDF_PAGEOBJECT) {
     // lib().FPDFPageObj_Destroy(page_object);
 }
 
+/// The type of a PDF page object.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ObjectType {
+    /// An unknown or unsupported page object type.
     Unsupported = FPDF_PAGEOBJ_UNKNOWN,
+    /// A text page object.
     Text = FPDF_PAGEOBJ_TEXT,
+    /// A path page object.
     Path = FPDF_PAGEOBJ_PATH,
+    /// An image page object.
     Image = FPDF_PAGEOBJ_IMAGE,
+    /// A shading page object.
     Shading = FPDF_PAGEOBJ_SHADING,
+    /// A form XObject page object.
     Form = FPDF_PAGEOBJ_FORM,
 }
 

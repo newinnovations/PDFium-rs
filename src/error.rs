@@ -76,6 +76,12 @@ pub enum PdfiumError {
 
     /// An invalid or unclear render configuration was provided
     InvalidConfiguration(String),
+
+    /// A circular reference was detected
+    CircularReferenceError,
+
+    /// An invalid enum value was provided
+    InvalidEnumValue,
 }
 
 impl From<std::io::Error> for PdfiumError {

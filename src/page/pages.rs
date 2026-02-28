@@ -19,7 +19,10 @@
 
 use std::{cell::OnceCell, ffi::CString, os::raw::c_ulong, ptr::null};
 
-use crate::{PdfiumDocument, PdfiumPage, PdfiumResult, lib};
+use crate::{
+    PdfiumDocument, PdfiumError, PdfiumPage, PdfiumResult, PdfiumXObject, lib,
+    pdfium_types::FS_SIZEF,
+};
 
 /// Iterator for [`PdfiumPage`]
 pub struct PdfiumPages<'a> {
@@ -97,6 +100,42 @@ impl<'a> PdfiumPages<'a> {
                 lib().FPDF_ImportPagesByIndex(self.doc.into(), src_doc.into(), null(), 0, index)
             }
         }
+    }
+
+    /// Returns the size `(width, height)` in PDF canvas units.
+    pub fn page_size(&self) -> PdfiumResult<(f32, f32)> {
+        let mut size = FS_SIZEF {
+            width: 0.0,
+            height: 0.0,
+        };
+        lib().FPDF_GetPageSizeByIndexF(self.doc, self.current_page, &mut size)?;
+        Ok((size.width, size.height))
+    }
+
+    /// Returns the label string of the page.
+    pub fn page_label(&self) -> PdfiumResult<String> {
+        let lib = lib();
+        let buf_len = lib.FPDF_GetPageLabel(self.doc, self.current_page, None, 0);
+        if buf_len == 0 {
+            return Err(PdfiumError::InvokationFailed);
+        }
+        let mut buffer = vec![0u8; buf_len as usize];
+        // The returned byte count is ignored since the buffer is sized from the first call.
+        lib.FPDF_GetPageLabel(self.doc, self.current_page, Some(&mut buffer), buf_len);
+
+        // The buffer contains UTF-16LE encoded data, but the last two bytes are always a null terminator.
+        let utf16_codes: Vec<_> = buffer[..buffer.len().saturating_sub(2)]
+            .chunks_exact(2)
+            .map(|pair| u16::from_le_bytes([pair[0], pair[1]])) // Convert bytes to u16
+            .collect();
+
+        Ok(String::from_utf16_lossy(&utf16_codes))
+    }
+
+    /// Captures the page as a [`PdfiumXObject`] attached to
+    /// `dest_doc`'s resources.
+    pub fn page_as_xobject(&self, dest_doc: &PdfiumDocument) -> PdfiumResult<PdfiumXObject> {
+        lib().FPDF_NewXObjectFromPage(dest_doc, self.doc, self.current_page)
     }
 }
 
