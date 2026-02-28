@@ -9,6 +9,7 @@ license = "GPL-3.0"
 readme = "README.md"
 repository = "https://github.com/newinnovations/pdfium-rs"
 homepage = "https://github.com/newinnovations/pdfium-rs"
+documentation = "https://docs.rs/pdfium"
 exclude = ["resources/*.pdf"]
 
 [dependencies]
