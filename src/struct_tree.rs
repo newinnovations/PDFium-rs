@@ -39,6 +39,16 @@ impl PdfiumStructTree {
             })
         }
     }
+
+    /// Returns the number of children for this structure tree.
+    pub fn count_children(&self) -> i32 {
+        lib().FPDF_StructTree_CountChildren(self)
+    }
+
+    /// Returns the child element at the given index.
+    pub fn get_child(&self, index: i32) -> PdfiumResult<crate::PdfiumStructElement> {
+        lib().FPDF_StructTree_GetChildAtIndex(self, index)
+    }
 }
 
 impl From<&PdfiumStructTree> for FPDF_STRUCTTREE {
