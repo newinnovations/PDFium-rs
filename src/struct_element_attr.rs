@@ -19,6 +19,7 @@
 
 use crate::{
     error::{PdfiumError, PdfiumResult},
+    lib,
     pdfium_types::{FPDF_STRUCTELEMENT_ATTR, Handle, StructElementAttrHandle},
 };
 
@@ -37,6 +38,38 @@ impl PdfiumStructElementAttr {
                 handle: Handle::new_const(handle), // TODO: check close is not needed
             })
         }
+    }
+
+    /// Returns the number of attributes in this map.
+    pub fn count(&self) -> i32 {
+        lib().FPDF_StructElement_Attr_GetCount(self)
+    }
+
+    /// Returns the name of the attribute at the given index.
+    pub fn name(&self, index: i32) -> Option<String> {
+        let mut len: std::os::raw::c_ulong = 0;
+        if lib()
+            .FPDF_StructElement_Attr_GetName(self, index, None, 0, &mut len)
+            .is_ok()
+            && len > 0
+        {
+            let mut buffer = vec![0u8; len as usize];
+            if lib()
+                .FPDF_StructElement_Attr_GetName(self, index, Some(&mut buffer), len, &mut len)
+                .is_ok()
+            {
+                let end = buffer.iter().position(|&b| b == 0).unwrap_or(buffer.len());
+                return Some(String::from_utf8_lossy(&buffer[..end]).into_owned());
+            }
+        }
+        None
+    }
+
+    /// Returns the value for the attribute with the given name.
+    pub fn value(&self, name: &str) -> PdfiumResult<crate::PdfiumStructElementAttrValue> {
+        let c_name =
+            std::ffi::CString::new(name).map_err(|_| crate::error::PdfiumError::Unknown)?;
+        lib().FPDF_StructElement_Attr_GetValue(self, &c_name)
     }
 }
 

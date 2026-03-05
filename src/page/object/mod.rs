@@ -232,6 +232,27 @@ impl PdfiumPageObject {
         lib().FPDFPageObj_GetMarkedContentID(self)
     }
 
+    /// Get the text from this [`PdfiumPageObject`] if it is a text object.
+    ///
+    /// text_page - the text page this object belongs to.
+    ///
+    /// Returns the text as an `Option<String>`, or `None` if it is not a text object
+    /// or if text extraction fails.
+    pub fn get_text(&self, text_page: &crate::PdfiumTextPage) -> Option<String> {
+        let mut empty_vec = Vec::new();
+        let len = lib().FPDFTextObj_GetText(self, text_page, &mut empty_vec, 0);
+        if len > 0 {
+            let mut buffer = vec![0u16; len as usize];
+            lib().FPDFTextObj_GetText(self, text_page, &mut buffer, len);
+            if let Some(pos) = buffer.iter().position(|&c| c == 0) {
+                buffer.truncate(pos);
+            }
+            Some(String::from_utf16_lossy(&buffer))
+        } else {
+            None
+        }
+    }
+
     /// Get the transform matrix of this [`PdfiumPageObject`].
     ///
     /// page_object - handle to this [`PdfiumPageObject`].
