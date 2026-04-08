@@ -23,7 +23,7 @@ pub mod objects;
 use std::{ffi::CString, os::raw::c_ulong};
 
 use crate::{
-    PdfiumClipPath, PdfiumPage, PdfiumPageObjectMark,
+    PdfiumClipPath, PdfiumPage, PdfiumPageObjectMark, PdfiumTextPage,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_constants::{
@@ -238,7 +238,7 @@ impl PdfiumPageObject {
     ///
     /// Returns the text as an `Option<String>`, or `None` if it is not a text object
     /// or if text extraction fails.
-    pub fn get_text(&self, text_page: &crate::PdfiumTextPage) -> Option<String> {
+    pub fn get_text(&self, text_page: &PdfiumTextPage) -> Option<String> {
         let mut empty_vec = Vec::new();
         let len = lib().FPDFTextObj_GetText(self, text_page, &mut empty_vec, 0);
         if len > 0 {

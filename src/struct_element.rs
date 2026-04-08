@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumStructElementAttr,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTELEMENT, Handle, StructElementHandle},
@@ -235,7 +236,7 @@ impl PdfiumStructElement {
     }
 
     /// Returns the attribute at the given index.
-    pub fn attribute_at_index(&self, index: i32) -> PdfiumResult<crate::PdfiumStructElementAttr> {
+    pub fn attribute_at_index(&self, index: i32) -> PdfiumResult<PdfiumStructElementAttr> {
         lib().FPDF_StructElement_GetAttributeAtIndex(self, index)
     }
 }

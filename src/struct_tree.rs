@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumStructElement,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTTREE, Handle, StructTreeHandle},
@@ -46,7 +47,7 @@ impl PdfiumStructTree {
     }
 
     /// Returns the child element at the given index.
-    pub fn get_child(&self, index: i32) -> PdfiumResult<crate::PdfiumStructElement> {
+    pub fn get_child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
         lib().FPDF_StructTree_GetChildAtIndex(self, index)
     }
 }
@@ -59,4 +60,48 @@ impl From<&PdfiumStructTree> for FPDF_STRUCTTREE {
 
 fn close_struct_tree(struct_tree: FPDF_STRUCTTREE) {
     lib().FPDF_StructTree_Close(struct_tree);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::PdfiumDocument;
+
+    #[test]
+    fn test_struct_tree() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        if let Ok(page) = document.page(0) {
+            let tree = page.struct_tree();
+            if let Some(tree) = tree {
+                let children = tree.count_children();
+                assert!(children >= 0);
+                if children > 0 {
+                    let child = tree.get_child(0);
+                    assert!(child.is_ok());
+                    let child = child.unwrap();
+
+                    // Test struct element methods
+                    let _ = child.obj_type();
+                    let _ = child.title();
+                    let _ = child.id();
+                    let _ = child.lang();
+                    let _ = child.alt_text();
+                    let _ = child.actual_text();
+
+                    let attr_count = child.attribute_count();
+                    if attr_count > 0 {
+                        let attr = child.attribute_at_index(0);
+                        assert!(attr.is_ok());
+                        let attr = attr.unwrap();
+                        let attr_count = attr.count();
+                        assert!(attr_count >= 0);
+                        if attr_count > 0 {
+                            if let Some(name) = attr.name(0) {
+                                let _ = attr.value(&name);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

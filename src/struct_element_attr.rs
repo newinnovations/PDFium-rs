@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumStructElementAttrValue,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTELEMENT_ATTR, Handle, StructElementAttrHandle},
@@ -66,9 +67,8 @@ impl PdfiumStructElementAttr {
     }
 
     /// Returns the value for the attribute with the given name.
-    pub fn value(&self, name: &str) -> PdfiumResult<crate::PdfiumStructElementAttrValue> {
-        let c_name =
-            std::ffi::CString::new(name).map_err(|_| crate::error::PdfiumError::Unknown)?;
+    pub fn value(&self, name: &str) -> PdfiumResult<PdfiumStructElementAttrValue> {
+        let c_name = std::ffi::CString::new(name).map_err(|_| PdfiumError::Unknown)?;
         lib().FPDF_StructElement_Attr_GetValue(self, &c_name)
     }
 }

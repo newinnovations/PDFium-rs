@@ -114,4 +114,27 @@ mod tests {
         assert_eq!(objects.object_count(), 721);
         assert_eq!(objects.count(), 720); // remaining in iterator
     }
+
+    #[test]
+    fn test_get_text() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let text_page = page.text().unwrap();
+
+        let mut objects = page.objects();
+        let mut found_text = false;
+
+        for object in objects {
+            let object = object.unwrap();
+            if object.get_type() == crate::page::object::ObjectType::Text {
+                if let Some(text) = object.get_text(&text_page) {
+                    found_text = true;
+                    assert!(!text.is_empty());
+                    break;
+                }
+            }
+        }
+
+        assert!(found_text);
+    }
 }
