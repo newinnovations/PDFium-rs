@@ -84,10 +84,8 @@ fn main() -> PdfiumResult<()> {
             let text_page = page.text()?;
 
             let mut objects = Vec::new();
-            for obj in page.objects() {
-                if let Ok(obj) = obj {
-                    objects.push(obj);
-                }
+            for obj in page.objects().flatten() {
+                objects.push(obj);
             }
 
             if let Some(tree) = page.struct_tree() {

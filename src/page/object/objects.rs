@@ -121,7 +121,7 @@ mod tests {
         let page = document.page(0).unwrap();
         let text_page = page.text().unwrap();
 
-        let mut objects = page.objects();
+        let objects = page.objects();
         let mut found_text = false;
 
         for object in objects {
