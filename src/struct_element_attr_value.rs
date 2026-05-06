@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumStructElementAttr,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTELEMENT_ATTR_VALUE, Handle, StructElementAttrValueHandle},
@@ -27,6 +28,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumStructElementAttrValue {
     handle: StructElementAttrValueHandle,
+    owner: Option<PdfiumStructElementAttr>,
 }
 
 impl PdfiumStructElementAttrValue {
@@ -36,8 +38,13 @@ impl PdfiumStructElementAttrValue {
         } else {
             Ok(Self {
                 handle: Handle::new_const(handle), // TODO: check close is not needed
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumStructElementAttr) {
+        self.owner = Some(owner);
     }
 
     /// Returns the type of this attribute value.
@@ -121,7 +128,11 @@ impl PdfiumStructElementAttrValue {
 
     /// Returns the child at the given index.
     pub fn get_child_at_index(&self, index: i32) -> PdfiumResult<PdfiumStructElementAttrValue> {
-        lib().FPDF_StructElement_Attr_GetChildAtIndex(self, index)
+        let mut child = lib().FPDF_StructElement_Attr_GetChildAtIndex(self, index)?;
+        if let Some(owner) = &self.owner {
+            child.set_owner(owner.clone());
+        }
+        Ok(child)
     }
 }
 

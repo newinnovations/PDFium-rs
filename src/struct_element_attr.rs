@@ -18,7 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    PdfiumStructElementAttrValue,
+    PdfiumStructElement, PdfiumStructElementAttrValue,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTELEMENT_ATTR, Handle, StructElementAttrHandle},
@@ -28,6 +28,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumStructElementAttr {
     handle: StructElementAttrHandle,
+    owner: Option<PdfiumStructElement>,
 }
 
 impl PdfiumStructElementAttr {
@@ -37,8 +38,13 @@ impl PdfiumStructElementAttr {
         } else {
             Ok(Self {
                 handle: Handle::new_const(handle), // TODO: check close is not needed
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumStructElement) {
+        self.owner = Some(owner);
     }
 
     /// Returns the number of attributes in this map.
@@ -69,7 +75,9 @@ impl PdfiumStructElementAttr {
     /// Returns the value for the attribute with the given name.
     pub fn value(&self, name: &str) -> PdfiumResult<PdfiumStructElementAttrValue> {
         let c_name = std::ffi::CString::new(name).map_err(|_| PdfiumError::Unknown)?;
-        lib().FPDF_StructElement_Attr_GetValue(self, &c_name)
+        let mut val = lib().FPDF_StructElement_Attr_GetValue(self, &c_name)?;
+        val.set_owner(self.clone());
+        Ok(val)
     }
 }
 

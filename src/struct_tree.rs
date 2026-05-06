@@ -18,7 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    PdfiumStructElement,
+    PdfiumPage, PdfiumStructElement,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTTREE, Handle, StructTreeHandle},
@@ -28,6 +28,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumStructTree {
     handle: StructTreeHandle,
+    owner: Option<PdfiumPage>,
 }
 
 impl PdfiumStructTree {
@@ -37,8 +38,13 @@ impl PdfiumStructTree {
         } else {
             Ok(Self {
                 handle: Handle::new(handle, Some(close_struct_tree)),
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumPage) {
+        self.owner = Some(owner);
     }
 
     /// Returns the number of children for this structure tree.
@@ -48,7 +54,9 @@ impl PdfiumStructTree {
 
     /// Returns the child element at the given index.
     pub fn get_child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
-        lib().FPDF_StructTree_GetChildAtIndex(self, index)
+        let mut child = lib().FPDF_StructTree_GetChildAtIndex(self, index)?;
+        child.set_owner(self.clone());
+        Ok(child)
     }
 }
 

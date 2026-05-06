@@ -95,7 +95,9 @@ impl PdfiumPage {
 
     /// Gets the structural tree for this page if it has one (e.g. Tagged PDF).
     pub fn struct_tree(&self) -> Option<PdfiumStructTree> {
-        lib().FPDF_StructTree_GetForPage(self).ok()
+        let mut tree = lib().FPDF_StructTree_GetForPage(self).ok()?;
+        tree.set_owner(self.clone());
+        Some(tree)
     }
 
     pub(crate) fn set_owner(&mut self, owner: PdfiumDocument) {

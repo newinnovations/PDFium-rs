@@ -18,7 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-    PdfiumStructElementAttr,
+    PdfiumStructElementAttr, PdfiumStructTree,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTELEMENT, Handle, StructElementHandle},
@@ -28,6 +28,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumStructElement {
     handle: StructElementHandle,
+    owner: Option<PdfiumStructTree>,
 }
 
 impl PdfiumStructElement {
@@ -37,8 +38,13 @@ impl PdfiumStructElement {
         } else {
             Ok(Self {
                 handle: Handle::new(handle, None), // TODO: check close is not needed
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumStructTree) {
+        self.owner = Some(owner);
     }
 
     /// Returns the number of children for this structure element.
@@ -48,7 +54,11 @@ impl PdfiumStructElement {
 
     /// Returns the child element at the given index.
     pub fn get_child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
-        lib().FPDF_StructElement_GetChildAtIndex(self, index)
+        let mut child = lib().FPDF_StructElement_GetChildAtIndex(self, index)?;
+        if let Some(owner) = &self.owner {
+            child.set_owner(owner.clone());
+        }
+        Ok(child)
     }
 
     /// Returns the type (/S) for this element as a String (e.g. "H1", "P", "Sect").
@@ -227,7 +237,11 @@ impl PdfiumStructElement {
 
     /// Returns the parent of this element.
     pub fn parent(&self) -> PdfiumResult<PdfiumStructElement> {
-        lib().FPDF_StructElement_GetParent(self)
+        let mut parent = lib().FPDF_StructElement_GetParent(self)?;
+        if let Some(owner) = &self.owner {
+            parent.set_owner(owner.clone());
+        }
+        Ok(parent)
     }
 
     /// Returns the number of attributes for this element.
@@ -237,7 +251,9 @@ impl PdfiumStructElement {
 
     /// Returns the attribute at the given index.
     pub fn attribute_at_index(&self, index: i32) -> PdfiumResult<PdfiumStructElementAttr> {
-        lib().FPDF_StructElement_GetAttributeAtIndex(self, index)
+        let mut attr = lib().FPDF_StructElement_GetAttributeAtIndex(self, index)?;
+        attr.set_owner(self.clone());
+        Ok(attr)
     }
 }
 
