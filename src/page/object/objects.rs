@@ -137,4 +137,45 @@ mod tests {
 
         assert!(found_text);
     }
+
+    #[test]
+    fn test_get_text_mcid() {
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let text_page = page.text().unwrap();
+
+        let mut all_mcids = Vec::new();
+        if let Some(tree) = page.struct_tree() {
+            let children = tree.count_children();
+            for i in 0..children {
+                if let Ok(child) = tree.child(i) {
+                    let mcid_count = child.marked_content_id_count().unwrap_or(0);
+                    for j in 0..mcid_count {
+                        if let Some(mcid) = child.marked_content_id_at_index(j) {
+                            all_mcids.push(mcid);
+                        }
+                    }
+                    if let Some(mcid) = child.marked_content_id() {
+                        all_mcids.push(mcid);
+                    }
+                }
+            }
+        }
+
+        let mut found_text = false;
+        for object in page.objects() {
+            let object = object.unwrap();
+            let obj_mcid = object.get_marked_content_id();
+
+            if obj_mcid >= 0 {
+                if let Some(text) = object.get_text(&text_page) {
+                    found_text = true;
+                    assert!(!text.is_empty());
+                    break;
+                }
+            }
+        }
+
+        assert!(found_text, "Should find text associated with an MCID");
+    }
 }

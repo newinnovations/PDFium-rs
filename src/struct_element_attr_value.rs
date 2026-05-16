@@ -37,7 +37,7 @@ impl PdfiumStructElementAttrValue {
             Err(PdfiumError::NullHandle)
         } else {
             Ok(Self {
-                handle: Handle::new_const(handle), // TODO: check close is not needed
+                handle: Handle::new_const(handle),
                 owner: None,
             })
         }

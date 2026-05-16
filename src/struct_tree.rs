@@ -53,7 +53,7 @@ impl PdfiumStructTree {
     }
 
     /// Returns the child element at the given index.
-    pub fn get_child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
+    pub fn child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
         let mut child = lib().FPDF_StructTree_GetChildAtIndex(self, index)?;
         child.set_owner(self.clone());
         Ok(child)
@@ -76,36 +76,36 @@ mod tests {
 
     #[test]
     fn test_struct_tree() {
-        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
         if let Ok(page) = document.page(0) {
             let tree = page.struct_tree();
+            assert!(tree.is_some(), "Tagged PDF should have a structure tree");
             if let Some(tree) = tree {
                 let children = tree.count_children();
-                assert!(children >= 0);
-                if children > 0 {
-                    let child = tree.get_child(0);
-                    assert!(child.is_ok());
-                    let child = child.unwrap();
+                assert!(children > 0, "Structure tree should have children");
 
-                    // Test struct element methods
-                    let _ = child.obj_type();
-                    let _ = child.title();
-                    let _ = child.id();
-                    let _ = child.lang();
-                    let _ = child.alt_text();
-                    let _ = child.actual_text();
+                let child = tree.child(0);
+                assert!(child.is_ok(), "Should be able to get the first child");
+                let child = child.unwrap();
 
-                    let attr_count = child.attribute_count();
+                // Test struct element methods
+                let _ = child.obj_type();
+                let _ = child.title();
+                let _ = child.id();
+                let _ = child.lang();
+                let _ = child.alt_text();
+                let _ = child.actual_text();
+
+                let attr_count = child.attribute_count();
+                if attr_count > 0 {
+                    let attr = child.attribute_at_index(0);
+                    assert!(attr.is_ok());
+                    let attr = attr.unwrap();
+                    let attr_count = attr.count();
+                    assert!(attr_count >= 0);
                     if attr_count > 0 {
-                        let attr = child.attribute_at_index(0);
-                        assert!(attr.is_ok());
-                        let attr = attr.unwrap();
-                        let attr_count = attr.count();
-                        assert!(attr_count >= 0);
-                        if attr_count > 0 {
-                            if let Some(name) = attr.name(0) {
-                                let _ = attr.value(&name);
-                            }
+                        if let Some(name) = attr.name(0) {
+                            let _ = attr.value(&name);
                         }
                     }
                 }

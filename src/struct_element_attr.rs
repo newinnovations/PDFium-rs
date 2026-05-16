@@ -37,7 +37,7 @@ impl PdfiumStructElementAttr {
             Err(PdfiumError::NullHandle)
         } else {
             Ok(Self {
-                handle: Handle::new_const(handle), // TODO: check close is not needed
+                handle: Handle::new_const(handle),
                 owner: None,
             })
         }
@@ -73,11 +73,11 @@ impl PdfiumStructElementAttr {
     }
 
     /// Returns the value for the attribute with the given name.
-    pub fn value(&self, name: &str) -> PdfiumResult<PdfiumStructElementAttrValue> {
-        let c_name = std::ffi::CString::new(name).map_err(|_| PdfiumError::Unknown)?;
-        let mut val = lib().FPDF_StructElement_Attr_GetValue(self, &c_name)?;
+    pub fn value(&self, name: &str) -> Option<PdfiumStructElementAttrValue> {
+        let c_name = std::ffi::CString::new(name).ok()?;
+        let mut val = lib().FPDF_StructElement_Attr_GetValue(self, &c_name).ok()?;
         val.set_owner(self.clone());
-        Ok(val)
+        Some(val)
     }
 }
 

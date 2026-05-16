@@ -37,7 +37,7 @@ impl PdfiumStructElement {
             Err(PdfiumError::NullHandle)
         } else {
             Ok(Self {
-                handle: Handle::new(handle, None), // TODO: check close is not needed
+                handle: Handle::new(handle, None),
                 owner: None,
             })
         }
@@ -53,7 +53,7 @@ impl PdfiumStructElement {
     }
 
     /// Returns the child element at the given index.
-    pub fn get_child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
+    pub fn child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
         let mut child = lib().FPDF_StructElement_GetChildAtIndex(self, index)?;
         if let Some(owner) = &self.owner {
             child.set_owner(owner.clone());
@@ -216,32 +216,40 @@ impl PdfiumStructElement {
     }
 
     /// Returns the marked content ID for this element.
-    pub fn marked_content_id(&self) -> i32 {
-        lib().FPDF_StructElement_GetMarkedContentID(self)
+    pub fn marked_content_id(&self) -> Option<i32> {
+        let id = lib().FPDF_StructElement_GetMarkedContentID(self);
+        if id == -1 { None } else { Some(id) }
     }
 
     /// Returns the number of marked content IDs for this element.
-    pub fn marked_content_id_count(&self) -> i32 {
-        lib().FPDF_StructElement_GetMarkedContentIdCount(self)
+    pub fn marked_content_id_count(&self) -> Option<usize> {
+        let count = lib().FPDF_StructElement_GetMarkedContentIdCount(self);
+        if count == -1 {
+            None
+        } else {
+            Some(count as usize)
+        }
     }
 
     /// Returns the marked content ID at the given index.
-    pub fn marked_content_id_at_index(&self, index: i32) -> i32 {
-        lib().FPDF_StructElement_GetMarkedContentIdAtIndex(self, index)
+    pub fn marked_content_id_at_index(&self, index: usize) -> Option<i32> {
+        let id = lib().FPDF_StructElement_GetMarkedContentIdAtIndex(self, index as i32);
+        if id == -1 { None } else { Some(id) }
     }
 
     /// Returns the child marked content ID at the given index.
-    pub fn child_marked_content_id(&self, index: i32) -> i32 {
-        lib().FPDF_StructElement_GetChildMarkedContentID(self, index)
+    pub fn child_marked_content_id(&self, index: i32) -> Option<i32> {
+        let id = lib().FPDF_StructElement_GetChildMarkedContentID(self, index);
+        if id == -1 { None } else { Some(id) }
     }
 
     /// Returns the parent of this element.
-    pub fn parent(&self) -> PdfiumResult<PdfiumStructElement> {
-        let mut parent = lib().FPDF_StructElement_GetParent(self)?;
+    pub fn parent(&self) -> Option<PdfiumStructElement> {
+        let mut parent = lib().FPDF_StructElement_GetParent(self).ok()?;
         if let Some(owner) = &self.owner {
             parent.set_owner(owner.clone());
         }
-        Ok(parent)
+        Some(parent)
     }
 
     /// Returns the number of attributes for this element.

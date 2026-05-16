@@ -242,7 +242,7 @@ impl PdfiumPageObject {
         let mut empty_vec = Vec::new();
         let len = lib().FPDFTextObj_GetText(self, text_page, &mut empty_vec, 0);
         if len > 0 {
-            let mut buffer = vec![0u16; len as usize];
+            let mut buffer = vec![0u16; (len as usize).div_ceil(2)];
             lib().FPDFTextObj_GetText(self, text_page, &mut buffer, len);
             if let Some(pos) = buffer.iter().position(|&c| c == 0) {
                 buffer.truncate(pos);

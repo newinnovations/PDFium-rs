@@ -3,7 +3,7 @@ use pdfium::*;
 fn print_tree(
     element: &PdfiumStructElement,
     text_page: &PdfiumTextPage,
-    objects: &Vec<PdfiumPageObject>,
+    objects: &[PdfiumPageObject],
     indent: usize,
 ) {
     let tag_type = element
@@ -15,10 +15,17 @@ fn print_tree(
     let mut text_content = String::new();
     let _mcid = element.marked_content_id();
 
-    let mcid_count = element.marked_content_id_count();
+    let mcid_count = element.marked_content_id_count().unwrap_or(0);
     let mut all_mcids = Vec::new();
     for i in 0..mcid_count {
-        all_mcids.push(element.marked_content_id_at_index(i));
+        if let Some(id) = element.marked_content_id_at_index(i) {
+            all_mcids.push(id);
+        }
+    }
+    if let Some(id) = element.marked_content_id() {
+        if !all_mcids.contains(&id) {
+            all_mcids.push(id);
+        }
     }
 
     // Check elements by mcid
@@ -64,14 +71,20 @@ fn print_tree(
 
     let child_count = element.count_children();
     for i in 0..child_count {
-        if let Ok(child) = element.get_child(i) {
+        if let Ok(child) = element.child(i) {
             print_tree(&child, text_page, objects, indent + 2);
         }
     }
 }
 
 fn main() -> PdfiumResult<()> {
-    let document = PdfiumDocument::new_from_path("TLCL-25.12.pdf", None)?;
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Usage: parse_tagged_tables <path/to/pdf>");
+        return Ok(());
+    }
+    let path = &args[1];
+    let document = PdfiumDocument::new_from_path(path, None)?;
 
     println!("Document loaded successfully.");
     let page_count = document.pages().count();
@@ -94,7 +107,7 @@ fn main() -> PdfiumResult<()> {
                 if children_count > 0 {
                     println!("\nPage {} Structure Tree:", i + 1);
                     for j in 0..children_count {
-                        if let Ok(child) = tree.get_child(j) {
+                        if let Ok(child) = tree.child(j) {
                             print_tree(&child, &text_page, &objects, 2);
                         }
                     }
