@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_get_text_mcid() {
-        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
         let page = document.page(0).unwrap();
         let text_page = page.text().unwrap();
 

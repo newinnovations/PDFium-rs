@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_struct_tree() {
-        let document = PdfiumDocument::new_from_path("resources/test-toc.pdf", None).unwrap();
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
         if let Ok(page) = document.page(0) {
             let tree = page.struct_tree();
             assert!(tree.is_some(), "Tagged PDF should have a structure tree");
