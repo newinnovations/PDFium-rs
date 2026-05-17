@@ -26,7 +26,7 @@ pub mod render;
 pub mod text;
 
 use crate::{
-    PdfiumDocument, PdfiumPageObject, PdfiumTextPage,
+    PdfiumDocument, PdfiumPageObject, PdfiumStructTree, PdfiumTextPage,
     error::{PdfiumError, PdfiumResult},
     lib,
     page::{boundaries::PdfiumPageBoundaries, object::objects::PdfiumPageObjects},
@@ -91,6 +91,13 @@ impl PdfiumPage {
                 owner: None,
             })
         }
+    }
+
+    /// Gets the structural tree for this page if it has one (e.g. Tagged PDF).
+    pub fn struct_tree(&self) -> Option<PdfiumStructTree> {
+        let mut tree = lib().FPDF_StructTree_GetForPage(self).ok()?;
+        tree.set_owner(self.clone());
+        Some(tree)
     }
 
     pub(crate) fn set_owner(&mut self, owner: PdfiumDocument) {

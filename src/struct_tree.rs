@@ -18,6 +18,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumPage, PdfiumStructElement,
     error::{PdfiumError, PdfiumResult},
     lib,
     pdfium_types::{FPDF_STRUCTTREE, Handle, StructTreeHandle},
@@ -27,6 +28,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumStructTree {
     handle: StructTreeHandle,
+    owner: Option<PdfiumPage>,
 }
 
 impl PdfiumStructTree {
@@ -36,8 +38,25 @@ impl PdfiumStructTree {
         } else {
             Ok(Self {
                 handle: Handle::new(handle, Some(close_struct_tree)),
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumPage) {
+        self.owner = Some(owner);
+    }
+
+    /// Returns the number of children for this structure tree.
+    pub fn count_children(&self) -> i32 {
+        lib().FPDF_StructTree_CountChildren(self)
+    }
+
+    /// Returns the child element at the given index.
+    pub fn child(&self, index: i32) -> PdfiumResult<PdfiumStructElement> {
+        let mut child = lib().FPDF_StructTree_GetChildAtIndex(self, index)?;
+        child.set_owner(self.clone());
+        Ok(child)
     }
 }
 
@@ -49,4 +68,48 @@ impl From<&PdfiumStructTree> for FPDF_STRUCTTREE {
 
 fn close_struct_tree(struct_tree: FPDF_STRUCTTREE) {
     lib().FPDF_StructTree_Close(struct_tree);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::PdfiumDocument;
+
+    #[test]
+    fn test_struct_tree() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        if let Ok(page) = document.page(0) {
+            let tree = page.struct_tree();
+            assert!(tree.is_some(), "Tagged PDF should have a structure tree");
+            if let Some(tree) = tree {
+                let children = tree.count_children();
+                assert!(children > 0, "Structure tree should have children");
+
+                let child = tree.child(0);
+                assert!(child.is_ok(), "Should be able to get the first child");
+                let child = child.unwrap();
+
+                // Test struct element methods
+                let _ = child.obj_type();
+                let _ = child.title();
+                let _ = child.id();
+                let _ = child.lang();
+                let _ = child.alt_text();
+                let _ = child.actual_text();
+
+                let attr_count = child.attribute_count();
+                if attr_count > 0 {
+                    let attr = child.attribute_at_index(0);
+                    assert!(attr.is_ok());
+                    let attr = attr.unwrap();
+                    let attr_count = attr.count();
+                    assert!(attr_count >= 0);
+                    if attr_count > 0 {
+                        if let Some(name) = attr.name(0) {
+                            let _ = attr.value(&name);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

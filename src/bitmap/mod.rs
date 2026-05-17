@@ -72,13 +72,13 @@ impl PdfiumBitmap {
     /// Returns the width of the image in the bitmap buffer backing this [`PdfiumBitmap`].
     #[inline]
     pub fn width(&self) -> i32 {
-        lib().FPDFBitmap_GetWidth(self) as i32
+        lib().FPDFBitmap_GetWidth(self)
     }
 
     /// Returns the height of the image in the bitmap buffer backing this [`PdfiumBitmap`].
     #[inline]
     pub fn height(&self) -> i32 {
-        lib().FPDFBitmap_GetHeight(self) as i32
+        lib().FPDFBitmap_GetHeight(self)
     }
 
     /// Returns the pixel format of the image in the bitmap buffer backing this [`PdfiumBitmap`].

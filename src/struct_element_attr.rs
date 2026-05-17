@@ -18,7 +18,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
+    PdfiumStructElement, PdfiumStructElementAttrValue,
     error::{PdfiumError, PdfiumResult},
+    lib,
     pdfium_types::{FPDF_STRUCTELEMENT_ATTR, Handle, StructElementAttrHandle},
 };
 
@@ -26,6 +28,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct PdfiumStructElementAttr {
     handle: StructElementAttrHandle,
+    owner: Option<PdfiumStructElement>,
 }
 
 impl PdfiumStructElementAttr {
@@ -34,9 +37,47 @@ impl PdfiumStructElementAttr {
             Err(PdfiumError::NullHandle)
         } else {
             Ok(Self {
-                handle: Handle::new_const(handle), // TODO: check close is not needed
+                handle: Handle::new_const(handle),
+                owner: None,
             })
         }
+    }
+
+    pub(crate) fn set_owner(&mut self, owner: PdfiumStructElement) {
+        self.owner = Some(owner);
+    }
+
+    /// Returns the number of attributes in this map.
+    pub fn count(&self) -> i32 {
+        lib().FPDF_StructElement_Attr_GetCount(self)
+    }
+
+    /// Returns the name of the attribute at the given index.
+    pub fn name(&self, index: i32) -> Option<String> {
+        let mut len: std::os::raw::c_ulong = 0;
+        if lib()
+            .FPDF_StructElement_Attr_GetName(self, index, None, 0, &mut len)
+            .is_ok()
+            && len > 0
+        {
+            let mut buffer = vec![0u8; len as usize];
+            if lib()
+                .FPDF_StructElement_Attr_GetName(self, index, Some(&mut buffer), len, &mut len)
+                .is_ok()
+            {
+                let end = buffer.iter().position(|&b| b == 0).unwrap_or(buffer.len());
+                return Some(String::from_utf8_lossy(&buffer[..end]).into_owned());
+            }
+        }
+        None
+    }
+
+    /// Returns the value for the attribute with the given name.
+    pub fn value(&self, name: &str) -> Option<PdfiumStructElementAttrValue> {
+        let c_name = std::ffi::CString::new(name).ok()?;
+        let mut val = lib().FPDF_StructElement_Attr_GetValue(self, &c_name).ok()?;
+        val.set_owner(self.clone());
+        Some(val)
     }
 }
 
