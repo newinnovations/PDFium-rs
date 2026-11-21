@@ -527,14 +527,9 @@ impl PdfiumPage {
                         "Cannot specify matrix or scale when only height is provided".to_string(),
                     ));
                 }
-                let bounds = self.boundaries().default()?;
-                let bounds = if (self.rotation() + config.rotation).needs_transpose() {
-                    bounds.transpose()
-                } else {
-                    bounds
-                };
-                let scale = h as f32 / bounds.height();
-                let w = (bounds.width() * scale) as i32;
+                let (page_width, page_height) = self.render_size(config.rotation);
+                let scale = h as f32 / page_height;
+                let w = (page_width * scale) as i32;
                 let m = PdfiumMatrix::new_scale_opt_pan(scale, config.pan);
                 Ok((w, h, m))
             }
@@ -545,14 +540,9 @@ impl PdfiumPage {
                         "Cannot specify matrix or scale when only width is provided".to_string(),
                     ));
                 }
-                let bounds = self.boundaries().default()?;
-                let bounds = if (self.rotation() + config.rotation).needs_transpose() {
-                    bounds.transpose()
-                } else {
-                    bounds
-                };
-                let scale = w as f32 / bounds.width();
-                let h = (bounds.height() * scale) as i32;
+                let (page_width, page_height) = self.render_size(config.rotation);
+                let scale = w as f32 / page_width;
+                let h = (page_height * scale) as i32;
                 let m = PdfiumMatrix::new_scale_opt_pan(scale, config.pan);
                 Ok((w, h, m))
             }
@@ -582,11 +572,53 @@ impl PdfiumPage {
             }
         }
     }
+
+    /// Returns the (width, height) in points of the page as rendered with `rotation`.
+    ///
+    /// Uses the page size PDFium renders with: the CropBox clipped to the MediaBox,
+    /// both inherited from parent page tree nodes when absent from the page, with the
+    /// page rotation already applied. Only the extra render rotation remains to apply.
+    fn render_size(&self, rotation: PdfiumRotation) -> (f32, f32) {
+        if rotation.needs_transpose() {
+            (self.height(), self.width())
+        } else {
+            (self.width(), self.height())
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::*;
+
+    #[test]
+    fn test_render_inherited_media_box() {
+        // resources/issue-9.pdf: MediaBox only on the /Pages node, not on the page
+        let document = PdfiumDocument::new_from_path("resources/issue-9.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        let config = PdfiumRenderConfig::new().with_height(1080);
+        let bitmap = page.render(&config).unwrap();
+        assert_eq!(bitmap.width(), 763);
+        assert_eq!(bitmap.height(), 1080);
+        bitmap
+            .save("issue-9-page-1.png", image::ImageFormat::Png)
+            .unwrap();
+    }
+
+    #[test]
+    fn test_render_at_height_rotated() {
+        let document = PdfiumDocument::new_from_path("resources/groningen.pdf", None).unwrap();
+        let page = document.page(0).unwrap();
+        page.set_rotation(PdfiumRotation::Cw90);
+        let config = PdfiumRenderConfig::new().with_height(1080);
+        let bitmap = page.render(&config).unwrap();
+        assert_eq!(bitmap.width(), 1528);
+        assert_eq!(bitmap.height(), 1080);
+        let config = config.with_rotation(PdfiumRotation::Cw90);
+        let bitmap = page.render(&config).unwrap();
+        assert_eq!(bitmap.width(), 763);
+        assert_eq!(bitmap.height(), 1080);
+    }
 
     #[test]
     fn test_render_at_height() {
