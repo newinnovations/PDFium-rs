@@ -178,9 +178,13 @@ impl<'a> PdfiumPageBoundaries<'a> {
     ///    page dimensions after trimming
     /// 3. **MediaBox** - The fallback option, representing the full physical page size
     ///
-    /// This method ensures that viewer applications always have a valid boundary to work
-    /// with, since MediaBox is required to exist in every PDF page. The returned rectangle
-    /// represents the area that should be visible to end users when viewing the document.
+    /// Returns an error when none of these boxes is set on the page dictionary itself:
+    /// PDFium does not resolve boxes inherited from parent page tree nodes, so a page whose
+    /// MediaBox is only defined on its `/Pages` parent has no default boundary. Use
+    /// [`PdfiumPage::width`](crate::PdfiumPage::width) and
+    /// [`PdfiumPage::height`](crate::PdfiumPage::height) for the inherited page size.
+    /// The returned rectangle represents the area that should be visible to end users
+    /// when viewing the document.
     pub fn default(&self) -> PdfiumResult<PdfiumRect> {
         self.crop()
             .or_else(|_| self.trim())
